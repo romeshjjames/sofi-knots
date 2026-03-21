@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { getAnalyticsSessionId, getStoredAttribution, trackAnalyticsEvent } from "@/lib/analytics";
 import type { Product } from "@/types/commerce";
 
 declare global {
@@ -72,6 +73,23 @@ export function CartCheckout({ products, razorpayKeyId }: CartCheckoutProps) {
   const shipping = subtotal > 1999 || subtotal === 0 ? 0 : SHIPPING_CHARGE;
   const total = subtotal + shipping;
 
+  useEffect(() => {
+    if (!selectedItems.length) return;
+    void trackAnalyticsEvent({
+      eventName: "cart_view",
+      path: "/cart",
+      metadata: {
+        items: selectedItems.map((item) => ({
+          productId: item.product?.id,
+          productName: item.product?.name,
+          quantity: item.quantity,
+        })),
+        subtotal,
+        total,
+      },
+    });
+  }, [selectedItems, subtotal, total]);
+
   async function handleCheckout() {
     setMessage(null);
 
@@ -86,10 +104,24 @@ export function CartCheckout({ products, razorpayKeyId }: CartCheckoutProps) {
     }
 
     startTransition(async () => {
+      await trackAnalyticsEvent({
+        eventName: "checkout_submitted",
+        path: "/cart",
+        metadata: {
+          itemCount: selectedItems.reduce((sum, item) => sum + item.quantity, 0),
+          subtotal,
+          total,
+        },
+      });
+
       const response = await fetch("/api/razorpay/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          analytics: {
+            sessionId: getAnalyticsSessionId(),
+            attribution: getStoredAttribution(),
+          },
           customer: {
             fullName: customer.fullName,
             email: customer.email,
@@ -150,10 +182,27 @@ export function CartCheckout({ products, razorpayKeyId }: CartCheckoutProps) {
           const verifyBody = await verifyResponse.json();
 
           if (!verifyResponse.ok) {
+            await trackAnalyticsEvent({
+              eventName: "payment_verification_failed",
+              path: "/cart",
+              metadata: {
+                localOrderId: payload.localOrder.id,
+                razorpayOrderId: payload.razorpayOrder.id,
+              },
+            });
             setMessage(verifyBody.error || "Payment verification failed.");
             return;
           }
 
+          await trackAnalyticsEvent({
+            eventName: "payment_verified",
+            path: "/cart",
+            metadata: {
+              localOrderId: payload.localOrder.id,
+              localOrderNumber: payload.localOrder.orderNumber,
+              razorpayOrderId: payload.razorpayOrder.id,
+            },
+          });
           setMessage(`Payment successful. Order ${verifyBody.order.order_number} is now marked as paid.`);
         },
         theme: {
@@ -161,6 +210,16 @@ export function CartCheckout({ products, razorpayKeyId }: CartCheckoutProps) {
         },
       });
 
+      await trackAnalyticsEvent({
+        eventName: "payment_popup_opened",
+        path: "/cart",
+        metadata: {
+          localOrderId: payload.localOrder.id,
+          localOrderNumber: payload.localOrder.orderNumber,
+          razorpayOrderId: payload.razorpayOrder.id,
+          totalInr: payload.localOrder.totalInr,
+        },
+      });
       razorpay.open();
     });
   }
@@ -185,6 +244,16 @@ export function CartCheckout({ products, razorpayKeyId }: CartCheckoutProps) {
                     onChange={(event) =>
                       setCart((current) => {
                         const nextQuantity = Number(event.target.value);
+                        void trackAnalyticsEvent({
+                          eventName: nextQuantity > 0 ? "add_to_cart_intent" : "remove_from_cart_intent",
+                          path: "/cart",
+                          metadata: {
+                            productId: product.id,
+                            productName: product.name,
+                            quantity: nextQuantity,
+                            source: "cart_quantity_selector",
+                          },
+                        });
                         const existing = current.find((entry) => entry.productId === product.id);
                         if (existing) {
                           return current.map((entry) => (entry.productId === product.id ? { ...entry, quantity: nextQuantity } : entry));

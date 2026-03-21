@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { DataSourceNote } from "@/components/site/data-source-note";
 import { Footer } from "@/components/site/footer";
 import { Navbar } from "@/components/site/navbar";
+import { ProductActionButtons } from "@/components/site/product-action-buttons";
 import { getCatalogProductBySlug } from "@/lib/catalog";
 import { getProductImageSource } from "@/lib/media";
 import { buildMetadata, productJsonLd } from "@/lib/seo";
@@ -76,14 +77,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
               ) : null}
             </div>
             <p className="mb-8 text-sm leading-relaxed text-brand-warm">{product.description}</p>
-            <div className="flex flex-wrap gap-3">
-              <button type="button" className="brand-btn-primary">
-                Add to Cart
-              </button>
-              <button type="button" className="brand-btn-outline">
-                Buy with Razorpay
-              </button>
-            </div>
+            <ProductActionButtons productId={product.id} productSlug={product.slug} productName={product.name} />
             <div className="mt-8 rounded-sm bg-brand-cream p-6">
               <p className="brand-label mb-2">SEO Focus</p>
               <p className="text-sm leading-relaxed text-brand-warm">

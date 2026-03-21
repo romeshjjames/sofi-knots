@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createAuditLog } from "@/lib/admin-data";
 import { markOrderPaid } from "@/lib/orders";
 import { verifyRazorpayPaymentSignature } from "@/lib/razorpay";
 
@@ -23,6 +24,18 @@ export async function POST(request: Request) {
     const order = await markOrderPaid({
       razorpayOrderId: body.razorpay_order_id,
       razorpayPaymentId: body.razorpay_payment_id,
+    });
+
+    await createAuditLog({
+      entityType: "analytics_event",
+      entityId: body.razorpay_order_id,
+      action: "payment_captured",
+      payload: {
+        localOrderId: order.id,
+        localOrderNumber: order.order_number,
+        razorpayOrderId: body.razorpay_order_id,
+        razorpayPaymentId: body.razorpay_payment_id,
+      },
     });
 
     return NextResponse.json({ verified: true, order });

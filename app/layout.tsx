@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Cormorant_Garamond, Jost } from "next/font/google";
+import { AnalyticsTracker } from "@/components/analytics/analytics-tracker";
 import "./globals.css";
 import { buildMetadata } from "@/lib/seo";
 
@@ -26,7 +28,12 @@ export const metadata: Metadata = buildMetadata({
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${jost.variable} ${cormorant.variable}`}>{children}</body>
+      <body className={`${jost.variable} ${cormorant.variable}`}>
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
+        </Suspense>
+        {children}
+      </body>
     </html>
   );
 }

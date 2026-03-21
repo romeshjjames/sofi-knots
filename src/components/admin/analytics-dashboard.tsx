@@ -15,6 +15,16 @@ type RangeSnapshot = {
   orderCount: number;
   paidOrders: number;
   averageOrderValue: number;
+  trafficSummary: {
+    pageViews: number;
+    productClicks: number;
+    addToCartIntents: number;
+    checkoutSubmissions: number;
+    abandonedCheckouts: number;
+  };
+  topPages: { path: string; views: number }[];
+  sourcePerformance: { source: string; medium: string; campaign: string; orders: number; revenueInr: number }[];
+  campaignPerformance: { campaign: string; source: string; orders: number; revenueInr: number }[];
 };
 
 type Props = {
@@ -96,6 +106,29 @@ export function AnalyticsDashboard({ rangeSnapshots, defaultRange, categorySerie
             <p className="mt-2 text-sm text-brand-warm">Average order value for the selected range.</p>
           </div>
         </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2 2xl:grid-cols-5">
+          <div className="rounded-3xl border border-brand-sand/60 bg-white px-5 py-4">
+            <p className="text-xs uppercase tracking-[0.22em] text-brand-taupe">Page views</p>
+            <p className="mt-2 text-2xl font-semibold text-brand-brown">{snapshot.trafficSummary.pageViews}</p>
+          </div>
+          <div className="rounded-3xl border border-brand-sand/60 bg-white px-5 py-4">
+            <p className="text-xs uppercase tracking-[0.22em] text-brand-taupe">Product clicks</p>
+            <p className="mt-2 text-2xl font-semibold text-brand-brown">{snapshot.trafficSummary.productClicks}</p>
+          </div>
+          <div className="rounded-3xl border border-brand-sand/60 bg-white px-5 py-4">
+            <p className="text-xs uppercase tracking-[0.22em] text-brand-taupe">Add-to-cart intent</p>
+            <p className="mt-2 text-2xl font-semibold text-brand-brown">{snapshot.trafficSummary.addToCartIntents}</p>
+          </div>
+          <div className="rounded-3xl border border-brand-sand/60 bg-white px-5 py-4">
+            <p className="text-xs uppercase tracking-[0.22em] text-brand-taupe">Checkout submits</p>
+            <p className="mt-2 text-2xl font-semibold text-brand-brown">{snapshot.trafficSummary.checkoutSubmissions}</p>
+          </div>
+          <div className="rounded-3xl border border-brand-sand/60 bg-white px-5 py-4">
+            <p className="text-xs uppercase tracking-[0.22em] text-brand-taupe">Abandoned</p>
+            <p className="mt-2 text-2xl font-semibold text-brand-brown">{snapshot.trafficSummary.abandonedCheckouts}</p>
+          </div>
+        </div>
       </section>
 
       <div className="grid gap-6 2xl:grid-cols-[1.2fr_0.8fr]">
@@ -162,6 +195,56 @@ export function AnalyticsDashboard({ rangeSnapshots, defaultRange, categorySerie
           <div className="grid gap-6 lg:grid-cols-2">
             <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6 shadow-[0_18px_50px_rgba(65,42,17,0.06)]">
               <div className="mb-4">
+                <h3 className="font-serif text-2xl text-brand-brown">Top pages</h3>
+                <p className="text-sm text-brand-warm">Most viewed storefront paths from the event tracker.</p>
+              </div>
+              <div className="space-y-3">
+                {snapshot.topPages.length ? (
+                  snapshot.topPages.map((page) => (
+                    <div key={page.path} className="flex items-center justify-between rounded-2xl border border-brand-sand/30 bg-[#fcfaf5] px-4 py-3 text-sm">
+                      <span className="truncate font-medium text-brand-brown">{page.path}</span>
+                      <span className="text-brand-warm">{page.views} views</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-brand-warm">No page view events have been captured yet for this range.</p>
+                )}
+              </div>
+            </section>
+
+            <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6 shadow-[0_18px_50px_rgba(65,42,17,0.06)]">
+              <div className="mb-4">
+                <h3 className="font-serif text-2xl text-brand-brown">Source attribution</h3>
+                <p className="text-sm text-brand-warm">Checkout-created orders grouped by source and medium.</p>
+              </div>
+              <div className="space-y-3">
+                {snapshot.sourcePerformance.length ? (
+                  snapshot.sourcePerformance.map((source) => (
+                    <div key={`${source.source}-${source.medium}`} className="rounded-2xl border border-brand-sand/30 bg-[#fcfaf5] p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="font-medium text-brand-brown">
+                            {source.source} / {source.medium}
+                          </div>
+                          <div className="mt-1 text-xs uppercase tracking-[0.16em] text-brand-taupe">{source.campaign}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium text-brand-brown">{source.orders} orders</div>
+                          <div className="text-xs text-brand-warm">Rs. {source.revenueInr.toLocaleString("en-IN")}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-brand-warm">No attributed checkout events captured yet.</p>
+                )}
+              </div>
+            </section>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6 shadow-[0_18px_50px_rgba(65,42,17,0.06)]">
+              <div className="mb-4">
                 <h3 className="font-serif text-2xl text-brand-brown">Customer cohorts</h3>
                 <p className="text-sm text-brand-warm">Repeat-purchase behavior by first-order month.</p>
               </div>
@@ -217,6 +300,26 @@ export function AnalyticsDashboard({ rangeSnapshots, defaultRange, categorySerie
         </div>
 
         <div className="space-y-6">
+          <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6 shadow-[0_18px_50px_rgba(65,42,17,0.06)]">
+            <h3 className="font-serif text-2xl text-brand-brown">Campaign performance</h3>
+            <div className="mt-4 space-y-3">
+              {snapshot.campaignPerformance.length ? (
+                snapshot.campaignPerformance.map((campaign) => (
+                  <div key={`${campaign.campaign}-${campaign.source}`} className="rounded-2xl border border-brand-sand/30 bg-[#fcfaf5] p-4">
+                    <div className="font-medium text-brand-brown">{campaign.campaign}</div>
+                    <div className="mt-1 text-xs uppercase tracking-[0.16em] text-brand-taupe">{campaign.source}</div>
+                    <div className="mt-2 flex items-center justify-between text-sm">
+                      <span className="text-brand-warm">{campaign.orders} orders</span>
+                      <span className="font-medium text-brand-brown">Rs. {campaign.revenueInr.toLocaleString("en-IN")}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-brand-warm">No UTM campaign data has been captured yet.</p>
+              )}
+            </div>
+          </section>
+
           <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6 shadow-[0_18px_50px_rgba(65,42,17,0.06)]">
             <h3 className="font-serif text-2xl text-brand-brown">Featured lineup</h3>
             <div className="mt-4 space-y-3">

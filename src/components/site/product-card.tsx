@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingBag, Star } from "lucide-react";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 import { getProductImageSource } from "@/lib/media";
 import type { Product } from "@/types/commerce";
 
@@ -14,7 +17,22 @@ export function ProductCard({ product, index = 0 }: Props) {
 
   return (
     <div className="brand-card group animate-fade-in" style={{ animationDelay: `${index * 80}ms` }}>
-      <Link href={`/product/${product.slug}`} className="block">
+      <Link
+        href={`/product/${product.slug}`}
+        className="block"
+        onClick={() =>
+          void trackAnalyticsEvent({
+            eventName: "product_click",
+            path: `/product/${product.slug}`,
+            metadata: {
+              productId: product.id,
+              productSlug: product.slug,
+              productName: product.name,
+              source: "product_card_media",
+            },
+          })
+        }
+      >
         <div className="relative aspect-[3/4] overflow-hidden bg-brand-cream">
           <Image
             src={imageSource}
@@ -42,6 +60,17 @@ export function ProductCard({ product, index = 0 }: Props) {
                 type="button"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-ivory/90 text-brand-warm shadow-sm backdrop-blur-sm transition-colors hover:text-brand-gold"
                 aria-label="Add to cart"
+                onClick={() =>
+                  void trackAnalyticsEvent({
+                    eventName: "add_to_cart_intent",
+                    metadata: {
+                      productId: product.id,
+                      productSlug: product.slug,
+                      productName: product.name,
+                      source: "product_card_quick_action",
+                    },
+                  })
+                }
               >
                 <ShoppingBag size={16} />
               </button>
@@ -51,7 +80,21 @@ export function ProductCard({ product, index = 0 }: Props) {
       </Link>
       <div className="p-4">
         <p className="brand-label mb-1 text-[10px]">{product.category}</p>
-        <Link href={`/product/${product.slug}`}>
+        <Link
+          href={`/product/${product.slug}`}
+          onClick={() =>
+            void trackAnalyticsEvent({
+              eventName: "product_click",
+              path: `/product/${product.slug}`,
+              metadata: {
+                productId: product.id,
+                productSlug: product.slug,
+                productName: product.name,
+                source: "product_card_title",
+              },
+            })
+          }
+        >
           <h3 className="font-serif text-lg text-brand-brown transition-colors group-hover:text-brand-gold">{product.name}</h3>
         </Link>
         <div className="mb-2 mt-1 flex items-center gap-1">

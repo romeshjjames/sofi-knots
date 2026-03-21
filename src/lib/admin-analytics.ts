@@ -1,3 +1,4 @@
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { getCatalogProducts, getFeaturedProducts } from "@/lib/catalog";
 import { getAuditLogs, getBlogPosts, getPages } from "@/lib/admin-data";
 import { getOrders } from "@/lib/orders";
@@ -20,14 +21,28 @@ const analyticsRanges: { key: AnalyticsRangeKey; label: string; days: number | n
 ];
 
 export async function getAdminAnalytics() {
-  const [catalogResult, featuredResult, orders, pages, posts, auditLogs] = await Promise.all([
+  const supabase = createAdminSupabaseClient();
+  const [catalogResult, featuredResult, orders, pages, posts, auditLogs, analyticsEventsResult] = await Promise.all([
     getCatalogProducts(),
     getFeaturedProducts(),
     getOrders(),
     getPages(),
     getBlogPosts(),
     getAuditLogs(),
+    supabase
+      .from("audit_logs")
+      .select("id, action, entity_id, payload, created_at")
+      .eq("entity_type", "analytics_event")
+      .order("created_at", { ascending: false })
+      .limit(1000),
   ]);
+  const analyticsEvents = (analyticsEventsResult.data ?? []) as {
+    id: string;
+    action: string;
+    entity_id: string;
+    payload: Record<string, unknown> | null;
+    created_at: string;
+  }[];
 
   const products = catalogResult.data;
   const categoryMap = new Map<string, number>();
@@ -55,16 +70,66 @@ export async function getAdminAnalytics() {
         days === null
           ? orders
           : orders.filter((order) => now - new Date(order.createdAt).getTime() <= days * 24 * 60 * 60 * 1000);
+      const scopedEvents =
+        days === null
+          ? analyticsEvents
+          : analyticsEvents.filter((event) => now - new Date(event.created_at).getTime() <= days * 24 * 60 * 60 * 1000);
 
       const revenueByDayMap = new Map<string, number>();
       const ordersByDayMap = new Map<string, number>();
       const paymentMap = new Map<string, number>();
+      const topPagesMap = new Map<string, number>();
+      const sourceMap = new Map<string, { source: string; medium: string; campaign: string; orders: number; revenueInr: number }>();
+      const campaignMap = new Map<string, { campaign: string; source: string; orders: number; revenueInr: number }>();
 
       for (const order of scopedOrders) {
         const day = order.createdAt.slice(0, 10);
         revenueByDayMap.set(day, (revenueByDayMap.get(day) ?? 0) + order.totalInr);
         ordersByDayMap.set(day, (ordersByDayMap.get(day) ?? 0) + 1);
         paymentMap.set(order.paymentStatus, (paymentMap.get(order.paymentStatus) ?? 0) + 1);
+      }
+
+      for (const event of scopedEvents) {
+        const payload = (event.payload ?? {}) as Record<string, unknown>;
+        const path = typeof payload.path === "string" ? payload.path : null;
+        const attribution = (payload.attribution ?? {}) as Record<string, unknown>;
+        const metadata = (payload.metadata ?? {}) as Record<string, unknown>;
+
+        if (event.action === "page_view" && path) {
+          topPagesMap.set(path, (topPagesMap.get(path) ?? 0) + 1);
+        }
+
+        if (event.action === "checkout_created") {
+          const source = typeof attribution.source === "string" && attribution.source ? attribution.source : "direct";
+          const medium = typeof attribution.medium === "string" && attribution.medium ? attribution.medium : "none";
+          const campaign = typeof attribution.campaign === "string" && attribution.campaign ? attribution.campaign : "unassigned";
+          const revenueInr = typeof payload.totalInr === "number" ? payload.totalInr : 0;
+
+          const sourceKey = `${source}::${medium}`;
+          const currentSource = sourceMap.get(sourceKey) ?? {
+            source,
+            medium,
+            campaign,
+            orders: 0,
+            revenueInr: 0,
+          };
+          currentSource.orders += 1;
+          currentSource.revenueInr += revenueInr;
+          sourceMap.set(sourceKey, currentSource);
+
+          const campaignKey = `${campaign}::${source}`;
+          const currentCampaign = campaignMap.get(campaignKey) ?? {
+            campaign,
+            source,
+            orders: 0,
+            revenueInr: 0,
+          };
+          currentCampaign.orders += 1;
+          currentCampaign.revenueInr += revenueInr;
+          campaignMap.set(campaignKey, currentCampaign);
+        }
+
+        void metadata;
       }
 
       const revenueSeries = Array.from(revenueByDayMap.entries())
@@ -125,6 +190,26 @@ export async function getAdminAnalytics() {
       const revenueTotal = scopedOrders.reduce((sum, order) => sum + order.totalInr, 0);
       const paidOrders = scopedOrders.filter((order) => order.paymentStatus === "paid").length;
       const averageOrderValue = scopedOrders.length ? Math.round(revenueTotal / scopedOrders.length) : 0;
+      const abandonedCheckouts = scopedOrders.filter(
+        (order) =>
+          order.paymentStatus === "pending" &&
+          order.status === "pending" &&
+          now - new Date(order.createdAt).getTime() > 60 * 60 * 1000,
+      ).length;
+      const pageViews = scopedEvents.filter((event) => event.action === "page_view").length;
+      const productClicks = scopedEvents.filter((event) => event.action === "product_click").length;
+      const addToCartIntents = scopedEvents.filter((event) => event.action === "add_to_cart_intent").length;
+      const checkoutSubmissions = scopedEvents.filter((event) => event.action === "checkout_submitted").length;
+      const topPages = Array.from(topPagesMap.entries())
+        .sort((left, right) => right[1] - left[1])
+        .slice(0, 5)
+        .map(([path, views]) => ({ path, views }));
+      const sourcePerformance = Array.from(sourceMap.values())
+        .sort((left, right) => right.orders - left.orders)
+        .slice(0, 5);
+      const campaignPerformance = Array.from(campaignMap.values())
+        .sort((left, right) => right.orders - left.orders)
+        .slice(0, 5);
 
       return [
         key,
@@ -138,6 +223,16 @@ export async function getAdminAnalytics() {
           orderCount: scopedOrders.length,
           paidOrders,
           averageOrderValue,
+          trafficSummary: {
+            pageViews,
+            productClicks,
+            addToCartIntents,
+            checkoutSubmissions,
+            abandonedCheckouts,
+          },
+          topPages,
+          sourcePerformance,
+          campaignPerformance,
         },
       ];
     }),
@@ -153,6 +248,16 @@ export async function getAdminAnalytics() {
       orderCount: number;
       paidOrders: number;
       averageOrderValue: number;
+      trafficSummary: {
+        pageViews: number;
+        productClicks: number;
+        addToCartIntents: number;
+        checkoutSubmissions: number;
+        abandonedCheckouts: number;
+      };
+      topPages: { path: string; views: number }[];
+      sourcePerformance: { source: string; medium: string; campaign: string; orders: number; revenueInr: number }[];
+      campaignPerformance: { campaign: string; source: string; orders: number; revenueInr: number }[];
     }
   >;
 

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createAuditLog } from "@/lib/admin-data";
 import { createRazorpayOrder } from "@/lib/razorpay";
 import { createPendingOrder, linkRazorpayOrder } from "@/lib/orders";
 
@@ -27,6 +28,23 @@ export async function POST(request: Request) {
     });
 
     await linkRazorpayOrder(pendingOrder.id, order.id);
+
+    if (body.analytics?.sessionId) {
+      await createAuditLog({
+        entityType: "analytics_event",
+        entityId: String(body.analytics.sessionId),
+        action: "checkout_created",
+        payload: {
+          localOrderId: pendingOrder.id,
+          localOrderNumber: pendingOrder.order_number,
+          totalInr: pendingOrder.total_inr,
+          razorpayOrderId: order.id,
+          customerEmail: body.customer.email,
+          attribution: body.analytics.attribution || null,
+          items: body.items,
+        },
+      });
+    }
 
     return NextResponse.json({
       razorpayOrder: order,
