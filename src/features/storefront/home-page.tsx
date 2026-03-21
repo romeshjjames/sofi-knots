@@ -6,6 +6,7 @@ import { DataSourceNote } from "@/components/site/data-source-note";
 import { Footer } from "@/components/site/footer";
 import { Navbar } from "@/components/site/navbar";
 import { ProductCard } from "@/components/site/product-card";
+import { defaultHomepageSections, getHomepageMerchandising, type HomepageSectionKey } from "@/lib/admin-data";
 import { getCatalogCollections, getFeaturedProducts, getNewArrivalProducts } from "@/lib/catalog";
 import { getCollectionImageSource } from "@/lib/media";
 
@@ -28,20 +29,21 @@ const testimonials = [
 ];
 
 export async function HomePage() {
-  const [featuredResult, newArrivalResult, collectionResult] = await Promise.all([
+  const [featuredResult, newArrivalResult, collectionResult, homepageMerchandising] = await Promise.all([
     getFeaturedProducts(),
     getNewArrivalProducts(),
     getCatalogCollections(),
+    getHomepageMerchandising().catch(() => ({ sectionOrder: [], updatedAt: null })),
   ]);
   const featuredProducts = featuredResult.data;
   const newArrivals = newArrivalResult.data;
   const storefrontCollections = collectionResult.data;
+  const sectionOrder = homepageMerchandising.sectionOrder.length
+    ? homepageMerchandising.sectionOrder
+    : defaultHomepageSections.map((section) => section.key);
 
-  return (
-    <div>
-      <Navbar />
-      <DataSourceNote source={featuredResult.source} error={featuredResult.error} />
-
+  const sections: Record<HomepageSectionKey, React.ReactNode> = {
+    hero: (
       <section className="relative flex min-h-[85vh] items-center overflow-hidden">
         <div className="absolute inset-0">
           <Image src={heroBg} alt="Sofi Knots macrame collection" className="h-full w-full object-cover" priority />
@@ -75,7 +77,8 @@ export async function HomePage() {
           </div>
         </div>
       </section>
-
+    ),
+    intro: (
       <section className="brand-section">
         <div className="brand-container mx-auto max-w-2xl text-center">
           <p className="brand-label mb-3">Welcome to Sofi Knots</p>
@@ -86,7 +89,8 @@ export async function HomePage() {
           </p>
         </div>
       </section>
-
+    ),
+    collections: (
       <section className="brand-section bg-brand-cream pt-0">
         <div className="brand-container">
           <div className="mb-12 text-center">
@@ -119,7 +123,8 @@ export async function HomePage() {
           </div>
         </div>
       </section>
-
+    ),
+    "featured-products": (
       <section className="brand-section">
         <div className="brand-container">
           <div className="mb-10 flex items-end justify-between">
@@ -138,7 +143,8 @@ export async function HomePage() {
           </div>
         </div>
       </section>
-
+    ),
+    "new-arrivals": (
       <section className="brand-section bg-brand-cream pt-0">
         <div className="brand-container">
           <div className="mb-10 flex items-end justify-between">
@@ -157,7 +163,8 @@ export async function HomePage() {
           </div>
         </div>
       </section>
-
+    ),
+    "value-props": (
       <section className="brand-section">
         <div className="brand-container">
           <div className="mb-14 text-center">
@@ -181,7 +188,8 @@ export async function HomePage() {
           </div>
         </div>
       </section>
-
+    ),
+    testimonials: (
       <section className="brand-section bg-brand-cream">
         <div className="brand-container">
           <div className="mb-14 text-center">
@@ -204,7 +212,8 @@ export async function HomePage() {
           </div>
         </div>
       </section>
-
+    ),
+    newsletter: (
       <section className="brand-section">
         <div className="brand-container mx-auto max-w-xl text-center">
           <p className="brand-label mb-3">Stay Connected</p>
@@ -220,6 +229,16 @@ export async function HomePage() {
           </form>
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <div>
+      <Navbar />
+      <DataSourceNote source={featuredResult.source} error={featuredResult.error} />
+      {sectionOrder.map((sectionKey) => (
+        <div key={sectionKey}>{sections[sectionKey]}</div>
+      ))}
 
       <Footer />
     </div>

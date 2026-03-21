@@ -1,20 +1,22 @@
 import Link from "next/link";
+import { CollectionMerchandisingManager } from "@/components/admin/collection-merchandising-manager";
 import { ProductCreateForm } from "@/components/admin/product-create-form";
 import { FeaturedMerchandisingManager } from "@/components/admin/featured-merchandising-manager";
 import { ProductManager } from "@/components/admin/product-manager";
 import { TaxonomyManager } from "@/components/admin/taxonomy-manager";
 import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
-import { getFeaturedProductMerchandising } from "@/lib/admin-data";
+import { getCollectionMerchandising, getFeaturedProductMerchandising } from "@/lib/admin-data";
 import { getCatalogCategories, getCatalogCollections, getCatalogProducts } from "@/lib/catalog";
 import { requireAdminPage } from "@/lib/supabase/auth";
 
 export default async function AdminProductsPage() {
   await requireAdminPage(["super_admin", "catalog_admin"]);
-  const [result, categoriesResult, collectionsResult, featuredMerchandising] = await Promise.all([
+  const [result, categoriesResult, collectionsResult, featuredMerchandising, collectionMerchandising] = await Promise.all([
     getCatalogProducts(),
     getCatalogCategories(),
     getCatalogCollections(),
     getFeaturedProductMerchandising(),
+    getCollectionMerchandising(),
   ]);
 
   return (
@@ -69,6 +71,17 @@ export default async function AdminProductsPage() {
             products={result.data}
             initialProductIds={featuredMerchandising.productIds}
             updatedAt={featuredMerchandising.updatedAt}
+          />
+        </AdminPanel>
+
+        <AdminPanel
+          title="Collection merchandising"
+          description="Control the order of collection cards across the homepage and collections landing page with drag-and-drop persistence."
+        >
+          <CollectionMerchandisingManager
+            collections={collectionsResult.data}
+            initialCollectionIds={collectionMerchandising.collectionIds}
+            updatedAt={collectionMerchandising.updatedAt}
           />
         </AdminPanel>
 

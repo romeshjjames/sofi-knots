@@ -8,7 +8,7 @@ import {
 } from "@/data/products";
 import productBag from "@/assets/product-bag.jpeg";
 import productPillow from "@/assets/product-pillow.jpeg";
-import { getFeaturedProductMerchandising } from "@/lib/admin-data";
+import { getCollectionMerchandising, getFeaturedProductMerchandising } from "@/lib/admin-data";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import type { BlogPost, Collection, Product } from "@/types/commerce";
 
@@ -312,7 +312,21 @@ export async function getCatalogCollections(): Promise<CatalogResult<Collection[
       return { data: fallbackCollections, source: "fallback", error: "No collections found in Supabase yet." };
     }
 
-    return { data: mapped, source: "supabase" };
+    const merchandising = await getCollectionMerchandising().catch(() => ({ collectionIds: [], updatedAt: null }));
+    const orderMap = new Map<string, number>(merchandising.collectionIds.map((id, index): [string, number] => [id, index]));
+    const ordered = [...mapped].sort((left, right) => {
+      const leftId = left.id ?? left.slug;
+      const rightId = right.id ?? right.slug;
+      const leftIndex = orderMap.get(leftId);
+      const rightIndex = orderMap.get(rightId);
+
+      if (leftIndex !== undefined && rightIndex !== undefined) return leftIndex - rightIndex;
+      if (leftIndex !== undefined) return -1;
+      if (rightIndex !== undefined) return 1;
+      return left.title.localeCompare(right.title);
+    });
+
+    return { data: ordered, source: "supabase" };
   } catch (error) {
     return {
       data: fallbackCollections,

@@ -87,6 +87,43 @@ export type FeaturedMerchandisingRecord = {
   updatedAt: string | null;
 };
 
+export type CollectionMerchandisingRecord = {
+  collectionIds: string[];
+  updatedAt: string | null;
+};
+
+export type HomepageSectionKey =
+  | "hero"
+  | "intro"
+  | "collections"
+  | "featured-products"
+  | "new-arrivals"
+  | "value-props"
+  | "testimonials"
+  | "newsletter";
+
+export type HomepageSectionRecord = {
+  key: HomepageSectionKey;
+  label: string;
+  description: string;
+};
+
+export type HomepageMerchandisingRecord = {
+  sectionOrder: HomepageSectionKey[];
+  updatedAt: string | null;
+};
+
+export const defaultHomepageSections: HomepageSectionRecord[] = [
+  { key: "hero", label: "Hero", description: "Primary brand statement, CTA, and first-fold imagery." },
+  { key: "intro", label: "Welcome intro", description: "Short founder-style introduction to the craft and brand story." },
+  { key: "collections", label: "Collections grid", description: "Merchandising-focused collection cards used for discovery and SEO landings." },
+  { key: "featured-products", label: "Featured products", description: "Bestsellers or campaign products highlighted in the featured lineup." },
+  { key: "new-arrivals", label: "New arrivals", description: "Latest launches and recently published products." },
+  { key: "value-props", label: "Why Sofi Knots", description: "Trust-building feature grid for craft, quality, and delivery." },
+  { key: "testimonials", label: "Testimonials", description: "Customer proof and social trust content." },
+  { key: "newsletter", label: "Newsletter signup", description: "Email capture and retention CTA near the bottom of the homepage." },
+];
+
 export async function getProductImages(productId: string) {
   const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
@@ -300,4 +337,54 @@ export async function getFeaturedProductMerchandising() {
     productIds,
     updatedAt: data?.created_at ?? null,
   } satisfies FeaturedMerchandisingRecord;
+}
+
+export async function getCollectionMerchandising() {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("payload, created_at")
+    .eq("entity_type", "merchandising")
+    .eq("entity_id", "homepage_collections")
+    .eq("action", "collections:reorder")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+
+  const payload = (data?.payload ?? {}) as Record<string, unknown>;
+  const collectionIds = Array.isArray(payload.collectionIds) ? payload.collectionIds.filter((value): value is string => typeof value === "string") : [];
+
+  return {
+    collectionIds,
+    updatedAt: data?.created_at ?? null,
+  } satisfies CollectionMerchandisingRecord;
+}
+
+export async function getHomepageMerchandising() {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("payload, created_at")
+    .eq("entity_type", "merchandising")
+    .eq("entity_id", "homepage_sections")
+    .eq("action", "sections:reorder")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+
+  const payload = (data?.payload ?? {}) as Record<string, unknown>;
+  const sectionOrder = Array.isArray(payload.sectionOrder)
+    ? payload.sectionOrder.filter((value): value is HomepageSectionKey =>
+        typeof value === "string" && defaultHomepageSections.some((section) => section.key === value),
+      )
+    : [];
+
+  return {
+    sectionOrder,
+    updatedAt: data?.created_at ?? null,
+  } satisfies HomepageMerchandisingRecord;
 }

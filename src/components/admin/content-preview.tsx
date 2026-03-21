@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { AlertCircle, Eye } from "lucide-react";
+import { AlertCircle, Eye, Monitor, Smartphone, Tablet } from "lucide-react";
 import { parseVisualBlocks, type VisualContentBlock } from "@/components/admin/visual-block-builder";
 
 type Props = {
@@ -65,6 +66,7 @@ function renderBlock(block: VisualContentBlock, index: number) {
 }
 
 export function ContentPreview({ mode, title, slug, excerpt, bodyText, coverImageUrl, authorName, publishedAt, seoTitle, seoDescription }: Props) {
+  const [viewport, setViewport] = useState<"mobile" | "tablet" | "desktop">("desktop");
   let isInvalidJson = false;
   try {
     JSON.parse(bodyText || "[]");
@@ -72,6 +74,11 @@ export function ContentPreview({ mode, title, slug, excerpt, bodyText, coverImag
     isInvalidJson = true;
   }
   const blocks: VisualContentBlock[] = isInvalidJson ? [] : parseVisualBlocks(bodyText);
+  const viewportClasses = {
+    mobile: "max-w-[390px]",
+    tablet: "max-w-[720px]",
+    desktop: "max-w-none",
+  } as const;
 
   const previewTitle = title || (mode === "page" ? "Untitled page" : "Untitled post");
   const previewSlug = slug ? `/${mode === "page" ? "" : "blog/"}${slug}`.replace("//", "/") : mode === "page" ? "/new-page" : "/blog/new-post";
@@ -94,35 +101,67 @@ export function ContentPreview({ mode, title, slug, excerpt, bodyText, coverImag
       </div>
 
       <div className="rounded-[28px] border border-brand-sand/60 bg-white p-5 shadow-[0_18px_50px_rgba(65,42,17,0.06)]">
-        <div className="border-b border-brand-sand/40 pb-4">
-          <p className="text-xs uppercase tracking-[0.22em] text-brand-taupe">{mode === "page" ? "Landing page" : "Editorial post"}</p>
-          <h3 className="mt-3 font-serif text-3xl text-brand-brown">{previewTitle}</h3>
-          {excerpt ? <p className="mt-3 text-sm leading-7 text-brand-warm">{excerpt}</p> : null}
-          {mode === "post" ? (
-            <div className="mt-3 flex flex-wrap gap-2 text-xs uppercase tracking-[0.16em] text-brand-taupe">
-              {authorName ? <span>{authorName}</span> : null}
-              {publishedAt ? <span>{new Date(publishedAt).toLocaleDateString("en-IN")}</span> : null}
-            </div>
-          ) : null}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-sand/40 pb-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.22em] text-brand-taupe">{mode === "page" ? "Landing page" : "Editorial post"}</p>
+            <h3 className="mt-3 font-serif text-3xl text-brand-brown">{previewTitle}</h3>
+            {excerpt ? <p className="mt-3 text-sm leading-7 text-brand-warm">{excerpt}</p> : null}
+            {mode === "post" ? (
+              <div className="mt-3 flex flex-wrap gap-2 text-xs uppercase tracking-[0.16em] text-brand-taupe">
+                {authorName ? <span>{authorName}</span> : null}
+                {publishedAt ? <span>{new Date(publishedAt).toLocaleDateString("en-IN")}</span> : null}
+              </div>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: "mobile", label: "Mobile", icon: Smartphone },
+              { key: "tablet", label: "Tablet", icon: Tablet },
+              { key: "desktop", label: "Desktop", icon: Monitor },
+            ].map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => setViewport(option.key as typeof viewport)}
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium transition ${
+                  viewport === option.key ? "bg-brand-brown text-white" : "border border-brand-sand/50 bg-[#fcfaf5] text-brand-warm"
+                }`}
+              >
+                <option.icon size={14} />
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {coverImageUrl ? (
-          <img src={coverImageUrl} alt={previewTitle} className="mt-5 aspect-[16/9] w-full rounded-[24px] object-cover" />
-        ) : null}
+        <div className="mt-5 rounded-[28px] bg-[#f7f2e8] p-4">
+          <div className={`mx-auto overflow-hidden rounded-[28px] border border-brand-sand/50 bg-white shadow-[0_18px_40px_rgba(65,42,17,0.08)] ${viewportClasses[viewport]}`}>
+            <div className="flex items-center gap-2 border-b border-brand-sand/40 px-4 py-3">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-300" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
+              <span className="ml-2 text-xs uppercase tracking-[0.16em] text-brand-taupe">{viewport} preview</span>
+            </div>
 
-        <div className="mt-5 space-y-5">
-          {isInvalidJson ? (
-            <div className="flex items-start gap-3 rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
-              <AlertCircle size={18} className="mt-0.5 shrink-0" />
-              <p>The raw JSON is invalid right now, so the live preview cannot render until the content structure is fixed.</p>
+            <div className="p-5">
+              {coverImageUrl ? <img src={coverImageUrl} alt={previewTitle} className="aspect-[16/9] w-full rounded-[24px] object-cover" /> : null}
+
+              <div className="mt-5 space-y-5">
+                {isInvalidJson ? (
+                  <div className="flex items-start gap-3 rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+                    <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                    <p>The raw JSON is invalid right now, so the live preview cannot render until the content structure is fixed.</p>
+                  </div>
+                ) : blocks.length ? (
+                  blocks.map((block, index) => renderBlock(block, index))
+                ) : (
+                  <div className="rounded-[24px] border border-dashed border-brand-sand/50 bg-[#fcfaf5] p-5 text-sm text-brand-warm">
+                    Add some content blocks to preview the finished page layout here.
+                  </div>
+                )}
+              </div>
             </div>
-          ) : blocks.length ? (
-            blocks.map((block, index) => renderBlock(block, index))
-          ) : (
-            <div className="rounded-[24px] border border-dashed border-brand-sand/50 bg-[#fcfaf5] p-5 text-sm text-brand-warm">
-              Add some content blocks to preview the finished page layout here.
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

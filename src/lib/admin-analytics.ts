@@ -1,4 +1,4 @@
-import { getCatalogProducts } from "@/lib/catalog";
+import { getCatalogProducts, getFeaturedProducts } from "@/lib/catalog";
 import { getAuditLogs, getBlogPosts, getPages } from "@/lib/admin-data";
 import { getOrders } from "@/lib/orders";
 
@@ -7,8 +7,9 @@ function formatDayLabel(value: string) {
 }
 
 export async function getAdminAnalytics() {
-  const [catalogResult, orders, pages, posts, auditLogs] = await Promise.all([
+  const [catalogResult, featuredResult, orders, pages, posts, auditLogs] = await Promise.all([
     getCatalogProducts(),
+    getFeaturedProducts(),
     getOrders(),
     getPages(),
     getBlogPosts(),
@@ -61,7 +62,7 @@ export async function getAdminAnalytics() {
     categorySeries,
     paymentSeries,
     contentHealth,
-    featuredProducts: products.filter((product) => product.isFeatured).slice(0, 6),
+    featuredProducts: featuredResult.data.slice(0, 6),
     recentActivity: auditLogs.slice(0, 8),
   };
 }
