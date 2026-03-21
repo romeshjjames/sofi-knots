@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Archive, ImagePlus, Search, Trash2 } from "lucide-react";
+import { Archive, ImagePlus, Save, Search, Trash2 } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 import { ProductGalleryManager } from "@/components/admin/product-gallery-manager";
 import { ProductVariantsManager } from "@/components/admin/product-variants-manager";
@@ -19,6 +19,24 @@ type ProductManagerProps = {
   collections: Option[];
 };
 
+type SavedViewPreset = "all" | "draft" | "active" | "needs-image" | "featured";
+
+type SavedView = {
+  id: string;
+  name: string;
+  query: string;
+  statusFilter: "all" | "active" | "draft" | "archived";
+  presetView: SavedViewPreset;
+};
+
+const presetViews: { value: SavedViewPreset; label: string }[] = [
+  { value: "all", label: "All products" },
+  { value: "draft", label: "Drafts" },
+  { value: "active", label: "Active" },
+  { value: "needs-image", label: "Needs image" },
+  { value: "featured", label: "Featured" },
+];
+
 function getStatusTone(status?: Product["status"]) {
   if (status === "active") return "success";
   if (status === "draft") return "warning";
@@ -32,7 +50,10 @@ export function ProductManager({ products, categories, collections }: ProductMan
   const [message, setMessage] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft" | "archived">("all");
-  const [savedView, setSavedView] = useState<"all" | "draft" | "active" | "needs-image" | "featured">("all");
+  const [savedView, setSavedView] = useState<SavedViewPreset>("all");
+  const [savedViews, setSavedViews] = useState<SavedView[]>([]);
+  const [activeSavedViewId, setActiveSavedViewId] = useState<string | null>(null);
+  const [newSavedViewName, setNewSavedViewName] = useState("");
   const [bulkAction, setBulkAction] = useState("set-status");
   const [isPending, startTransition] = useTransition();
   const [uploadingId, setUploadingId] = useState<string | null>(null);
@@ -42,6 +63,33 @@ export function ProductManager({ products, categories, collections }: ProductMan
       setSelectedId(items[0]?.id ?? "");
     }
   }, [items, selectedId]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadSavedViews() {
+      const response = await fetch("/api/admin/preferences/saved-views?scope=catalog-products");
+      const body = await response.json();
+      if (!response.ok || !active) return;
+
+      const state = body.state as { views?: SavedView[]; activeViewId?: string | null };
+      const nextViews = Array.isArray(state.views) ? state.views : [];
+      setSavedViews(nextViews);
+      setActiveSavedViewId(state.activeViewId ?? null);
+
+      const activeView = nextViews.find((view) => view.id === state.activeViewId);
+      if (activeView) {
+        setQuery(activeView.query);
+        setStatusFilter(activeView.statusFilter);
+        setSavedView(activeView.presetView);
+      }
+    }
+
+    void loadSavedViews();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const visibleItems = items.filter((item) => {
     const matchesQuery =
@@ -64,6 +112,62 @@ export function ProductManager({ products, categories, collections }: ProductMan
   });
 
   const selectedProduct = items.find((item) => item.id === selectedId) ?? visibleItems[0] ?? items[0] ?? null;
+
+  async function persistSavedViews(nextViews: SavedView[], nextActiveViewId: string | null) {
+    const response = await fetch("/api/admin/preferences/saved-views", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        scope: "catalog-products",
+        views: nextViews,
+        activeViewId: nextActiveViewId,
+      }),
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      setMessage(body.error || "Failed to persist saved views.");
+      return false;
+    }
+    setSavedViews(nextViews);
+    setActiveSavedViewId(nextActiveViewId);
+    return true;
+  }
+
+  async function createSavedView() {
+    const name = newSavedViewName.trim();
+    if (!name) {
+      setMessage("Name your view before saving it.");
+      return;
+    }
+
+    const nextView: SavedView = {
+      id: `view_${Date.now()}`,
+      name,
+      query,
+      statusFilter,
+      presetView: savedView,
+    };
+    const ok = await persistSavedViews([...savedViews, nextView], nextView.id);
+    if (!ok) return;
+    setNewSavedViewName("");
+    setMessage(`Saved view "${name}" is now available for this admin account.`);
+  }
+
+  async function deleteSavedView(id: string) {
+    const nextViews = savedViews.filter((view) => view.id !== id);
+    const nextActiveViewId = activeSavedViewId === id ? null : activeSavedViewId;
+    const ok = await persistSavedViews(nextViews, nextActiveViewId);
+    if (!ok) return;
+    setMessage("Saved view removed.");
+  }
+
+  function applySavedView(view: SavedView) {
+    setQuery(view.query);
+    setStatusFilter(view.statusFilter);
+    setSavedView(view.presetView);
+    setActiveSavedViewId(view.id);
+    void persistSavedViews(savedViews, view.id);
+  }
 
   function updateLocal(id: string, field: keyof Product, value: string | number | boolean | string[] | null | undefined) {
     setItems((current) => current.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
@@ -193,22 +297,51 @@ export function ProductManager({ products, categories, collections }: ProductMan
             </button>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            {[
-              ["all", "All products"],
-              ["draft", "Drafts"],
-              ["active", "Active"],
-              ["needs-image", "Needs image"],
-              ["featured", "Featured"],
-            ].map(([value, label]) => (
+            {presetViews.map(({ value, label }) => (
               <button
                 key={value}
                 type="button"
-                onClick={() => setSavedView(value as typeof savedView)}
+                onClick={() => {
+                  setSavedView(value);
+                  setActiveSavedViewId(null);
+                }}
                 className={`rounded-2xl px-3 py-2 ${savedView === value ? "bg-brand-gold text-white" : "bg-white text-brand-warm"}`}
               >
                 {label}
               </button>
             ))}
+          </div>
+          <div className="grid gap-2 rounded-2xl border border-brand-sand/40 bg-white p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-[0.16em] text-brand-taupe">Saved views</p>
+              {activeSavedViewId ? <AdminBadge tone="info">Active</AdminBadge> : null}
+            </div>
+            <div className="grid gap-2 md:grid-cols-[1fr_auto]">
+              <input className="brand-input" value={newSavedViewName} onChange={(event) => setNewSavedViewName(event.target.value)} placeholder="Save current filters as..." />
+              <button type="button" className="brand-btn-outline justify-center px-4 py-2" onClick={() => void createSavedView()}>
+                <Save size={15} />
+                Save view
+              </button>
+            </div>
+            <div className="space-y-2">
+              {savedViews.length ? (
+                savedViews.map((view) => (
+                  <div key={view.id} className="flex items-center justify-between gap-3 rounded-2xl bg-[#fcfaf5] px-3 py-2">
+                    <button type="button" className="text-left text-sm text-brand-brown" onClick={() => applySavedView(view)}>
+                      <div className="font-medium">{view.name}</div>
+                      <div className="text-xs text-brand-taupe">
+                        {view.statusFilter} | {view.presetView} | {view.query || "no query"}
+                      </div>
+                    </button>
+                    <button type="button" className="text-xs font-medium text-rose-700" onClick={() => void deleteSavedView(view.id)}>
+                      Delete
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-brand-warm">No custom saved views yet. Saved views persist per admin user.</p>
+              )}
+            </div>
           </div>
           <div className="grid gap-2">
             <select className="brand-input" value={bulkAction} onChange={(event) => setBulkAction(event.target.value)}>

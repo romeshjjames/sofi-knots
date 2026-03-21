@@ -113,6 +113,20 @@ export type HomepageMerchandisingRecord = {
   updatedAt: string | null;
 };
 
+export type SavedViewRecord = {
+  id: string;
+  name: string;
+  query: string;
+  statusFilter: "all" | "active" | "draft" | "archived";
+  presetView: "all" | "draft" | "active" | "needs-image" | "featured";
+};
+
+export type SavedViewsState = {
+  views: SavedViewRecord[];
+  activeViewId: string | null;
+  updatedAt: string | null;
+};
+
 export const defaultHomepageSections: HomepageSectionRecord[] = [
   { key: "hero", label: "Hero", description: "Primary brand statement, CTA, and first-fold imagery." },
   { key: "intro", label: "Welcome intro", description: "Short founder-style introduction to the craft and brand story." },
@@ -387,4 +401,52 @@ export async function getHomepageMerchandising() {
     sectionOrder,
     updatedAt: data?.created_at ?? null,
   } satisfies HomepageMerchandisingRecord;
+}
+
+export async function getSavedViews(userId: string, scope: string) {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("payload, created_at")
+    .eq("entity_type", "admin_preferences")
+    .eq("entity_id", `${userId}:${scope}`)
+    .eq("action", "saved_views:update")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+
+  const payload = (data?.payload ?? {}) as Record<string, unknown>;
+  const views = Array.isArray(payload.views)
+    ? payload.views
+        .map((value) => {
+          if (!value || typeof value !== "object") return null;
+          const entry = value as Record<string, unknown>;
+          if (typeof entry.id !== "string" || typeof entry.name !== "string") return null;
+          return {
+            id: entry.id,
+            name: entry.name,
+            query: typeof entry.query === "string" ? entry.query : "",
+            statusFilter:
+              entry.statusFilter === "active" || entry.statusFilter === "draft" || entry.statusFilter === "archived"
+                ? entry.statusFilter
+                : "all",
+            presetView:
+              entry.presetView === "draft" ||
+              entry.presetView === "active" ||
+              entry.presetView === "needs-image" ||
+              entry.presetView === "featured"
+                ? entry.presetView
+                : "all",
+          } satisfies SavedViewRecord;
+        })
+        .filter((value): value is SavedViewRecord => Boolean(value))
+    : [];
+
+  return {
+    views,
+    activeViewId: typeof payload.activeViewId === "string" ? payload.activeViewId : null,
+    updatedAt: data?.created_at ?? null,
+  } satisfies SavedViewsState;
 }

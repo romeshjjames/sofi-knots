@@ -172,7 +172,10 @@ export function ContentStudio({ pages, posts }: Props) {
         ) : null}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-brand-brown">Visual content blocks</p>
+            <div>
+              <p className="text-sm font-medium text-brand-brown">Visual section composer</p>
+              <p className="text-xs text-brand-taupe">Build pages from reusable visual sections. Raw JSON is now only for advanced fallback editing.</p>
+            </div>
             <button type="button" className="brand-btn-outline px-4 py-2" onClick={() => setAdvancedMode((current) => !current)}>
               {advancedMode ? "Hide raw JSON" : "Show raw JSON"}
             </button>
