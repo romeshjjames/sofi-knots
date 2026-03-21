@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { getAnalyticsSessionId, getStoredAttribution, trackAnalyticsEvent } from "@/lib/analytics";
+import { getAnalyticsSessionId, getStoredAttribution, hasAnalyticsConsent, trackAnalyticsEvent } from "@/lib/analytics";
 import type { Product } from "@/types/commerce";
 
 declare global {
@@ -118,10 +118,12 @@ export function CartCheckout({ products, razorpayKeyId }: CartCheckoutProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          analytics: {
-            sessionId: getAnalyticsSessionId(),
-            attribution: getStoredAttribution(),
-          },
+          analytics: hasAnalyticsConsent()
+            ? {
+                sessionId: getAnalyticsSessionId(),
+                attribution: getStoredAttribution(),
+              }
+            : null,
           customer: {
             fullName: customer.fullName,
             email: customer.email,

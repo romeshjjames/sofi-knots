@@ -115,10 +115,12 @@ export default async function AdminDashboardPage() {
           rangeSnapshots={analytics.rangeSnapshots}
           defaultRange={analytics.defaultRange}
           categorySeries={analytics.categorySeries}
-          cohortSeries={analytics.cohortSeries}
           featuredProducts={analytics.featuredProducts}
           recentActivity={analytics.recentActivity}
           contentHealth={analytics.contentHealth}
+          rawOrders={analytics.rawOrders}
+          rawEvents={analytics.rawEvents}
+          rawOrderItems={analytics.rawOrderItems}
         />
       </div>
     </AdminShell>

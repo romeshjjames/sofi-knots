@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Cormorant_Garamond, Jost } from "next/font/google";
+import { AnalyticsConsentBanner } from "@/components/analytics/analytics-consent-banner";
 import { AnalyticsTracker } from "@/components/analytics/analytics-tracker";
 import "./globals.css";
 import { buildMetadata } from "@/lib/seo";
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <AnalyticsTracker />
         </Suspense>
         {children}
+        <AnalyticsConsentBanner />
       </body>
     </html>
   );

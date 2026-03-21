@@ -6,9 +6,10 @@ type Props = {
   productId: string;
   productSlug: string;
   productName: string;
+  category: string;
 };
 
-export function ProductActionButtons({ productId, productSlug, productName }: Props) {
+export function ProductActionButtons({ productId, productSlug, productName, category }: Props) {
   return (
     <div className="flex flex-wrap gap-3">
       <button
@@ -23,6 +24,7 @@ export function ProductActionButtons({ productId, productSlug, productName }: Pr
               productSlug,
               productName,
               source: "product_detail",
+              category,
             },
           })
         }
@@ -41,6 +43,7 @@ export function ProductActionButtons({ productId, productSlug, productName }: Pr
               productSlug,
               productName,
               source: "product_detail",
+              category,
             },
           })
         }

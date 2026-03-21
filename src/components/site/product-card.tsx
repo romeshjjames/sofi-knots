@@ -29,6 +29,7 @@ export function ProductCard({ product, index = 0 }: Props) {
               productSlug: product.slug,
               productName: product.name,
               source: "product_card_media",
+              category: product.category,
             },
           })
         }
@@ -68,6 +69,7 @@ export function ProductCard({ product, index = 0 }: Props) {
                       productSlug: product.slug,
                       productName: product.name,
                       source: "product_card_quick_action",
+                      category: product.category,
                     },
                   })
                 }
@@ -91,6 +93,7 @@ export function ProductCard({ product, index = 0 }: Props) {
                 productSlug: product.slug,
                 productName: product.name,
                 source: "product_card_title",
+                category: product.category,
               },
             })
           }

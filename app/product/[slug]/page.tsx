@@ -77,7 +77,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
               ) : null}
             </div>
             <p className="mb-8 text-sm leading-relaxed text-brand-warm">{product.description}</p>
-            <ProductActionButtons productId={product.id} productSlug={product.slug} productName={product.name} />
+            <ProductActionButtons productId={product.id} productSlug={product.slug} productName={product.name} category={product.category} />
             <div className="mt-8 rounded-sm bg-brand-cream p-6">
               <p className="brand-label mb-2">SEO Focus</p>
               <p className="text-sm leading-relaxed text-brand-warm">

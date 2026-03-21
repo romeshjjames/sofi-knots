@@ -13,6 +13,26 @@ function formatMonthLabel(value: string) {
 
 type AnalyticsRangeKey = "7d" | "30d" | "90d" | "all";
 
+type AnalyticsEventRow = {
+  id: string;
+  action: string;
+  entity_id: string;
+  payload: Record<string, unknown> | null;
+  created_at: string;
+};
+
+type OrderItemAnalyticsRow = {
+  product_id: string | null;
+  product_name: string;
+  sku: string | null;
+  quantity: number;
+  line_total_inr: number;
+  orders: {
+    created_at: string;
+    payment_status: string;
+  }[] | null;
+};
+
 const analyticsRanges: { key: AnalyticsRangeKey; label: string; days: number | null }[] = [
   { key: "7d", label: "Last 7 days", days: 7 },
   { key: "30d", label: "Last 30 days", days: 30 },
@@ -22,7 +42,7 @@ const analyticsRanges: { key: AnalyticsRangeKey; label: string; days: number | n
 
 export async function getAdminAnalytics() {
   const supabase = createAdminSupabaseClient();
-  const [catalogResult, featuredResult, orders, pages, posts, auditLogs, analyticsEventsResult] = await Promise.all([
+  const [catalogResult, featuredResult, orders, pages, posts, auditLogs, analyticsEventsResult, orderItemsResult] = await Promise.all([
     getCatalogProducts(),
     getFeaturedProducts(),
     getOrders(),
@@ -35,17 +55,17 @@ export async function getAdminAnalytics() {
       .eq("entity_type", "analytics_event")
       .order("created_at", { ascending: false })
       .limit(1000),
+    supabase
+      .from("order_items")
+      .select("product_id, product_name, sku, quantity, line_total_inr, orders(created_at, payment_status)")
+      .limit(2000),
   ]);
-  const analyticsEvents = (analyticsEventsResult.data ?? []) as {
-    id: string;
-    action: string;
-    entity_id: string;
-    payload: Record<string, unknown> | null;
-    created_at: string;
-  }[];
+  const analyticsEvents = (analyticsEventsResult.data ?? []) as AnalyticsEventRow[];
+  const orderItems = (orderItemsResult.data ?? []) as OrderItemAnalyticsRow[];
 
   const products = catalogResult.data;
   const categoryMap = new Map<string, number>();
+  const productLookup = new Map(products.map((product) => [product.id, product]));
 
   for (const product of products) {
     categoryMap.set(product.category, (categoryMap.get(product.category) ?? 0) + 1);
@@ -302,6 +322,44 @@ export async function getAdminAnalytics() {
       revenueInr: cohort.revenueInr,
     }));
 
+  const rawOrders = orders.map((order) => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+    createdAt: order.createdAt,
+    totalInr: order.totalInr,
+    paymentStatus: order.paymentStatus,
+    fulfillmentStatus: order.fulfillmentStatus,
+    status: order.status,
+    razorpayOrderId: order.razorpayOrderId ?? null,
+    customerEmail: order.customerEmail,
+  }));
+
+  const rawEvents = analyticsEvents.map((event) => ({
+    id: event.id,
+    action: event.action,
+    sessionId: event.entity_id,
+    createdAt: event.created_at,
+    path: typeof event.payload?.path === "string" ? event.payload.path : null,
+    attribution: ((event.payload?.attribution ?? null) as Record<string, unknown> | null),
+    metadata: ((event.payload?.metadata ?? {}) as Record<string, unknown>),
+    payload: (event.payload ?? {}) as Record<string, unknown>,
+  }));
+
+  const rawOrderItems = orderItems.map((item) => {
+    const product = item.product_id ? productLookup.get(item.product_id) : undefined;
+    const order = item.orders?.[0];
+    return {
+      productId: item.product_id,
+      productName: item.product_name,
+      sku: item.sku,
+      category: product?.category ?? "Uncategorized",
+      quantity: item.quantity,
+      lineTotalInr: item.line_total_inr,
+      createdAt: order?.created_at ?? null,
+      paymentStatus: order?.payment_status ?? "pending",
+    };
+  });
+
   return {
     categorySeries,
     rangeSnapshots,
@@ -310,5 +368,8 @@ export async function getAdminAnalytics() {
     contentHealth,
     featuredProducts: featuredResult.data.slice(0, 6),
     recentActivity: auditLogs.slice(0, 8),
+    rawOrders,
+    rawEvents,
+    rawOrderItems,
   };
 }
