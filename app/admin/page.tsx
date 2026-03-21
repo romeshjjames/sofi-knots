@@ -112,9 +112,10 @@ export default async function AdminDashboardPage() {
 
       <div className="mt-6">
         <AnalyticsDashboard
-          revenueSeries={analytics.revenueSeries}
+          rangeSnapshots={analytics.rangeSnapshots}
+          defaultRange={analytics.defaultRange}
           categorySeries={analytics.categorySeries}
-          paymentSeries={analytics.paymentSeries}
+          cohortSeries={analytics.cohortSeries}
           featuredProducts={analytics.featuredProducts}
           recentActivity={analytics.recentActivity}
           contentHealth={analytics.contentHealth}
