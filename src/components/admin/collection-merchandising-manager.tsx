@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { GripVertical, Layers3 } from "lucide-react";
+import { GripVertical, ImagePlus, Layers3, Save } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 
 type CollectionItem = {
@@ -9,6 +9,7 @@ type CollectionItem = {
   title: string;
   slug: string;
   description: string;
+  imageUrl?: string | null;
 };
 
 type Props = {
@@ -38,6 +39,7 @@ export function CollectionMerchandisingManager({ collections, initialCollectionI
   const [message, setMessage] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(updatedAt);
   const [isPending, startTransition] = useTransition();
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   const initialOrder = useMemo(() => orderCollections(collections, initialCollectionIds), [collections, initialCollectionIds]);
 
@@ -61,6 +63,48 @@ export function CollectionMerchandisingManager({ collections, initialCollectionI
       next.splice(toIndex, 0, moved);
       return next;
     });
+  }
+
+  async function saveCollectionImage(itemId: string) {
+    const collection = orderedCollections.find((entry) => (entry.id ?? entry.slug) === itemId);
+    if (!collection || !collection.id) return;
+
+    const response = await fetch(`/api/admin/collections/${collection.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: collection.title,
+        slug: collection.slug,
+        description: collection.description,
+        imageUrl: collection.imageUrl || null,
+      }),
+    });
+    const body = await response.json();
+    setMessage(response.ok ? `${collection.title} updated.` : body.error || "Failed to update collection.");
+  }
+
+  async function uploadCollectionImage(itemId: string, file: File) {
+    setUploadingId(itemId);
+    setMessage(null);
+    const payload = new FormData();
+    payload.append("file", file);
+    payload.append("folder", "collections");
+    const response = await fetch("/api/admin/storage/upload", {
+      method: "POST",
+      body: payload,
+    });
+    const body = await response.json();
+    setUploadingId(null);
+
+    if (!response.ok) {
+      setMessage(body.error || "Collection image upload failed.");
+      return;
+    }
+
+    setOrderedCollections((current) =>
+      current.map((collection) => ((collection.id ?? collection.slug) === itemId ? { ...collection, imageUrl: body.publicUrl } : collection)),
+    );
+    setMessage("Collection image uploaded. Save card changes to persist it.");
   }
 
   async function saveOrder() {
@@ -131,6 +175,47 @@ export function CollectionMerchandisingManager({ collections, initialCollectionI
                   <AdminBadge tone="default">{collection.slug}</AdminBadge>
                 </div>
                 <p className="mt-1 text-sm text-brand-warm">{collection.description}</p>
+                <div className="mt-4 grid gap-4 lg:grid-cols-[120px_minmax(0,1fr)_auto]">
+                  <div className="overflow-hidden rounded-2xl border border-brand-sand/40 bg-[#fcfaf5]">
+                    {collection.imageUrl ? (
+                      <img src={collection.imageUrl} alt={collection.title} className="h-24 w-full object-cover" />
+                    ) : (
+                      <div className="flex h-24 items-center justify-center text-xs uppercase tracking-[0.16em] text-brand-taupe">No image</div>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    <input
+                      className="brand-input"
+                      value={collection.imageUrl ?? ""}
+                      placeholder="Collection image URL"
+                      onChange={(event) =>
+                        setOrderedCollections((current) =>
+                          current.map((entry) => ((entry.id ?? entry.slug) === itemId ? { ...entry, imageUrl: event.target.value } : entry)),
+                        )
+                      }
+                    />
+                    <p className="text-xs text-brand-taupe">Upload or paste the image used for collection cards across the storefront.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 lg:flex-col">
+                    <label className="brand-btn-outline cursor-pointer justify-center px-4 py-2">
+                      <ImagePlus size={15} />
+                      {uploadingId === itemId ? "Uploading..." : "Upload image"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (file) void uploadCollectionImage(itemId, file);
+                        }}
+                      />
+                    </label>
+                    <button type="button" className="brand-btn-outline justify-center px-4 py-2" onClick={() => void saveCollectionImage(itemId)}>
+                      <Save size={15} />
+                      Save card
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           );

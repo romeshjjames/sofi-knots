@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { FileText, LayoutTemplate, Newspaper, Sparkles } from "lucide-react";
 import { ContentPreview } from "@/components/admin/content-preview";
 import type { BlogPostRecord, PageRecord } from "@/lib/admin-data";
-import { normalizeVisualBlocks, VisualBlockBuilder } from "@/components/admin/visual-block-builder";
+import { VisualBlockBuilder } from "@/components/admin/visual-block-builder";
+import { normalizeVisualBlocks } from "@/lib/cms-blocks";
 
 type Props = {
   pages: PageRecord[];

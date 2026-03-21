@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { Footer } from "@/components/site/footer";
 import { Navbar } from "@/components/site/navbar";
-import { getCatalogBlogPosts } from "@/lib/catalog";
+import { getCatalogBlogPostBySlug } from "@/lib/catalog";
 import { buildMetadata } from "@/lib/seo";
 
 async function getPostBySlug(slug: string) {
-  const result = await getCatalogBlogPosts();
-  return result.data.find((post) => post.slug === slug);
+  const result = await getCatalogBlogPostBySlug(slug);
+  return result.data;
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
@@ -43,14 +44,14 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
         <div className="brand-container max-w-3xl">
           <p className="brand-label mb-4">{post.category}</p>
           <h1 className="brand-heading mb-4">{post.title}</h1>
-          <p className="mb-8 text-sm text-brand-taupe">
-            {post.publishedAt} · {post.readTime}
+          <p className="mb-4 text-sm text-brand-taupe">
+            {post.publishedAt} | {post.readTime}
           </p>
+          {post.authorName ? <p className="mb-6 text-sm uppercase tracking-[0.16em] text-brand-gold">By {post.authorName}</p> : null}
+          {post.coverImageUrl ? <img src={post.coverImageUrl} alt={post.title} className="mb-8 w-full rounded-[28px] object-cover" /> : null}
           <div className="space-y-6 text-base leading-relaxed text-brand-warm">
             <p>{post.excerpt}</p>
-            <p>
-              This article route is ready for CMS-backed blog content. The next step is replacing this placeholder body with rich text from Supabase while preserving unique metadata and internal linking.
-            </p>
+            <CmsPageRenderer bodyText={JSON.stringify(post.body ?? [], null, 2)} />
           </div>
         </div>
       </article>

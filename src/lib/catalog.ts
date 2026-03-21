@@ -10,7 +10,7 @@ import productBag from "@/assets/product-bag.jpeg";
 import productPillow from "@/assets/product-pillow.jpeg";
 import { getCollectionMerchandising, getFeaturedProductMerchandising } from "@/lib/admin-data";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import type { BlogPost, Collection, Product } from "@/types/commerce";
+import type { BlogPost, CmsPage, Collection, Product } from "@/types/commerce";
 
 type CatalogResult<T> = {
   data: T;
@@ -58,6 +58,35 @@ type CollectionRow = {
   seo_title: string | null;
   seo_description: string | null;
   seo_keywords: string[] | null;
+};
+
+type PageRow = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  body: unknown;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_keywords: string[] | null;
+  canonical_url: string | null;
+  status: "draft" | "published";
+};
+
+type BlogPostRow = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  body: unknown;
+  cover_image_url: string | null;
+  author_name: string | null;
+  published_at: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_keywords: string[] | null;
+  canonical_url: string | null;
+  status: "draft" | "published";
 };
 
 function mapProductRow(row: ProductRow): Product | null {
@@ -134,6 +163,44 @@ function mapCollectionRow(row: CollectionRow): Collection | null {
     seoTitle: row.seo_title ?? fallbackLike.seoTitle,
     seoDescription: row.seo_description ?? fallbackLike.seoDescription,
     seoKeywords: row.seo_keywords?.length ? row.seo_keywords : fallbackLike.seoKeywords,
+  };
+}
+
+function estimateReadTime(body: unknown, excerpt: string | null) {
+  const text = typeof excerpt === "string" ? excerpt : JSON.stringify(body ?? []);
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+  return `${Math.max(3, Math.ceil(wordCount / 180))} min read`;
+}
+
+function mapBlogPostRow(row: BlogPostRow): BlogPost {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt ?? "",
+    publishedAt: row.published_at ? row.published_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
+    authorName: row.author_name,
+    coverImageUrl: row.cover_image_url,
+    body: row.body,
+    readTime: estimateReadTime(row.body, row.excerpt),
+    category: "Editorial",
+    seoTitle: row.seo_title ?? row.title,
+    seoDescription: row.seo_description ?? row.excerpt ?? `Read ${row.title} from Sofi Knots.`,
+    seoKeywords: row.seo_keywords?.length ? row.seo_keywords : ["sofi knots blog"],
+  };
+}
+
+function mapPageRow(row: PageRow): CmsPage {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt ?? "",
+    body: row.body ?? [],
+    canonicalUrl: row.canonical_url,
+    seoTitle: row.seo_title ?? row.title,
+    seoDescription: row.seo_description ?? row.excerpt ?? `Read ${row.title} on Sofi Knots.`,
+    seoKeywords: row.seo_keywords?.length ? row.seo_keywords : ["sofi knots"],
   };
 }
 
@@ -368,5 +435,79 @@ export async function getCatalogCategories(): Promise<CatalogResult<Category[]>>
 }
 
 export async function getCatalogBlogPosts(): Promise<CatalogResult<BlogPost[]>> {
-  return { data: fallbackBlogPosts, source: "fallback", error: "Blog is still using starter content until CMS tables are populated." };
+  try {
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase
+      .from("blog_posts")
+      .select("id, slug, title, excerpt, body, cover_image_url, author_name, published_at, seo_title, seo_description, seo_keywords, canonical_url, status")
+      .eq("status", "published")
+      .order("published_at", { ascending: false, nullsFirst: false });
+
+    if (error) {
+      return { data: fallbackBlogPosts, source: "fallback", error: error.message };
+    }
+
+    const mapped = (data as BlogPostRow[]).map(mapBlogPostRow);
+    if (!mapped.length) {
+      return { data: fallbackBlogPosts, source: "fallback", error: "Blog is still using starter content until CMS tables are populated." };
+    }
+
+    return { data: mapped, source: "supabase" };
+  } catch (error) {
+    return {
+      data: fallbackBlogPosts,
+      source: "fallback",
+      error: error instanceof Error ? error.message : "Unknown blog error",
+    };
+  }
+}
+
+export async function getCatalogBlogPostBySlug(slug: string): Promise<CatalogResult<BlogPost | null>> {
+  try {
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase
+      .from("blog_posts")
+      .select("id, slug, title, excerpt, body, cover_image_url, author_name, published_at, seo_title, seo_description, seo_keywords, canonical_url, status")
+      .eq("slug", slug)
+      .eq("status", "published")
+      .maybeSingle();
+
+    if (error || !data) {
+      const fallback = fallbackBlogPosts.find((post) => post.slug === slug) ?? null;
+      return { data: fallback, source: "fallback", error: error?.message ?? "Blog post not found in Supabase" };
+    }
+
+    return { data: mapBlogPostRow(data as BlogPostRow), source: "supabase" };
+  } catch (error) {
+    const fallback = fallbackBlogPosts.find((post) => post.slug === slug) ?? null;
+    return {
+      data: fallback,
+      source: "fallback",
+      error: error instanceof Error ? error.message : "Unknown blog post error",
+    };
+  }
+}
+
+export async function getCatalogPageBySlug(slug: string): Promise<CatalogResult<CmsPage | null>> {
+  try {
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase
+      .from("pages")
+      .select("id, slug, title, excerpt, body, seo_title, seo_description, seo_keywords, canonical_url, status")
+      .eq("slug", slug)
+      .eq("status", "published")
+      .maybeSingle();
+
+    if (error || !data) {
+      return { data: null, source: "fallback", error: error?.message ?? "Page not found in Supabase" };
+    }
+
+    return { data: mapPageRow(data as PageRow), source: "supabase" };
+  } catch (error) {
+    return {
+      data: null,
+      source: "fallback",
+      error: error instanceof Error ? error.message : "Unknown page lookup error",
+    };
+  }
 }

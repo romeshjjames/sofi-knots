@@ -86,7 +86,13 @@ export default async function AdminProductsPage() {
           description="Control the order of collection cards across the homepage and collections landing page with drag-and-drop persistence."
         >
           <CollectionMerchandisingManager
-            collections={collectionsResult.data}
+            collections={collectionsResult.data.map((item) => ({
+              id: item.id,
+              title: item.title,
+              slug: item.slug,
+              description: item.description,
+              imageUrl: item.imageUrl,
+            }))}
             initialCollectionIds={collectionMerchandising.collectionIds}
             updatedAt={collectionMerchandising.updatedAt}
           />

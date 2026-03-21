@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, Eye, Monitor, Search, Smartphone, Tablet } from "lucide-react";
-import { groupVisualSections, type VisualContentBlock, type VisualSectionLayout, type VisualSectionSpacing, type VisualSectionTheme } from "@/components/admin/visual-block-builder";
+import { groupVisualSections, type VisualContentBlock, type VisualSectionLayout, type VisualSectionSpacing, type VisualSectionTheme } from "@/lib/cms-blocks";
 
 type Props = {
   mode: "page" | "post";

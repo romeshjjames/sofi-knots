@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type AdminNavKey = "dashboard" | "products" | "orders" | "seo" | "content" | "settings";
+type AdminNavKey = "dashboard" | "products" | "orders" | "merchandising" | "seo" | "content" | "settings";
 
 type AdminStat = {
   label: string;
@@ -35,6 +35,7 @@ const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof Ho
   { key: "dashboard", label: "Overview", href: "/admin", icon: LayoutDashboard },
   { key: "products", label: "Catalog", href: "/admin/products", icon: Package },
   { key: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingCart },
+  { key: "merchandising", label: "Merchandising", href: "/admin/merchandising", icon: Home },
   { key: "seo", label: "SEO", href: "/admin/seo", icon: Sparkles },
   { key: "content", label: "Content", href: "/admin/content", icon: FileText },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings2 },

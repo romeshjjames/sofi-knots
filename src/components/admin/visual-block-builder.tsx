@@ -2,25 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Copy, ImageIcon, LayoutTemplate, Palette, Plus, Quote, Sparkles, Trash2 } from "lucide-react";
-
-export type VisualSectionTheme = "paper" | "sand" | "forest" | "ink";
-export type VisualSectionLayout = "stacked" | "split" | "banner";
-export type VisualSectionSpacing = "compact" | "airy";
-
-type VisualSectionMeta = {
-  sectionId?: string;
-  sectionLabel?: string;
-  sectionTheme?: VisualSectionTheme;
-  sectionLayout?: VisualSectionLayout;
-  sectionSpacing?: VisualSectionSpacing;
-};
-
-export type VisualContentBlock =
-  | ({ type: "heading"; content: string; level?: "h2" | "h3" } & VisualSectionMeta)
-  | ({ type: "paragraph"; content: string } & VisualSectionMeta)
-  | ({ type: "image"; url: string; alt?: string; caption?: string } & VisualSectionMeta)
-  | ({ type: "quote"; quote: string; cite?: string } & VisualSectionMeta)
-  | ({ type: "cta"; label: string; href: string; style?: "primary" | "secondary" } & VisualSectionMeta);
+import {
+  buildSectionBlock,
+  createSectionId,
+  defaultSectionMeta,
+  groupVisualSections,
+  normalizeVisualBlocks,
+  type VisualContentBlock,
+  type VisualSection,
+  type VisualSectionLayout,
+  type VisualSectionSpacing,
+  type VisualSectionTheme,
+} from "@/lib/cms-blocks";
 
 const blockTemplates: Record<string, VisualContentBlock> = {
   heading: { type: "heading", content: "New heading", level: "h2" },
@@ -109,90 +102,6 @@ const sectionTemplates: {
   },
 ];
 
-type VisualSection = {
-  id: string;
-  label: string;
-  theme: VisualSectionTheme;
-  layout: VisualSectionLayout;
-  spacing: VisualSectionSpacing;
-  blocks: VisualContentBlock[];
-};
-
-const defaultSectionMeta = {
-  theme: "paper",
-  layout: "stacked",
-  spacing: "airy",
-} satisfies Pick<VisualSection, "theme" | "layout" | "spacing">;
-
-function createSectionId() {
-  return `section_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function buildSectionBlock(block: VisualContentBlock, section: Omit<VisualSection, "blocks">): VisualContentBlock {
-  return {
-    ...block,
-    sectionId: section.id,
-    sectionLabel: section.label,
-    sectionTheme: section.theme,
-    sectionLayout: section.layout,
-    sectionSpacing: section.spacing,
-  };
-}
-
-export function normalizeVisualBlocks(bodyText: string): VisualContentBlock[] {
-  const parsed = parseVisualBlocks(bodyText);
-  let fallbackIndex = 1;
-
-  return parsed.map((block) => {
-    const sectionId = block.sectionId ?? `legacy_section_${fallbackIndex}`;
-    const normalized = {
-      ...block,
-      sectionId,
-      sectionLabel: block.sectionLabel ?? `Section ${fallbackIndex}`,
-      sectionTheme: block.sectionTheme ?? defaultSectionMeta.theme,
-      sectionLayout: block.sectionLayout ?? defaultSectionMeta.layout,
-      sectionSpacing: block.sectionSpacing ?? defaultSectionMeta.spacing,
-    } satisfies VisualContentBlock;
-
-    if (!block.sectionId) fallbackIndex += 1;
-    return normalized;
-  });
-}
-
-export function groupVisualSections(bodyText: string): VisualSection[] {
-  const normalized = normalizeVisualBlocks(bodyText);
-  const sections: VisualSection[] = [];
-
-  normalized.forEach((block) => {
-    const sectionId = block.sectionId ?? createSectionId();
-    const existing = sections.find((section) => section.id === sectionId);
-    if (existing) {
-      existing.blocks.push(block);
-      return;
-    }
-
-    sections.push({
-      id: sectionId,
-      label: block.sectionLabel ?? "Untitled section",
-      theme: block.sectionTheme ?? defaultSectionMeta.theme,
-      layout: block.sectionLayout ?? defaultSectionMeta.layout,
-      spacing: block.sectionSpacing ?? defaultSectionMeta.spacing,
-      blocks: [block],
-    });
-  });
-
-  return sections;
-}
-
-export function parseVisualBlocks(bodyText: string): VisualContentBlock[] {
-  try {
-    const parsed = JSON.parse(bodyText || "[]");
-    return Array.isArray(parsed) ? (parsed as VisualContentBlock[]) : [];
-  } catch {
-    return [];
-  }
-}
-
 export function VisualBlockBuilder({ bodyText, onChange }: { bodyText: string; onChange: (next: string) => void }) {
   const [blocks, setBlocks] = useState<VisualContentBlock[]>(() => normalizeVisualBlocks(bodyText));
 
@@ -201,22 +110,7 @@ export function VisualBlockBuilder({ bodyText, onChange }: { bodyText: string; o
   }, [bodyText]);
 
   const sections = useMemo(() => {
-    const grouped = new Map<string, VisualSection>();
-    blocks.forEach((block) => {
-      const sectionId = block.sectionId ?? createSectionId();
-      if (!grouped.has(sectionId)) {
-        grouped.set(sectionId, {
-          id: sectionId,
-          label: block.sectionLabel ?? "Untitled section",
-          theme: block.sectionTheme ?? defaultSectionMeta.theme,
-          layout: block.sectionLayout ?? defaultSectionMeta.layout,
-          spacing: block.sectionSpacing ?? defaultSectionMeta.spacing,
-          blocks: [],
-        });
-      }
-      grouped.get(sectionId)?.blocks.push(block);
-    });
-    return Array.from(grouped.values());
+    return groupVisualSections(JSON.stringify(blocks));
   }, [blocks]);
 
   function commit(nextBlocks: VisualContentBlock[]) {

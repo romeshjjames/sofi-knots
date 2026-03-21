@@ -29,16 +29,19 @@ export default async function BlogPage() {
       <section className="brand-section">
         <div className="brand-container grid gap-6 lg:grid-cols-3">
           {result.data.map((post) => (
-            <article key={post.slug} className="rounded-sm bg-brand-cream p-8">
-              <p className="brand-label mb-3">{post.category}</p>
-              <h2 className="mb-3 font-serif text-3xl text-brand-brown">{post.title}</h2>
-              <p className="mb-4 text-sm text-brand-taupe">
-                {post.publishedAt} · {post.readTime}
-              </p>
-              <p className="mb-6 text-sm leading-relaxed text-brand-warm">{post.excerpt}</p>
-              <Link href={`/blog/${post.slug}`} className="text-sm font-medium text-brand-gold">
-                Read article
-              </Link>
+            <article key={post.slug} className="overflow-hidden rounded-[28px] bg-brand-cream">
+              {post.coverImageUrl ? <img src={post.coverImageUrl} alt={post.title} className="aspect-[16/10] w-full object-cover" /> : null}
+              <div className="p-8">
+                <p className="brand-label mb-3">{post.category}</p>
+                <h2 className="mb-3 font-serif text-3xl text-brand-brown">{post.title}</h2>
+                <p className="mb-4 text-sm text-brand-taupe">
+                  {post.publishedAt} | {post.readTime}
+                </p>
+                <p className="mb-6 text-sm leading-relaxed text-brand-warm">{post.excerpt}</p>
+                <Link href={`/blog/${post.slug}`} className="text-sm font-medium text-brand-gold">
+                  Read article
+                </Link>
+              </div>
             </article>
           ))}
         </div>

@@ -39,10 +39,23 @@ export type Collection = SeoEntity & {
 };
 
 export type BlogPost = SeoEntity & {
+  id?: string;
   slug: string;
   title: string;
   excerpt: string;
   publishedAt: string;
+  authorName?: string | null;
+  coverImageUrl?: string | null;
+  body?: unknown;
   readTime: string;
   category: string;
+};
+
+export type CmsPage = SeoEntity & {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: unknown;
+  canonicalUrl?: string | null;
 };

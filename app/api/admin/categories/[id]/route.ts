@@ -12,17 +12,20 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
   try {
     const supabase = createAdminSupabaseClient();
+    const updates: Record<string, unknown> = {
+      name: body.name,
+      slug: body.slug,
+      description: body.description || null,
+      seo_title: body.seoTitle || body.name,
+      seo_description: body.seoDescription || body.description || null,
+      seo_keywords: Array.isArray(body.seoKeywords) ? body.seoKeywords : [],
+    };
+    if (typeof body.sortOrder === "number") {
+      updates.sort_order = body.sortOrder;
+    }
     const { data, error } = await supabase
       .from("categories")
-      .update({
-        name: body.name,
-        slug: body.slug,
-        description: body.description || null,
-        seo_title: body.seoTitle || body.name,
-        seo_description: body.seoDescription || body.description || null,
-        seo_keywords: Array.isArray(body.seoKeywords) ? body.seoKeywords : [],
-        sort_order: typeof body.sortOrder === "number" ? body.sortOrder : 0,
-      })
+      .update(updates)
       .eq("id", params.id)
       .select("id, name, slug")
       .single();
