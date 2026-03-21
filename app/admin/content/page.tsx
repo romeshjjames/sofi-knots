@@ -19,6 +19,26 @@ export default async function AdminContentPage() {
         { label: "Blog posts", value: `${posts.length}`, hint: "Editorial posts available in the content library." },
       ]}
     >
+      <AdminPanel
+        title="Publishing map"
+        description="Use these slugs to drive live storefront routes directly from the content studio."
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            ["home", "Homepage content override"],
+            ["collections", "Collections landing intro"],
+            ["collection-your-collection-slug", "Individual collection landing page"],
+            ["about / contact / faq / shipping / terms / privacy", "Managed static pages with CMS override"],
+          ].map(([slug, description]) => (
+            <div key={slug} className="rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4">
+              <div className="text-xs uppercase tracking-[0.16em] text-brand-taupe">Slug pattern</div>
+              <div className="mt-2 font-medium text-brand-brown">{slug}</div>
+              <div className="mt-2 text-sm text-brand-warm">{description}</div>
+            </div>
+          ))}
+        </div>
+      </AdminPanel>
+
       <AdminPanel title="Homepage layout" description="Reorder homepage storytelling sections so campaign priorities can shift without another code change.">
         <HomepageSectionsManager
           sections={defaultHomepageSections}

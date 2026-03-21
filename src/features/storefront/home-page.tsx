@@ -2,12 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Quote, Scissors, Shield, Star, Truck } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
+import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { DataSourceNote } from "@/components/site/data-source-note";
 import { Footer } from "@/components/site/footer";
 import { Navbar } from "@/components/site/navbar";
 import { ProductCard } from "@/components/site/product-card";
 import { defaultHomepageSections, getHomepageMerchandising, type HomepageSectionKey } from "@/lib/admin-data";
-import { getCatalogCollections, getFeaturedProducts, getNewArrivalProducts } from "@/lib/catalog";
+import { getCatalogCollections, getCatalogPageBySlug, getFeaturedProducts, getNewArrivalProducts } from "@/lib/catalog";
 import { getCollectionImageSource } from "@/lib/media";
 
 const testimonials = [
@@ -29,11 +30,12 @@ const testimonials = [
 ];
 
 export async function HomePage() {
-  const [featuredResult, newArrivalResult, collectionResult, homepageMerchandising] = await Promise.all([
+  const [featuredResult, newArrivalResult, collectionResult, homepageMerchandising, homepageCmsResult] = await Promise.all([
     getFeaturedProducts(),
     getNewArrivalProducts(),
     getCatalogCollections(),
     getHomepageMerchandising().catch(() => ({ sectionOrder: [], updatedAt: null })),
+    getCatalogPageBySlug("home"),
   ]);
   const featuredProducts = featuredResult.data;
   const newArrivals = newArrivalResult.data;
@@ -41,6 +43,22 @@ export async function HomePage() {
   const sectionOrder = homepageMerchandising.sectionOrder.length
     ? homepageMerchandising.sectionOrder
     : defaultHomepageSections.map((section) => section.key);
+  const homepageCms = homepageCmsResult.data;
+
+  if (homepageCms) {
+    return (
+      <div>
+        <Navbar />
+        <DataSourceNote source={homepageCmsResult.source} error={homepageCmsResult.error} />
+        <section className="brand-section pb-0">
+          <div className="brand-container max-w-5xl">
+            <CmsPageRenderer bodyText={JSON.stringify(homepageCms.body ?? [], null, 2)} />
+          </div>
+        </section>
+        <Footer />
+      </div>
+    );
+  }
 
   const sections: Record<HomepageSectionKey, React.ReactNode> = {
     hero: (

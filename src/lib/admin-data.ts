@@ -1,4 +1,5 @@
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { getPreviewUrl } from "@/lib/preview";
 import type { AdminRole } from "@/lib/supabase/auth";
 
 export type ProductImageRecord = {
@@ -33,6 +34,7 @@ export type PageRecord = {
   seoKeywords: string[];
   canonicalUrl: string | null;
   updatedAt: string;
+  previewUrl: string;
 };
 
 export type BlogPostRecord = {
@@ -50,6 +52,7 @@ export type BlogPostRecord = {
   seoKeywords: string[];
   canonicalUrl: string | null;
   updatedAt: string;
+  previewUrl: string;
 };
 
 export type StaffMemberRecord = {
@@ -207,6 +210,7 @@ export async function getPages() {
         seoKeywords: row.seo_keywords ?? [],
         canonicalUrl: row.canonical_url,
         updatedAt: row.updated_at,
+        previewUrl: getPreviewUrl("page", row.id),
       }) satisfies PageRecord,
   );
 }
@@ -235,6 +239,7 @@ export async function getBlogPosts() {
         seoKeywords: row.seo_keywords ?? [],
         canonicalUrl: row.canonical_url,
         updatedAt: row.updated_at,
+        previewUrl: getPreviewUrl("post", row.id),
       }) satisfies BlogPostRecord,
   );
 }

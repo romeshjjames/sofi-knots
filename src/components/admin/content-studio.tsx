@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { FileText, LayoutTemplate, Newspaper, Sparkles } from "lucide-react";
+import { ExternalLink, FileText, LayoutTemplate, Link as LinkIcon, Newspaper, Sparkles } from "lucide-react";
 import { ContentPreview } from "@/components/admin/content-preview";
 import type { BlogPostRecord, PageRecord } from "@/lib/admin-data";
 import { VisualBlockBuilder } from "@/components/admin/visual-block-builder";
@@ -28,6 +28,7 @@ type EditorRecord = {
   coverImageUrl: string;
   authorName: string;
   publishedAt: string;
+  previewUrl: string;
 };
 
 const emptyRecord: EditorRecord = {
@@ -44,6 +45,7 @@ const emptyRecord: EditorRecord = {
   coverImageUrl: "",
   authorName: "",
   publishedAt: "",
+  previewUrl: "",
 };
 
 const contentStarters = {
@@ -132,6 +134,7 @@ export function ContentStudio({ pages, posts }: Props) {
       coverImageUrl: "coverImageUrl" in record ? String(record.coverImageUrl ?? "") : "",
       authorName: "authorName" in record ? String(record.authorName ?? "") : "",
       publishedAt: "publishedAt" in record ? String(record.publishedAt ?? "") : "",
+      previewUrl: "previewUrl" in record ? String(record.previewUrl ?? "") : "",
     };
   }, [records, selectedId]);
 
@@ -186,7 +189,7 @@ export function ContentStudio({ pages, posts }: Props) {
         canonicalUrl: activeRecord.canonicalUrl,
         coverImageUrl: activeRecord.coverImageUrl,
         authorName: activeRecord.authorName,
-        publishedAt: activeRecord.publishedAt || null,
+          publishedAt: activeRecord.publishedAt || null,
       }),
     });
     const body = await response.json();
@@ -261,6 +264,25 @@ export function ContentStudio({ pages, posts }: Props) {
           </select>
           <input className="brand-input" value={activeRecord.canonicalUrl} onChange={(event) => setEditor((current) => ({ ...current, canonicalUrl: event.target.value }))} placeholder="Canonical URL" />
         </div>
+        {activeRecord.previewUrl ? (
+          <div className="flex flex-wrap gap-3 rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4">
+            <a href={activeRecord.previewUrl} target="_blank" rel="noreferrer" className="brand-btn-outline px-4 py-2">
+              <ExternalLink size={15} />
+              Open draft preview
+            </a>
+            <button
+              type="button"
+              className="brand-btn-outline px-4 py-2"
+              onClick={async () => {
+                await navigator.clipboard.writeText(`${window.location.origin}${activeRecord.previewUrl}`);
+                setMessage("Preview link copied.");
+              }}
+            >
+              <LinkIcon size={15} />
+              Copy share link
+            </button>
+          </div>
+        ) : null}
         {mode === "post" ? (
           <div className="grid gap-4 md:grid-cols-3">
             <input className="brand-input" value={activeRecord.authorName} onChange={(event) => setEditor((current) => ({ ...current, authorName: event.target.value }))} placeholder="Author name" />

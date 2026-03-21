@@ -407,6 +407,14 @@ export async function getCatalogCollections(): Promise<CatalogResult<Collection[
   }
 }
 
+export async function getCatalogCollectionBySlug(slug: string): Promise<CatalogResult<Collection | null>> {
+  const result = await getCatalogCollections();
+  return {
+    ...result,
+    data: result.data.find((collection) => collection.slug === slug) ?? null,
+  };
+}
+
 export async function getCatalogCategories(): Promise<CatalogResult<Category[]>> {
   try {
     const supabase = createAdminSupabaseClient();
