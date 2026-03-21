@@ -1,3 +1,4 @@
+import type { Collection, Product } from "@/types/commerce";
 import productBag from "@/assets/product-bag.jpeg";
 import productPillow from "@/assets/product-pillow.jpeg";
 import productWallhanging from "@/assets/product-wallhanging.jpeg";
@@ -8,116 +9,210 @@ import productBabydress from "@/assets/product-babydress.jpeg";
 import productKeychain from "@/assets/product-keychain.jpeg";
 import productHeadband from "@/assets/product-headband.jpeg";
 
-export interface Product {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  category: string;
-  collection: string;
-  badge?: string;
-  description: string;
-  rating: number;
-}
-
 export const products: Product[] = [
   {
     id: "1",
+    slug: "bohemian-tote-bag",
     name: "Bohemian Tote Bag",
     price: 2450,
     originalPrice: 2950,
     image: productBag,
     category: "Bags",
+    categorySlug: "bags",
     collection: "Bohemian Living",
+    collectionSlug: "bohemian-living",
     badge: "Bestseller",
-    description: "Hand-knotted macrame tote with vibrant geometric patterns. Perfect for beach days and casual outings.",
+    description: "Hand-knotted macrame tote with vibrant geometric patterns. Perfect for beach days, gifting, and everyday artisan styling.",
+    shortDescription: "A handcrafted macrame tote with bold bohemian detailing.",
     rating: 4.8,
+    seoTitle: "Bohemian Tote Bag | Handmade Macrame Tote by Sofi Knots",
+    seoDescription: "Shop the Bohemian Tote Bag by Sofi Knots, a handcrafted macrame tote made with premium cotton cord for chic everyday styling.",
+    seoKeywords: ["bohemian tote bag", "handmade macrame bag", "macrame tote india"],
   },
   {
     id: "2",
+    slug: "terracotta-cushion-cover",
     name: "Terracotta Cushion Cover",
     price: 1650,
     image: productPillow,
     category: "Home Decor",
+    categorySlug: "home-decor",
     collection: "Earth & Texture",
+    collectionSlug: "earth-texture",
     badge: "New",
-    description: "Rustic macrame cushion cover with tassels in warm terracotta tones. Adds artisan charm to any space.",
+    description: "Rustic macrame cushion cover with tassels in warm terracotta tones. Adds artisan charm and texture to modern and boho homes.",
+    shortDescription: "Warm terracotta texture for cozy handcrafted interiors.",
     rating: 4.9,
+    seoTitle: "Terracotta Cushion Cover | Handmade Macrame Home Decor",
+    seoDescription: "Discover a handcrafted terracotta macrame cushion cover from Sofi Knots, designed to bring warmth and artisan style to your home.",
+    seoKeywords: ["macrame cushion cover", "terracotta home decor", "boho cushion india"],
   },
   {
     id: "3",
+    slug: "natural-wall-hanging",
     name: "Natural Wall Hanging",
     price: 1850,
     image: productWallhanging,
     category: "Wall Art",
+    categorySlug: "wall-art",
     collection: "Minimalist Knots",
-    description: "Delicate macrame wall hanging in natural cotton. Brings warmth and texture to your walls.",
+    collectionSlug: "minimalist-knots",
+    description: "Delicate macrame wall hanging in natural cotton. Brings softness, depth, and handmade warmth to your walls.",
+    shortDescription: "A soft neutral macrame wall accent for serene spaces.",
     rating: 4.7,
+    seoTitle: "Natural Wall Hanging | Handmade Macrame Wall Decor",
+    seoDescription: "Buy a natural cotton macrame wall hanging from Sofi Knots for elegant handcrafted wall decor with a minimalist boho feel.",
+    seoKeywords: ["macrame wall hanging", "wall decor handmade", "boho wall art india"],
   },
   {
     id: "4",
+    slug: "bottle-holder-net",
     name: "Bottle Holder Net",
     price: 450,
     image: productBottleholder,
     category: "Accessories",
+    categorySlug: "accessories",
     collection: "Everyday Essentials",
-    description: "Practical macrame bottle holder for your on-the-go lifestyle. Eco-friendly and handcrafted.",
+    collectionSlug: "everyday-essentials",
+    description: "Practical macrame bottle holder for your on-the-go lifestyle. Lightweight, reusable, and handcrafted for daily use.",
+    shortDescription: "An eco-friendly handcrafted bottle carry essential.",
     rating: 4.6,
+    seoTitle: "Bottle Holder Net | Handmade Macrame Bottle Carrier",
+    seoDescription: "Carry your bottle in style with a handcrafted macrame bottle holder net by Sofi Knots, designed for everyday convenience.",
+    seoKeywords: ["macrame bottle holder", "bottle net bag", "handmade accessories india"],
   },
   {
     id: "5",
+    slug: "mandala-wall-art",
     name: "Mandala Wall Art",
     price: 3200,
     image: productWallart,
     category: "Wall Art",
+    categorySlug: "wall-art",
     collection: "Bohemian Living",
+    collectionSlug: "bohemian-living",
     badge: "Bestseller",
-    description: "Stunning large mandala wall art with intricate knotwork and golden tassels. A true statement piece.",
-    rating: 5.0,
+    description: "Large mandala wall art with intricate knotwork and golden tassels. A statement piece for elevated artisan interiors.",
+    shortDescription: "A large handcrafted statement piece for bohemian homes.",
+    rating: 5,
+    seoTitle: "Mandala Wall Art | Statement Macrame Wall Decor",
+    seoDescription: "Explore Sofi Knots mandala wall art, a premium handcrafted macrame statement piece for bohemian and contemporary interiors.",
+    seoKeywords: ["mandala wall art", "macrame statement decor", "boho wall decor india"],
   },
   {
     id: "6",
+    slug: "mini-car-charm",
     name: "Mini Car Charm",
     price: 350,
     image: productCarhanger,
     category: "Accessories",
+    categorySlug: "accessories",
     collection: "Everyday Essentials",
-    description: "Adorable mini macrame charm for your car mirror. Handmade with love.",
+    collectionSlug: "everyday-essentials",
+    description: "Adorable mini macrame charm for your car mirror. Handmade with love and designed to add softness to everyday travel.",
+    shortDescription: "A delicate mirror charm for soulful drives.",
     rating: 4.5,
+    seoTitle: "Mini Car Charm | Handmade Macrame Car Accessory",
+    seoDescription: "Add a handcrafted touch to your car with the Sofi Knots mini macrame car charm, designed for thoughtful gifting and styling.",
+    seoKeywords: ["macrame car charm", "car mirror hanging handmade", "small macrame accessory"],
   },
   {
     id: "7",
+    slug: "baby-fringe-dress",
     name: "Baby Fringe Dress",
     price: 1950,
     image: productBabydress,
     category: "Baby Collection",
+    categorySlug: "baby-collection",
     collection: "Little Knots",
+    collectionSlug: "little-knots",
     badge: "New",
-    description: "Handmade macrame baby dress with pink tassel details and matching headband.",
+    description: "Handmade macrame baby dress with tassel details and matching headband. A memorable choice for special gifting.",
+    shortDescription: "A handcrafted baby outfit with signature fringe detailing.",
     rating: 4.9,
+    seoTitle: "Baby Fringe Dress | Handmade Macrame Baby Gift",
+    seoDescription: "Shop a handcrafted macrame baby fringe dress by Sofi Knots, a unique artisan piece for baby showers and milestone gifting.",
+    seoKeywords: ["macrame baby dress", "handmade baby gift", "baby fringe dress india"],
   },
   {
     id: "8",
+    slug: "daisy-keychain",
     name: "Daisy Keychain",
     price: 280,
     image: productKeychain,
     category: "Accessories",
+    categorySlug: "accessories",
     collection: "Everyday Essentials",
-    description: "Charming floral macrame keychain with mint and red accents. A perfect little gift.",
+    collectionSlug: "everyday-essentials",
+    description: "Charming floral macrame keychain with playful color accents. A perfect handcrafted add-on gift.",
+    shortDescription: "A colorful handmade accessory for gifting and everyday use.",
     rating: 4.7,
+    seoTitle: "Daisy Keychain | Handmade Macrame Keychain",
+    seoDescription: "Buy the Sofi Knots daisy keychain, a floral handcrafted macrame accessory perfect for gifting and everyday style.",
+    seoKeywords: ["macrame keychain", "floral keychain handmade", "small gift ideas india"],
   },
   {
     id: "9",
+    slug: "floral-headband",
     name: "Floral Headband",
     price: 550,
     image: productHeadband,
     category: "Accessories",
+    categorySlug: "accessories",
     collection: "Little Knots",
-    description: "Soft macrame headband with delicate pink flower details. Comfortable and stylish.",
+    collectionSlug: "little-knots",
+    description: "Soft macrame headband with delicate pink flower details. Comfortable, lightweight, and perfect for festive looks.",
+    shortDescription: "A lightweight handcrafted floral headband.",
     rating: 4.8,
+    seoTitle: "Floral Headband | Handmade Macrame Headband",
+    seoDescription: "Discover a soft handcrafted macrame floral headband by Sofi Knots, perfect for gifting and styling special occasions.",
+    seoKeywords: ["macrame headband", "handmade floral headband", "artisan hair accessory"],
+  },
+];
+
+export const storefrontCollections: Collection[] = [
+  {
+    id: "bohemian-living",
+    title: "Bohemian Living",
+    slug: "bohemian-living",
+    description: "Statement pieces for soulful homes and layered spaces.",
+    image: productBag,
+    seoTitle: "Bohemian Living Collection | Handmade Macrame Decor",
+    seoDescription: "Explore the Bohemian Living collection by Sofi Knots featuring handcrafted macrame decor and accessories.",
+    seoKeywords: ["bohemian home decor", "macrame collection", "handmade decor india"],
+  },
+  {
+    id: "earth-texture",
+    title: "Earth & Texture",
+    slug: "earth-texture",
+    description: "Warm neutral craftsmanship inspired by earthy tones.",
+    image: productPillow,
+    seoTitle: "Earth & Texture Collection | Artisan Macrame Pieces",
+    seoDescription: "Shop the Earth & Texture collection for warm handcrafted macrame home decor and lifestyle accents.",
+    seoKeywords: ["earthy home decor", "neutral macrame decor", "artisan collection"],
+  },
+  {
+    id: "little-knots",
+    title: "Little Knots",
+    slug: "little-knots",
+    description: "Tiny treasures, gifting favorites, and baby keepsakes.",
+    image: productBabydress,
+    seoTitle: "Little Knots Collection | Handmade Gifts and Baby Pieces",
+    seoDescription: "Browse Little Knots by Sofi Knots for handmade baby gifts, keepsakes, and delicate artisan accessories.",
+    seoKeywords: ["baby collection handmade", "artisan gifts india", "little knots sofi knots"],
   },
 ];
 
 export const categories = ["All", "Bags", "Home Decor", "Wall Art", "Accessories", "Baby Collection"];
-export const collections = ["Bohemian Living", "Earth & Texture", "Minimalist Knots", "Everyday Essentials", "Little Knots"];
+
+export function getFeaturedProducts() {
+  return products.filter((product) => product.badge === "Bestseller" || product.rating >= 4.8).slice(0, 4);
+}
+
+export function getNewArrivalProducts() {
+  return products.filter((product) => product.badge === "New").concat(products.slice(2, 4)).slice(0, 4);
+}
+
+export function getProductBySlug(slug: string) {
+  return products.find((product) => product.slug === slug);
+}

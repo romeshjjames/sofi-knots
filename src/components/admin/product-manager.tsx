@@ -1,0 +1,438 @@
+"use client";
+
+import { useEffect, useState, useTransition } from "react";
+import { Archive, ImagePlus, Search, Trash2 } from "lucide-react";
+import { AdminBadge } from "@/components/admin/admin-shell";
+import { ProductGalleryManager } from "@/components/admin/product-gallery-manager";
+import { ProductVariantsManager } from "@/components/admin/product-variants-manager";
+import type { Product } from "@/types/commerce";
+
+type Option = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+type ProductManagerProps = {
+  products: Product[];
+  categories: Option[];
+  collections: Option[];
+};
+
+function getStatusTone(status?: Product["status"]) {
+  if (status === "active") return "success";
+  if (status === "draft") return "warning";
+  return "default";
+}
+
+export function ProductManager({ products, categories, collections }: ProductManagerProps) {
+  const [items, setItems] = useState(products);
+  const [selectedId, setSelectedId] = useState(products[0]?.id ?? "");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [message, setMessage] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft" | "archived">("all");
+  const [savedView, setSavedView] = useState<"all" | "draft" | "active" | "needs-image" | "featured">("all");
+  const [bulkAction, setBulkAction] = useState("set-status");
+  const [isPending, startTransition] = useTransition();
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!items.find((item) => item.id === selectedId)) {
+      setSelectedId(items[0]?.id ?? "");
+    }
+  }, [items, selectedId]);
+
+  const visibleItems = items.filter((item) => {
+    const matchesQuery =
+      !query ||
+      item.name.toLowerCase().includes(query.toLowerCase()) ||
+      item.slug.toLowerCase().includes(query.toLowerCase()) ||
+      item.category.toLowerCase().includes(query.toLowerCase());
+    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+    const matchesView =
+      savedView === "all"
+        ? true
+        : savedView === "draft"
+          ? item.status === "draft"
+          : savedView === "active"
+            ? item.status === "active"
+            : savedView === "needs-image"
+              ? !item.featuredImageUrl
+              : Boolean(item.isFeatured);
+    return matchesQuery && matchesStatus && matchesView;
+  });
+
+  const selectedProduct = items.find((item) => item.id === selectedId) ?? visibleItems[0] ?? items[0] ?? null;
+
+  function updateLocal(id: string, field: keyof Product, value: string | number | boolean | string[] | null | undefined) {
+    setItems((current) => current.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+  }
+
+  async function saveProduct(product: Product) {
+    setMessage(null);
+    startTransition(async () => {
+      const response = await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: product.name,
+          slug: product.slug,
+          priceInr: product.price,
+          originalPriceInr: product.originalPrice ?? null,
+          categoryId: product.categoryId ?? null,
+          collectionId: product.collectionId ?? null,
+          shortDescription: product.shortDescription,
+          description: product.description,
+          badge: product.badge ?? null,
+          featuredImageUrl: product.featuredImageUrl ?? null,
+          isFeatured: Boolean(product.isFeatured),
+          seoTitle: product.seoTitle,
+          seoDescription: product.seoDescription,
+          seoKeywords: product.seoKeywords,
+          status: product.status ?? "active",
+        }),
+      });
+
+      const body = await response.json();
+      setMessage(response.ok ? `Saved ${body.product?.name || product.name}.` : body.error || "Update failed.");
+      if (response.ok) {
+        window.location.reload();
+      }
+    });
+  }
+
+  async function archiveProduct(id: string, mode: "archive" | "delete") {
+    setMessage(null);
+    startTransition(async () => {
+      const response = await fetch(`/api/admin/products/${id}?mode=${mode}`, { method: "DELETE" });
+      const body = await response.json();
+      setMessage(response.ok ? `Product ${mode}d successfully.` : body.error || `Failed to ${mode} product.`);
+      if (response.ok) {
+        setItems((current) => current.filter((item) => item.id !== id || mode !== "delete"));
+        window.location.reload();
+      }
+    });
+  }
+
+  async function runBulkAction() {
+    if (!selectedIds.length) {
+      setMessage("Select at least one product for bulk actions.");
+      return;
+    }
+    setMessage(null);
+    startTransition(async () => {
+      const payload: Record<string, unknown> = { ids: selectedIds, action: bulkAction };
+      if (bulkAction === "set-status") payload.status = "active";
+      const response = await fetch("/api/admin/products/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const body = await response.json();
+      setMessage(response.ok ? "Bulk action applied." : body.error || "Bulk action failed.");
+      if (response.ok) window.location.reload();
+    });
+  }
+
+  async function uploadImage(productId: string, file: File) {
+    setUploadingId(productId);
+    setMessage(null);
+    const payload = new FormData();
+    payload.append("file", file);
+    payload.append("folder", "products");
+
+    const response = await fetch("/api/admin/storage/upload", {
+      method: "POST",
+      body: payload,
+    });
+    const body = await response.json();
+    setUploadingId(null);
+
+    if (!response.ok) {
+      setMessage(body.error || "Image upload failed.");
+      return;
+    }
+
+    updateLocal(productId, "featuredImageUrl", body.publicUrl);
+    setMessage("Image uploaded successfully. Save to publish it to the storefront.");
+  }
+
+  if (!selectedProduct) {
+    return <p className="text-sm text-brand-warm">No products available yet.</p>;
+  }
+
+  const draftCount = items.filter((item) => item.status === "draft").length;
+  const archivedCount = items.filter((item) => item.status === "archived").length;
+
+  return (
+    <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="space-y-4">
+        <div className="grid gap-3 rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-brand-sand/50 bg-white px-4 py-3">
+            <Search size={16} className="text-brand-taupe" />
+            <input
+              className="w-full bg-transparent text-sm text-brand-brown outline-none placeholder:text-brand-taupe"
+              placeholder="Search products, slugs, categories"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <button type="button" onClick={() => setStatusFilter("all")} className={`rounded-2xl px-3 py-3 text-sm ${statusFilter === "all" ? "bg-brand-brown text-white" : "bg-white text-brand-warm"}`}>
+              <div className="font-medium">{items.length}</div>
+              <div className="text-xs uppercase tracking-[0.16em] opacity-70">All</div>
+            </button>
+            <button type="button" onClick={() => setStatusFilter("draft")} className={`rounded-2xl px-3 py-3 text-sm ${statusFilter === "draft" ? "bg-brand-brown text-white" : "bg-white text-brand-warm"}`}>
+              <div className="font-medium">{draftCount}</div>
+              <div className="text-xs uppercase tracking-[0.16em] opacity-70">Draft</div>
+            </button>
+            <button type="button" onClick={() => setStatusFilter("archived")} className={`rounded-2xl px-3 py-3 text-sm ${statusFilter === "archived" ? "bg-brand-brown text-white" : "bg-white text-brand-warm"}`}>
+              <div className="font-medium">{archivedCount}</div>
+              <div className="text-xs uppercase tracking-[0.16em] opacity-70">Archived</div>
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {[
+              ["all", "All products"],
+              ["draft", "Drafts"],
+              ["active", "Active"],
+              ["needs-image", "Needs image"],
+              ["featured", "Featured"],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setSavedView(value as typeof savedView)}
+                className={`rounded-2xl px-3 py-2 ${savedView === value ? "bg-brand-gold text-white" : "bg-white text-brand-warm"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="grid gap-2">
+            <select className="brand-input" value={bulkAction} onChange={(event) => setBulkAction(event.target.value)}>
+              <option value="set-status">Bulk activate</option>
+              <option value="feature">Mark featured</option>
+              <option value="unfeature">Remove featured</option>
+              <option value="delete">Bulk delete</option>
+            </select>
+            <button type="button" className="brand-btn-outline justify-center px-4 py-2" onClick={() => void runBulkAction()}>
+              Apply to {selectedIds.length} selected
+            </button>
+          </div>
+        </div>
+
+        <div className="max-h-[900px] space-y-3 overflow-auto pr-1">
+          {visibleItems.map((product) => (
+            <button
+              key={product.id}
+              type="button"
+              onClick={() => setSelectedId(product.id)}
+              className={`w-full rounded-[24px] border p-4 text-left transition ${
+                selectedProduct.id === product.id ? "border-brand-gold bg-white shadow-[0_18px_40px_rgba(65,42,17,0.08)]" : "border-brand-sand/40 bg-[#fcfaf5] hover:bg-white"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <label className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-brand-taupe">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(product.id)}
+                      onChange={(event) =>
+                        setSelectedIds((current) =>
+                          event.target.checked ? [...new Set([...current, product.id])] : current.filter((id) => id !== product.id),
+                        )
+                      }
+                    />
+                    Select
+                  </label>
+                  <p className="text-lg font-medium text-brand-brown">{product.name}</p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.18em] text-brand-taupe">{product.slug}</p>
+                </div>
+                <AdminBadge tone={getStatusTone(product.status)}>{product.status ?? "active"}</AdminBadge>
+              </div>
+              <div className="mt-4 flex items-center justify-between text-sm text-brand-warm">
+                <span>{product.category}</span>
+                <span>Rs. {product.price.toLocaleString("en-IN")}</span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {product.badge ? <AdminBadge tone="info">{product.badge}</AdminBadge> : null}
+                {product.isFeatured ? <AdminBadge tone="info">Featured lineup</AdminBadge> : null}
+                {product.featuredImageUrl ? <AdminBadge tone="success">Image ready</AdminBadge> : <AdminBadge tone="warning">Needs image</AdminBadge>}
+                {product.seoDescription ? <AdminBadge tone="default">SEO set</AdminBadge> : null}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        <div className="rounded-[28px] border border-brand-sand/50 bg-[#fcfaf5] p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                <h3 className="font-serif text-3xl text-brand-brown">{selectedProduct.name}</h3>
+                <AdminBadge tone={getStatusTone(selectedProduct.status)}>{selectedProduct.status ?? "active"}</AdminBadge>
+              </div>
+              <p className="mt-2 text-sm text-brand-warm">{selectedProduct.shortDescription}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-sm lg:min-w-[240px]">
+              <div className="rounded-2xl bg-white px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.16em] text-brand-taupe">Price</p>
+                <p className="mt-1 font-medium text-brand-brown">Rs. {selectedProduct.price.toLocaleString("en-IN")}</p>
+              </div>
+              <div className="rounded-2xl bg-white px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.16em] text-brand-taupe">Category</p>
+                <p className="mt-1 font-medium text-brand-brown">{selectedProduct.category}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-6 2xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-6">
+            <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6">
+              <h4 className="font-serif text-2xl text-brand-brown">Product details</h4>
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <input className="brand-input" value={selectedProduct.name} onChange={(event) => updateLocal(selectedProduct.id, "name", event.target.value)} />
+                <input className="brand-input" value={selectedProduct.slug} onChange={(event) => updateLocal(selectedProduct.id, "slug", event.target.value)} />
+                <input className="brand-input" type="number" value={selectedProduct.price} onChange={(event) => updateLocal(selectedProduct.id, "price", Number(event.target.value))} />
+                <input className="brand-input" type="number" value={selectedProduct.originalPrice ?? ""} onChange={(event) => updateLocal(selectedProduct.id, "originalPrice", event.target.value ? Number(event.target.value) : undefined)} placeholder="Compare at price" />
+                <select
+                  className="brand-input"
+                  value={selectedProduct.categoryId ?? ""}
+                  onChange={(event) => {
+                    const selected = categories.find((item) => item.id === event.target.value);
+                    updateLocal(selectedProduct.id, "categoryId", event.target.value);
+                    updateLocal(selectedProduct.id, "category", selected?.name ?? selectedProduct.category);
+                    updateLocal(selectedProduct.id, "categorySlug", selected?.slug ?? selectedProduct.categorySlug);
+                  }}
+                >
+                  <option value="">Select category</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="brand-input"
+                  value={selectedProduct.collectionId ?? ""}
+                  onChange={(event) => {
+                    const selected = collections.find((item) => item.id === event.target.value);
+                    updateLocal(selectedProduct.id, "collectionId", event.target.value);
+                    updateLocal(selectedProduct.id, "collection", selected?.name ?? selectedProduct.collection);
+                    updateLocal(selectedProduct.id, "collectionSlug", selected?.slug ?? selectedProduct.collectionSlug);
+                  }}
+                >
+                  <option value="">Select collection</option>
+                  {collections.map((collection) => (
+                    <option key={collection.id} value={collection.id}>
+                      {collection.name}
+                    </option>
+                  ))}
+                </select>
+                <input className="brand-input" value={selectedProduct.badge ?? ""} onChange={(event) => updateLocal(selectedProduct.id, "badge", event.target.value)} placeholder="Badge or highlight label" />
+                <select className="brand-input" value={selectedProduct.status ?? "active"} onChange={(event) => updateLocal(selectedProduct.id, "status", event.target.value as Product["status"])}>
+                  <option value="draft">Draft</option>
+                  <option value="active">Active</option>
+                  <option value="archived">Archived</option>
+                </select>
+                <label className="flex items-center gap-3 rounded-2xl border border-brand-sand/40 px-4 py-3 text-sm text-brand-brown">
+                  <input type="checkbox" checked={Boolean(selectedProduct.isFeatured)} onChange={(event) => updateLocal(selectedProduct.id, "isFeatured", event.target.checked)} />
+                  Include in featured lineup
+                </label>
+              </div>
+              <input className="brand-input mt-4" value={selectedProduct.shortDescription} onChange={(event) => updateLocal(selectedProduct.id, "shortDescription", event.target.value)} placeholder="Short description" />
+              <textarea className="brand-input mt-4 min-h-32" value={selectedProduct.description} onChange={(event) => updateLocal(selectedProduct.id, "description", event.target.value)} />
+            </section>
+
+            <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6">
+              <h4 className="font-serif text-2xl text-brand-brown">SEO and discovery</h4>
+              <div className="mt-5 grid gap-4">
+                <input className="brand-input" value={selectedProduct.seoTitle} onChange={(event) => updateLocal(selectedProduct.id, "seoTitle", event.target.value)} placeholder="SEO title" />
+                <textarea className="brand-input min-h-28" value={selectedProduct.seoDescription} onChange={(event) => updateLocal(selectedProduct.id, "seoDescription", event.target.value)} placeholder="SEO description" />
+                <input
+                  className="brand-input"
+                  value={selectedProduct.seoKeywords.join(", ")}
+                  onChange={(event) =>
+                    updateLocal(
+                      selectedProduct.id,
+                      "seoKeywords",
+                      event.target.value
+                        .split(",")
+                        .map((value) => value.trim())
+                        .filter(Boolean),
+                    )
+                  }
+                  placeholder="SEO keywords separated by commas"
+                />
+              </div>
+            </section>
+          </div>
+
+          <div className="space-y-6">
+            <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6">
+              <h4 className="font-serif text-2xl text-brand-brown">Media</h4>
+              <div className="mt-5 rounded-[24px] border border-dashed border-brand-sand/60 bg-[#fcfaf5] p-4">
+                {selectedProduct.featuredImageUrl ? (
+                  <img src={selectedProduct.featuredImageUrl} alt={selectedProduct.name} className="aspect-[4/5] w-full rounded-[18px] object-cover" />
+                ) : (
+                  <div className="flex aspect-[4/5] items-center justify-center rounded-[18px] bg-brand-cream text-sm text-brand-taupe">
+                    No featured image yet
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 grid gap-3">
+                <input className="brand-input" value={selectedProduct.featuredImageUrl ?? ""} onChange={(event) => updateLocal(selectedProduct.id, "featuredImageUrl", event.target.value)} placeholder="Featured image URL" />
+                <label className="brand-btn-outline cursor-pointer justify-center gap-2">
+                  <ImagePlus size={16} />
+                  {uploadingId === selectedProduct.id ? "Uploading..." : "Upload featured image"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) {
+                        void uploadImage(selectedProduct.id, file);
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+            </section>
+
+            <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6">
+              <ProductGalleryManager productId={selectedProduct.id} />
+            </section>
+
+            <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6">
+              <ProductVariantsManager productId={selectedProduct.id} basePrice={selectedProduct.price} />
+            </section>
+
+            <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6">
+              <h4 className="font-serif text-2xl text-brand-brown">Actions</h4>
+              <div className="mt-5 grid gap-3">
+                <button type="button" className="brand-btn-primary justify-center" disabled={isPending} onClick={() => void saveProduct(selectedProduct)}>
+                  {isPending ? "Saving..." : "Save changes"}
+                </button>
+                <button type="button" className="brand-btn-outline justify-center gap-2" disabled={isPending} onClick={() => void archiveProduct(selectedProduct.id, "archive")}>
+                  <Archive size={16} />
+                  Archive product
+                </button>
+                <button type="button" className="brand-btn-outline justify-center gap-2 border-rose-300 text-rose-700 hover:bg-rose-600 hover:text-white" disabled={isPending} onClick={() => void archiveProduct(selectedProduct.id, "delete")}>
+                  <Trash2 size={16} />
+                  Delete product
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        {message ? <p className="text-sm text-brand-warm">{message}</p> : null}
+      </div>
+    </div>
+  );
+}
