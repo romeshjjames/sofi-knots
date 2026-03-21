@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { FileText, LayoutTemplate, Newspaper, Sparkles } from "lucide-react";
 import { ContentPreview } from "@/components/admin/content-preview";
 import type { BlogPostRecord, PageRecord } from "@/lib/admin-data";
-import { VisualBlockBuilder } from "@/components/admin/visual-block-builder";
+import { normalizeVisualBlocks, VisualBlockBuilder } from "@/components/admin/visual-block-builder";
 
 type Props = {
   pages: PageRecord[];
@@ -44,6 +45,65 @@ const emptyRecord: EditorRecord = {
   publishedAt: "",
 };
 
+const contentStarters = {
+  page: [
+    {
+      id: "landing",
+      label: "Landing page",
+      description: "Hero, story section, image spotlight, and CTA.",
+      icon: LayoutTemplate,
+      body: [
+        { type: "heading", content: "Build the campaign headline", level: "h2" },
+        { type: "paragraph", content: "Introduce the page with a clear promise and supporting value proposition." },
+        { type: "cta", label: "Shop now", href: "/shop", style: "primary" },
+        { type: "heading", content: "Tell the deeper story", level: "h2" },
+        { type: "paragraph", content: "Use this area for craftsmanship, product education, or campaign narrative." },
+        { type: "image", url: "", alt: "Editorial image", caption: "Add a supporting visual" },
+      ],
+    },
+    {
+      id: "policy",
+      label: "Policy page",
+      description: "Simple, readable stack for shipping, care, or returns.",
+      icon: FileText,
+      body: [
+        { type: "heading", content: "Policy title", level: "h2" },
+        { type: "paragraph", content: "Start with a short summary that tells visitors what this page covers." },
+        { type: "heading", content: "Section heading", level: "h3" },
+        { type: "paragraph", content: "Use concise, readable paragraphs for policy details." },
+      ],
+    },
+  ],
+  post: [
+    {
+      id: "editorial",
+      label: "Editorial story",
+      description: "Long-form post with visual rhythm and quote moments.",
+      icon: Newspaper,
+      body: [
+        { type: "heading", content: "Open with a strong editorial headline", level: "h2" },
+        { type: "paragraph", content: "Set up the story with a warm introduction that invites the reader into the post." },
+        { type: "image", url: "", alt: "Feature image", caption: "Visual supporting the story" },
+        { type: "quote", quote: "Add a memorable founder, customer, or editorial quote here.", cite: "Quote source" },
+        { type: "paragraph", content: "Continue the article with practical details, styling ideas, or behind-the-scenes context." },
+      ],
+    },
+    {
+      id: "seo-guide",
+      label: "SEO guide",
+      description: "Useful structure for FAQ, listicle, or search-intent content.",
+      icon: Sparkles,
+      body: [
+        { type: "heading", content: "Guide headline", level: "h2" },
+        { type: "paragraph", content: "Begin with a concise answer to the main search intent." },
+        { type: "heading", content: "Helpful subtopic", level: "h3" },
+        { type: "paragraph", content: "Expand with practical tips, examples, or comparisons." },
+        { type: "cta", label: "Browse products", href: "/shop", style: "secondary" },
+      ],
+    },
+  ],
+} as const;
+
 export function ContentStudio({ pages, posts }: Props) {
   const [mode, setMode] = useState<Mode>("page");
   const [selectedId, setSelectedId] = useState<string>(pages[0]?.id ?? "");
@@ -75,6 +135,10 @@ export function ContentStudio({ pages, posts }: Props) {
   }, [records, selectedId]);
 
   const activeRecord = selected ? { ...selected, ...editor } : editor;
+  const normalizedBlocks = useMemo(() => normalizeVisualBlocks(activeRecord.bodyText), [activeRecord.bodyText]);
+  const blockCount = normalizedBlocks.length;
+  const sectionCount = new Set(normalizedBlocks.map((block) => block.sectionId)).size;
+  const seoReady = Boolean(activeRecord.seoTitle && activeRecord.seoDescription);
 
   useEffect(() => {
     if (selected) {
@@ -84,6 +148,17 @@ export function ContentStudio({ pages, posts }: Props) {
       setEditor(emptyRecord);
     }
   }, [selected, selectedId]);
+
+  function applyStarter(templateId: string) {
+    const starter = contentStarters[mode].find((entry) => entry.id === templateId);
+    if (!starter) return;
+    setEditor((current) => ({
+      ...current,
+      bodyText: JSON.stringify(normalizeVisualBlocks(JSON.stringify(starter.body)), null, 2),
+      excerpt: current.excerpt || starter.description,
+    }));
+    setMessage(`${starter.label} starter applied.`);
+  }
 
   async function saveRecord() {
     const endpoint = mode === "page" ? "/api/admin/content/pages" : "/api/admin/content/posts";
@@ -159,15 +234,37 @@ export function ContentStudio({ pages, posts }: Props) {
       </div>
 
       <div className="space-y-4">
+        <div className="grid gap-3 rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4 md:grid-cols-3">
+          <div className="rounded-2xl bg-white px-4 py-3">
+            <div className="text-xs uppercase tracking-[0.16em] text-brand-taupe">Sections</div>
+            <div className="mt-2 text-2xl font-medium text-brand-brown">{sectionCount}</div>
+          </div>
+          <div className="rounded-2xl bg-white px-4 py-3">
+            <div className="text-xs uppercase tracking-[0.16em] text-brand-taupe">Blocks</div>
+            <div className="mt-2 text-2xl font-medium text-brand-brown">{blockCount}</div>
+          </div>
+          <div className="rounded-2xl bg-white px-4 py-3">
+            <div className="text-xs uppercase tracking-[0.16em] text-brand-taupe">SEO status</div>
+            <div className="mt-2 text-sm font-medium text-brand-brown">{seoReady ? "Ready for preview" : "Needs SEO copy"}</div>
+          </div>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           <input className="brand-input" value={activeRecord.title} onChange={(event) => setEditor((current) => ({ ...current, title: event.target.value }))} placeholder="Title" />
           <input className="brand-input" value={activeRecord.slug} onChange={(event) => setEditor((current) => ({ ...current, slug: event.target.value }))} placeholder="Slug" />
         </div>
         <textarea className="brand-input min-h-24" value={activeRecord.excerpt} onChange={(event) => setEditor((current) => ({ ...current, excerpt: event.target.value }))} placeholder="Excerpt" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <select className="brand-input" value={activeRecord.status} onChange={(event) => setEditor((current) => ({ ...current, status: event.target.value as EditorRecord["status"] }))}>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+          <input className="brand-input" value={activeRecord.canonicalUrl} onChange={(event) => setEditor((current) => ({ ...current, canonicalUrl: event.target.value }))} placeholder="Canonical URL" />
+        </div>
         {mode === "post" ? (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <input className="brand-input" value={activeRecord.authorName} onChange={(event) => setEditor((current) => ({ ...current, authorName: event.target.value }))} placeholder="Author name" />
             <input className="brand-input" value={activeRecord.coverImageUrl} onChange={(event) => setEditor((current) => ({ ...current, coverImageUrl: event.target.value }))} placeholder="Cover image URL" />
+            <input className="brand-input" type="date" value={activeRecord.publishedAt ? activeRecord.publishedAt.slice(0, 10) : ""} onChange={(event) => setEditor((current) => ({ ...current, publishedAt: event.target.value }))} placeholder="Publish date" />
           </div>
         ) : null}
         <div className="space-y-3">
@@ -179,6 +276,20 @@ export function ContentStudio({ pages, posts }: Props) {
             <button type="button" className="brand-btn-outline px-4 py-2" onClick={() => setAdvancedMode((current) => !current)}>
               {advancedMode ? "Hide raw JSON" : "Show raw JSON"}
             </button>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {contentStarters[mode].map((starter) => {
+              const Icon = starter.icon;
+              return (
+                <button key={starter.id} type="button" className="rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4 text-left transition hover:border-brand-gold/50 hover:bg-white" onClick={() => applyStarter(starter.id)}>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-brand-brown">
+                    <Icon size={18} />
+                  </div>
+                  <div className="mt-4 font-medium text-brand-brown">{starter.label}</div>
+                  <div className="mt-2 text-sm leading-6 text-brand-warm">{starter.description}</div>
+                </button>
+              );
+            })}
           </div>
           <VisualBlockBuilder bodyText={activeRecord.bodyText} onChange={(next) => setEditor((current) => ({ ...current, bodyText: next }))} />
           {advancedMode ? (
@@ -204,6 +315,14 @@ export function ContentStudio({ pages, posts }: Props) {
       </div>
 
       <div className="2xl:sticky 2xl:top-6 2xl:self-start">
+        <div className="mb-4 rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4">
+          <div className="text-xs uppercase tracking-[0.16em] text-brand-taupe">Preview checklist</div>
+          <div className="mt-3 space-y-2 text-sm text-brand-warm">
+            <div>{sectionCount ? `${sectionCount} sections composed` : "Add at least one section"}</div>
+            <div>{seoReady ? "SEO title and description are set" : "Complete SEO title and description"}</div>
+            <div>{activeRecord.slug ? `Slug ready at /${mode === "post" ? "blog/" : ""}${activeRecord.slug}` : "Add a slug for the final URL"}</div>
+          </div>
+        </div>
         <ContentPreview
           mode={mode}
           title={activeRecord.title}

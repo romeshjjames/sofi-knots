@@ -57,7 +57,14 @@ export default async function AdminProductsPage() {
               <TaxonomyManager
                 title="Collections"
                 endpoint="/api/admin/collections"
-                items={collectionsResult.data.map((item) => ({ id: item.id ?? item.slug, name: item.title, slug: item.slug }))}
+                items={collectionsResult.data.map((item) => ({
+                  id: item.id ?? item.slug,
+                  name: item.title,
+                  slug: item.slug,
+                  description: item.description,
+                  imageUrl: item.imageUrl,
+                  sortOrder: item.sortOrder,
+                }))}
               />
             </div>
           </AdminPanel>

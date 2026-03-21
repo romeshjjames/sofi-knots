@@ -22,6 +22,8 @@ type Category = {
   id: string;
   name: string;
   slug: string;
+  description?: string | null;
+  sortOrder?: number;
 };
 
 type ProductRow = {
@@ -52,6 +54,7 @@ type CollectionRow = {
   slug: string;
   description: string | null;
   image_url: string | null;
+  sort_order?: number | null;
   seo_title: string | null;
   seo_description: string | null;
   seo_keywords: string[] | null;
@@ -127,6 +130,7 @@ function mapCollectionRow(row: CollectionRow): Collection | null {
     slug: row.slug,
     description: row.description ?? fallbackLike.description,
     imageUrl: row.image_url,
+    sortOrder: row.sort_order ?? undefined,
     seoTitle: row.seo_title ?? fallbackLike.seoTitle,
     seoDescription: row.seo_description ?? fallbackLike.seoDescription,
     seoKeywords: row.seo_keywords?.length ? row.seo_keywords : fallbackLike.seoKeywords,
@@ -299,7 +303,7 @@ export async function getCatalogCollections(): Promise<CatalogResult<Collection[
     const supabase = createAdminSupabaseClient();
     const { data, error } = await supabase
       .from("collections")
-      .select("id, name, slug, description, image_url, seo_title, seo_description, seo_keywords")
+      .select("id, name, slug, description, image_url, sort_order, seo_title, seo_description, seo_keywords")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
 
@@ -341,7 +345,7 @@ export async function getCatalogCategories(): Promise<CatalogResult<Category[]>>
     const supabase = createAdminSupabaseClient();
     const { data, error } = await supabase
       .from("categories")
-      .select("id, name, slug")
+      .select("id, name, slug, description, sort_order")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
 

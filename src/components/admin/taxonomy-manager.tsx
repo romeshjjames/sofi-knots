@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { GripVertical, Save } from "lucide-react";
 
 type Item = {
   id: string;
   name: string;
   slug: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  sortOrder?: number;
 };
 
 type TaxonomyManagerProps = {
@@ -25,7 +29,13 @@ export function TaxonomyManager({ title, endpoint, items }: TaxonomyManagerProps
   });
   const [records, setRecords] = useState(items);
   const [message, setMessage] = useState<string | null>(null);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const orderedRecords = useMemo(
+    () => [...records].sort((left, right) => (left.sortOrder ?? 0) - (right.sortOrder ?? 0) || left.name.localeCompare(right.name)),
+    [records],
+  );
 
   function slugify(value: string) {
     return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -33,6 +43,40 @@ export function TaxonomyManager({ title, endpoint, items }: TaxonomyManagerProps
 
   function singularTitle() {
     return title.endsWith("s") ? title.slice(0, -1) : title;
+  }
+
+  function moveRecord(fromId: string, toId: string) {
+    if (fromId === toId) return;
+    setRecords((current) => {
+      const next = [...current].sort((left, right) => (left.sortOrder ?? 0) - (right.sortOrder ?? 0));
+      const fromIndex = next.findIndex((record) => record.id === fromId);
+      const toIndex = next.findIndex((record) => record.id === toId);
+      if (fromIndex === -1 || toIndex === -1) return current;
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next.map((record, index) => ({ ...record, sortOrder: index }));
+    });
+  }
+
+  async function saveOrder() {
+    setMessage(null);
+    startTransition(async () => {
+      for (const [index, item] of orderedRecords.entries()) {
+        const response = await fetch(`${endpoint}/${item.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...item, sortOrder: index }),
+        });
+        if (!response.ok) {
+          const body = await response.json();
+          setMessage(body.error || `Failed to save ${title.toLowerCase()} order.`);
+          return;
+        }
+      }
+
+      setMessage(`${title} order saved.`);
+      window.location.reload();
+    });
   }
 
   return (
@@ -82,6 +126,7 @@ export function TaxonomyManager({ title, endpoint, items }: TaxonomyManagerProps
                 seoTitle: createState.seoTitle || createState.name,
                 seoDescription: createState.seoDescription || createState.description,
                 seoKeywords: createState.seoKeywords.split(",").map((value) => value.trim()).filter(Boolean),
+                sortOrder: orderedRecords.length,
               }),
             });
             const body = await response.json();
@@ -99,9 +144,35 @@ export function TaxonomyManager({ title, endpoint, items }: TaxonomyManagerProps
         {isPending ? "Saving..." : `Add ${singularTitle()}`}
       </button>
       <div className="space-y-3 rounded-sm bg-brand-cream p-4">
-        <p className="text-sm font-medium text-brand-brown">Manage existing {title.toLowerCase()}</p>
-        {records.map((item) => (
-          <div key={item.id} className="grid gap-3 rounded-sm border border-brand-sand/30 bg-brand-ivory p-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-medium text-brand-brown">Manage existing {title.toLowerCase()}</p>
+          <button type="button" className="brand-btn-outline px-4 py-2" disabled={isPending || !orderedRecords.length} onClick={() => void saveOrder()}>
+            <Save size={15} />
+            Save order
+          </button>
+        </div>
+        {orderedRecords.map((item, index) => (
+          <div
+            key={item.id}
+            draggable
+            onDragStart={() => setDraggedId(item.id)}
+            onDragEnd={() => setDraggedId(null)}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={() => {
+              if (draggedId) moveRecord(draggedId, item.id);
+              setDraggedId(null);
+            }}
+            className={`grid gap-3 rounded-sm border p-3 ${draggedId === item.id ? "border-brand-gold bg-white" : "border-brand-sand/30 bg-brand-ivory"}`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-brand-taupe">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1">
+                  <GripVertical size={13} />
+                  Position {index + 1}
+                </span>
+                <span>{item.slug}</span>
+              </div>
+            </div>
             <div className="grid gap-3 md:grid-cols-2">
               <input
                 className="brand-input"
@@ -118,6 +189,14 @@ export function TaxonomyManager({ title, endpoint, items }: TaxonomyManagerProps
                 }
               />
             </div>
+            <input
+              className="brand-input"
+              value={item.description ?? ""}
+              placeholder="Description"
+              onChange={(event) =>
+                setRecords((current) => current.map((record) => (record.id === item.id ? { ...record, description: event.target.value } : record)))
+              }
+            />
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"

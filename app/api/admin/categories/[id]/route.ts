@@ -21,6 +21,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         seo_title: body.seoTitle || body.name,
         seo_description: body.seoDescription || body.description || null,
         seo_keywords: Array.isArray(body.seoKeywords) ? body.seoKeywords : [],
+        sort_order: typeof body.sortOrder === "number" ? body.sortOrder : 0,
       })
       .eq("id", params.id)
       .select("id, name, slug")

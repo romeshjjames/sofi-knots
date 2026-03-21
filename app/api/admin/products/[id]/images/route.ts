@@ -60,3 +60,52 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to create image." }, { status: 500 });
   }
 }
+
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  const auth = await requireAdminApi(["super_admin", "catalog_admin"]);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const body = await request.json();
+  const updates = Array.isArray(body.images) ? body.images : [];
+
+  if (!updates.length) {
+    return NextResponse.json({ error: "No gallery images provided." }, { status: 400 });
+  }
+
+  try {
+    const supabase = createAdminSupabaseClient();
+
+    for (const [index, item] of updates.entries()) {
+      if (!item?.id || typeof item.id !== "string") continue;
+      const { error } = await supabase
+        .from("product_images")
+        .update({
+          sort_order: typeof item.sortOrder === "number" ? item.sortOrder : index,
+          alt_text: typeof item.altText === "string" ? item.altText : null,
+        })
+        .eq("id", item.id)
+        .eq("product_id", params.id);
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+    }
+
+    await createAuditLog({
+      actorUserId: auth.session.user.id,
+      entityType: "product",
+      entityId: params.id,
+      action: "image:reorder",
+      payload: {
+        imageIds: updates.map((item: { id?: string }) => item.id).filter((value: unknown): value is string => typeof value === "string"),
+      },
+    });
+
+    const images = await getProductImages(params.id);
+    return NextResponse.json({ images });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to update gallery order." }, { status: 500 });
+  }
+}

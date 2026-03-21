@@ -35,6 +35,7 @@ export type Collection = SeoEntity & {
   description: string;
   image: StaticImageData;
   imageUrl?: string | null;
+  sortOrder?: number;
 };
 
 export type BlogPost = SeoEntity & {
