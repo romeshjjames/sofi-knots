@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   ExternalLink,
   FileText,
+  Home,
   LayoutTemplate,
   Link as LinkIcon,
   Newspaper,
@@ -76,6 +77,37 @@ const categoryOptions = [
 
 const pageStarters = [
   {
+    id: "homepage",
+    label: "Homepage layout",
+    description: "Pre-label the live homepage sections so each block maps clearly to the storefront.",
+    icon: Home,
+    body: [
+      { type: "heading", content: "Where Every Knot Tells a Story", level: "h2", sectionId: "home-hero", sectionLabel: "Homepage hero", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
+      { type: "paragraph", content: "Use this section for the homepage hero headline, supporting copy, and CTA buttons.", sectionId: "home-hero", sectionLabel: "Homepage hero", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
+      { type: "cta", label: "Shop now", href: "/shop", style: "primary", sectionId: "home-hero", sectionLabel: "Homepage hero", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
+      { type: "cta", label: "Explore collections", href: "/collections", style: "secondary", sectionId: "home-hero", sectionLabel: "Homepage hero", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
+      { type: "heading", content: "Trust strip items", level: "h2", sectionId: "home-intro", sectionLabel: "Welcome intro", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "compact" },
+      { type: "paragraph", content: "Use H3 headings below this intro for each slim trust-strip item under the hero.", sectionId: "home-intro", sectionLabel: "Welcome intro", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "compact" },
+      { type: "heading", content: "Free Shipping Over 375", level: "h3", sectionId: "home-intro", sectionLabel: "Welcome intro", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "compact" },
+      { type: "paragraph", content: "Short support text for trust item one.", sectionId: "home-intro", sectionLabel: "Welcome intro", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "compact" },
+      { type: "heading", content: "Artisan Guarantee", level: "h3", sectionId: "home-intro", sectionLabel: "Welcome intro", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "compact" },
+      { type: "paragraph", content: "Short support text for trust item two.", sectionId: "home-intro", sectionLabel: "Welcome intro", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "compact" },
+      { type: "heading", content: "Our Collections", level: "h2", sectionId: "home-collections", sectionLabel: "Collections", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "airy" },
+      { type: "paragraph", content: "This text appears above the collection cards grid.", sectionId: "home-collections", sectionLabel: "Collections", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "airy" },
+      { type: "heading", content: "Best Sellers", level: "h2", sectionId: "home-featured", sectionLabel: "Featured products", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "airy" },
+      { type: "paragraph", content: "This intro appears above the bestseller product grid.", sectionId: "home-featured", sectionLabel: "Featured products", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "airy" },
+      { type: "heading", content: "Made by Hand, Made with Heart", level: "h2", sectionId: "home-values", sectionLabel: "Why Sofi Knots", sectionTheme: "paper", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "paragraph", content: "Use this section for the craft story split block.", sectionId: "home-values", sectionLabel: "Why Sofi Knots", sectionTheme: "paper", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "image", url: "", alt: "Craft story image", caption: "Optional craft image", sectionId: "home-values", sectionLabel: "Why Sofi Knots", sectionTheme: "paper", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "cta", label: "Our story", href: "/about", style: "secondary", sectionId: "home-values", sectionLabel: "Why Sofi Knots", sectionTheme: "paper", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "heading", content: "What Our Customers Say", level: "h2", sectionId: "home-testimonials", sectionLabel: "Testimonials", sectionTheme: "ink", sectionLayout: "stacked", sectionSpacing: "airy" },
+      { type: "paragraph", content: "Approved featured reviews appear in this dark testimonial section automatically.", sectionId: "home-testimonials", sectionLabel: "Testimonials", sectionTheme: "ink", sectionLayout: "stacked", sectionSpacing: "airy" },
+      { type: "heading", content: "Join Our Circle", level: "h2", sectionId: "home-newsletter", sectionLabel: "Newsletter", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "airy" },
+      { type: "paragraph", content: "This text appears above the newsletter signup block.", sectionId: "home-newsletter", sectionLabel: "Newsletter", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "airy" },
+      { type: "cta", label: "Subscribe", href: "#", style: "primary", sectionId: "home-newsletter", sectionLabel: "Newsletter", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "airy" },
+    ],
+  },
+  {
     id: "landing",
     label: "Landing page",
     description: "Hero, story section, image spotlight, and CTA.",
@@ -102,6 +134,16 @@ const pageStarters = [
     ],
   },
 ] as const;
+
+const homepageSectionGuide = [
+  { label: "Homepage hero", description: "Controls the hero headline, hero paragraph, and hero CTA buttons." },
+  { label: "Welcome intro", description: "Controls the slim trust strip under the hero. Use H3 blocks for each trust item." },
+  { label: "Collections", description: "Controls the heading and intro above the homepage collection cards." },
+  { label: "Featured products", description: "Controls the heading and intro above the bestseller grid." },
+  { label: "Why Sofi Knots", description: "Controls the craft story split section with image, copy, and CTA." },
+  { label: "Testimonials", description: "Controls the intro above the dark testimonials block. Reviews still come from the Reviews admin." },
+  { label: "Newsletter", description: "Controls the newsletter heading, description, and button label." },
+];
 
 const postStarters = [
   {
@@ -237,6 +279,7 @@ export function ContentStudio({ pages, posts, initialMode = "page", initialRecor
   }, [records, selectedId, mode]);
 
   const activeRecord = selected ? { ...selected, ...editor } : editor;
+  const isHomepagePage = mode === "page" && activeRecord.slug === "home";
   const normalizedBlocks = useMemo(() => normalizeVisualBlocks(activeRecord.bodyText), [activeRecord.bodyText]);
   const sectionCount = new Set(normalizedBlocks.map((block) => block.sectionId)).size;
   const blockCount = normalizedBlocks.length;
@@ -531,6 +574,30 @@ export function ContentStudio({ pages, posts, initialMode = "page", initialRecor
               <LinkIcon size={15} />
               Copy share link
             </button>
+          </div>
+        ) : null}
+
+        {isHomepagePage ? (
+          <div className="rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-medium text-brand-brown">Homepage section map</p>
+                <p className="text-xs text-brand-taupe">
+                  The live homepage reads these labeled sections. Keep the section labels below aligned with the blocks you want to control.
+                </p>
+              </div>
+              <button type="button" className="brand-btn-outline px-4 py-2" onClick={() => applyStarter("homepage")}>
+                Use homepage layout starter
+              </button>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {homepageSectionGuide.map((section) => (
+                <div key={section.label} className="rounded-2xl border border-brand-sand/40 bg-white px-4 py-3">
+                  <div className="text-sm font-medium text-brand-brown">{section.label}</div>
+                  <div className="mt-1 text-xs leading-6 text-brand-taupe">{section.description}</div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : null}
 
