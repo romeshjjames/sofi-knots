@@ -60,6 +60,11 @@ export type BlogPost = SeoEntity & {
   body?: unknown;
   readTime: string;
   category: string;
+  blogType?: string;
+  tags?: string[];
+  featuredArticle?: boolean;
+  featureOnHomepage?: boolean;
+  highlightInBlog?: boolean;
 };
 
 export type CmsPage = SeoEntity & {

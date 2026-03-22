@@ -66,8 +66,29 @@ export type BlogPostRecord = {
   seoDescription: string | null;
   seoKeywords: string[];
   canonicalUrl: string | null;
+  blogType: string;
+  category: string;
+  tags: string[];
+  adminStatus: "draft" | "published" | "scheduled";
+  scheduledFor: string | null;
+  featuredArticle: boolean;
+  featureOnHomepage: boolean;
+  highlightInBlog: boolean;
   updatedAt: string;
   previewUrl: string;
+};
+
+export type BlogPostAdminSettingsRecord = {
+  postId: string;
+  blogType: string;
+  category: string;
+  tags: string[];
+  adminStatus: "draft" | "published" | "scheduled";
+  scheduledFor: string | null;
+  featuredArticle: boolean;
+  featureOnHomepage: boolean;
+  highlightInBlog: boolean;
+  updatedAt: string | null;
 };
 
 export type StaffMemberRecord = {
@@ -317,9 +338,12 @@ export async function getBlogPosts() {
     .select("id, title, slug, excerpt, body, cover_image_url, author_name, published_at, status, seo_title, seo_description, seo_keywords, canonical_url, updated_at")
     .order("updated_at", { ascending: false });
   if (error) throw new Error(error.message);
+  const postIds = (data ?? []).map((row) => row.id);
+  const settingsMap = await getBlogPostAdminSettingsMap(postIds);
   return (data ?? []).map(
-    (row) =>
-      ({
+    (row) => {
+      const settings = settingsMap[row.id];
+      return {
         id: row.id,
         title: row.title,
         slug: row.slug,
@@ -333,10 +357,75 @@ export async function getBlogPosts() {
         seoDescription: row.seo_description,
         seoKeywords: row.seo_keywords ?? [],
         canonicalUrl: row.canonical_url,
+        blogType: settings.blogType,
+        category: settings.category,
+        tags: settings.tags,
+        adminStatus: settings.adminStatus,
+        scheduledFor: settings.scheduledFor,
+        featuredArticle: settings.featuredArticle,
+        featureOnHomepage: settings.featureOnHomepage,
+        highlightInBlog: settings.highlightInBlog,
         updatedAt: row.updated_at,
         previewUrl: getPreviewUrl("post", row.id),
-      }) satisfies BlogPostRecord,
+      } satisfies BlogPostRecord;
+    },
   );
+}
+
+export async function getBlogPostAdminSettingsMap(postIds: string[]) {
+  const uniqueIds = Array.from(new Set(postIds.filter(Boolean)));
+  if (!uniqueIds.length) return {} as Record<string, BlogPostAdminSettingsRecord>;
+
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("entity_id, payload, created_at")
+    .eq("entity_type", "blog_post_admin")
+    .eq("action", "settings:update")
+    .in("entity_id", uniqueIds)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const map: Record<string, BlogPostAdminSettingsRecord> = {};
+
+  for (const row of data ?? []) {
+    if (map[row.entity_id]) continue;
+    const payload = (row.payload ?? {}) as Record<string, unknown>;
+    map[row.entity_id] = {
+      postId: row.entity_id,
+      blogType: typeof payload.blogType === "string" && payload.blogType ? payload.blogType : "Article",
+      category: typeof payload.category === "string" && payload.category ? payload.category : "Editorial",
+      tags: Array.isArray(payload.tags) ? payload.tags.filter((value): value is string => typeof value === "string") : [],
+      adminStatus:
+        payload.adminStatus === "published" || payload.adminStatus === "scheduled"
+          ? payload.adminStatus
+          : "draft",
+      scheduledFor: typeof payload.scheduledFor === "string" ? payload.scheduledFor : null,
+      featuredArticle: payload.featuredArticle === true,
+      featureOnHomepage: payload.featureOnHomepage === true,
+      highlightInBlog: payload.highlightInBlog === true,
+      updatedAt: row.created_at,
+    } satisfies BlogPostAdminSettingsRecord;
+  }
+
+  uniqueIds.forEach((postId) => {
+    if (map[postId]) return;
+    map[postId] = {
+      postId,
+      blogType: "Article",
+      category: "Editorial",
+      tags: [],
+      adminStatus: "draft",
+      scheduledFor: null,
+      featuredArticle: false,
+      featureOnHomepage: false,
+      highlightInBlog: false,
+      updatedAt: null,
+    };
+  });
+
+  return map;
 }
 
 export async function getStaffMembers() {

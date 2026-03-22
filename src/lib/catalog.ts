@@ -91,6 +91,15 @@ type BlogPostRow = {
   status: "draft" | "published";
 };
 
+type BlogPostAdminSettings = {
+  category: string;
+  blogType: string;
+  tags: string[];
+  featuredArticle: boolean;
+  featureOnHomepage: boolean;
+  highlightInBlog: boolean;
+};
+
 function mapProductRow(row: ProductRow): Product | null {
   const fallback = fallbackProducts.find((item) => item.slug === row.slug || item.name === row.name);
   const category = row.categories?.[0];
@@ -175,7 +184,7 @@ function estimateReadTime(body: unknown, excerpt: string | null) {
   return `${Math.max(3, Math.ceil(wordCount / 180))} min read`;
 }
 
-function mapBlogPostRow(row: BlogPostRow): BlogPost {
+function mapBlogPostRow(row: BlogPostRow, settings?: BlogPostAdminSettings): BlogPost {
   return {
     id: row.id,
     slug: row.slug,
@@ -186,11 +195,48 @@ function mapBlogPostRow(row: BlogPostRow): BlogPost {
     coverImageUrl: row.cover_image_url,
     body: row.body,
     readTime: estimateReadTime(row.body, row.excerpt),
-    category: "Editorial",
+    category: settings?.category || "Editorial",
+    blogType: settings?.blogType || "Article",
+    tags: settings?.tags || [],
+    featuredArticle: settings?.featuredArticle ?? false,
+    featureOnHomepage: settings?.featureOnHomepage ?? false,
+    highlightInBlog: settings?.highlightInBlog ?? false,
     seoTitle: row.seo_title ?? row.title,
     seoDescription: row.seo_description ?? row.excerpt ?? `Read ${row.title} from Sofi Knots.`,
     seoKeywords: row.seo_keywords?.length ? row.seo_keywords : ["sofi knots blog"],
   };
+}
+
+async function getBlogPostAdminSettingsMap(postIds: string[]) {
+  const uniqueIds = Array.from(new Set(postIds.filter(Boolean)));
+  if (!uniqueIds.length) return {} as Record<string, BlogPostAdminSettings>;
+
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("entity_id, payload, created_at")
+    .eq("entity_type", "blog_post_admin")
+    .eq("action", "settings:update")
+    .in("entity_id", uniqueIds)
+    .order("created_at", { ascending: false });
+
+  if (error) return {} as Record<string, BlogPostAdminSettings>;
+
+  const map: Record<string, BlogPostAdminSettings> = {};
+  for (const row of data ?? []) {
+    if (map[row.entity_id]) continue;
+    const payload = (row.payload ?? {}) as Record<string, unknown>;
+    map[row.entity_id] = {
+      category: typeof payload.category === "string" && payload.category ? payload.category : "Editorial",
+      blogType: typeof payload.blogType === "string" && payload.blogType ? payload.blogType : "Article",
+      tags: Array.isArray(payload.tags) ? payload.tags.filter((value): value is string => typeof value === "string") : [],
+      featuredArticle: payload.featuredArticle === true,
+      featureOnHomepage: payload.featureOnHomepage === true,
+      highlightInBlog: payload.highlightInBlog === true,
+    };
+  }
+
+  return map;
 }
 
 function mapPageRow(row: PageRow): CmsPage {
@@ -533,8 +579,9 @@ export async function getCatalogBlogPosts(): Promise<CatalogResult<BlogPost[]>> 
     if (error) {
       return { data: fallbackBlogPosts, source: "fallback", error: error.message };
     }
-
-    const mapped = (data as BlogPostRow[]).map(mapBlogPostRow);
+    const rows = data as BlogPostRow[];
+    const settingsMap = await getBlogPostAdminSettingsMap(rows.map((row) => row.id));
+    const mapped = rows.map((row) => mapBlogPostRow(row, settingsMap[row.id]));
     if (!mapped.length) {
       return { data: fallbackBlogPosts, source: "fallback", error: "Blog is still using starter content until CMS tables are populated." };
     }
@@ -563,8 +610,8 @@ export async function getCatalogBlogPostBySlug(slug: string): Promise<CatalogRes
       const fallback = fallbackBlogPosts.find((post) => post.slug === slug) ?? null;
       return { data: fallback, source: "fallback", error: error?.message ?? "Blog post not found in Supabase" };
     }
-
-    return { data: mapBlogPostRow(data as BlogPostRow), source: "supabase" };
+    const settingsMap = await getBlogPostAdminSettingsMap([data.id]);
+    return { data: mapBlogPostRow(data as BlogPostRow, settingsMap[data.id]), source: "supabase" };
   } catch (error) {
     const fallback = fallbackBlogPosts.find((post) => post.slug === slug) ?? null;
     return {

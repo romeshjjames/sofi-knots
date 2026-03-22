@@ -1,10 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { ExternalLink, FileText, LayoutTemplate, Link as LinkIcon, Newspaper, Sparkles } from "lucide-react";
+import {
+  ExternalLink,
+  FileText,
+  LayoutTemplate,
+  Link as LinkIcon,
+  Newspaper,
+  Search,
+  Sparkles,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { ContentPreview } from "@/components/admin/content-preview";
-import type { BlogPostRecord, PageRecord } from "@/lib/admin-data";
 import { VisualBlockBuilder } from "@/components/admin/visual-block-builder";
+import type { BlogPostRecord, PageRecord } from "@/lib/admin-data";
 import { normalizeVisualBlocks } from "@/lib/cms-blocks";
 
 type Props = {
@@ -13,6 +23,7 @@ type Props = {
 };
 
 type Mode = "page" | "post";
+type PublishStatus = "draft" | "published" | "scheduled";
 
 type EditorRecord = {
   id: string;
@@ -20,7 +31,7 @@ type EditorRecord = {
   slug: string;
   excerpt: string;
   bodyText: string;
-  status: "draft" | "published";
+  status: PublishStatus;
   seoTitle: string;
   seoDescription: string;
   seoKeywordsText: string;
@@ -29,7 +40,94 @@ type EditorRecord = {
   authorName: string;
   publishedAt: string;
   previewUrl: string;
+  blogType: string;
+  category: string;
+  tagsText: string;
+  scheduledFor: string;
+  featuredArticle: boolean;
+  featureOnHomepage: boolean;
+  highlightInBlog: boolean;
 };
+
+const blogTypeOptions = [
+  "Article",
+  "News",
+  "Style Guide",
+  "Care Guide",
+  "Brand Story",
+  "Collection Launch",
+  "Customer Story",
+  "Announcement",
+  "Tutorial",
+  "Lookbook Story",
+];
+
+const categoryOptions = [
+  "Fashion Tips",
+  "Handmade Stories",
+  "Product Updates",
+  "Craftsmanship",
+  "Gifting",
+  "Editorial",
+];
+
+const pageStarters = [
+  {
+    id: "landing",
+    label: "Landing page",
+    description: "Hero, story section, image spotlight, and CTA.",
+    icon: LayoutTemplate,
+    body: [
+      { type: "heading", content: "Build the campaign headline", level: "h2" },
+      { type: "paragraph", content: "Introduce the page with a clear promise and supporting value proposition." },
+      { type: "cta", label: "Shop now", href: "/shop", style: "primary" },
+      { type: "heading", content: "Tell the deeper story", level: "h2" },
+      { type: "paragraph", content: "Use this area for craftsmanship, product education, or campaign narrative." },
+      { type: "image", url: "", alt: "Editorial image", caption: "Add a supporting visual" },
+    ],
+  },
+  {
+    id: "policy",
+    label: "Policy page",
+    description: "Simple, readable stack for shipping, care, or returns.",
+    icon: FileText,
+    body: [
+      { type: "heading", content: "Policy title", level: "h2" },
+      { type: "paragraph", content: "Start with a short summary that tells visitors what this page covers." },
+      { type: "heading", content: "Section heading", level: "h3" },
+      { type: "paragraph", content: "Use concise, readable paragraphs for policy details." },
+    ],
+  },
+] as const;
+
+const postStarters = [
+  {
+    id: "editorial",
+    label: "Editorial story",
+    description: "Long-form post with visual rhythm and quote moments.",
+    icon: Newspaper,
+    body: [
+      { type: "heading", content: "Open with a strong editorial headline", level: "h2" },
+      { type: "paragraph", content: "Set up the story with a warm introduction that invites the reader into the post." },
+      { type: "image", url: "", alt: "Feature image", caption: "Visual supporting the story" },
+      { type: "quote", quote: "Add a memorable founder, customer, or editorial quote here.", cite: "Quote source" },
+      { type: "paragraph", content: "Continue the article with practical details, styling ideas, or behind-the-scenes context." },
+    ],
+  },
+  {
+    id: "seo-guide",
+    label: "SEO guide",
+    description: "Useful structure for FAQ, listicle, or search-intent content.",
+    icon: Sparkles,
+    body: [
+      { type: "heading", content: "Guide headline", level: "h2" },
+      { type: "paragraph", content: "Begin with a concise answer to the main search intent." },
+      { type: "heading", content: "Helpful subtopic", level: "h3" },
+      { type: "paragraph", content: "Expand with practical tips, examples, or comparisons." },
+      { type: "cta", label: "Browse products", href: "/shop", style: "secondary" },
+    ],
+  },
+] as const;
 
 const emptyRecord: EditorRecord = {
   id: "",
@@ -46,115 +144,122 @@ const emptyRecord: EditorRecord = {
   authorName: "",
   publishedAt: "",
   previewUrl: "",
+  blogType: "Article",
+  category: "Editorial",
+  tagsText: "",
+  scheduledFor: "",
+  featuredArticle: false,
+  featureOnHomepage: false,
+  highlightInBlog: false,
 };
 
-const contentStarters = {
-  page: [
-    {
-      id: "landing",
-      label: "Landing page",
-      description: "Hero, story section, image spotlight, and CTA.",
-      icon: LayoutTemplate,
-      body: [
-        { type: "heading", content: "Build the campaign headline", level: "h2" },
-        { type: "paragraph", content: "Introduce the page with a clear promise and supporting value proposition." },
-        { type: "cta", label: "Shop now", href: "/shop", style: "primary" },
-        { type: "heading", content: "Tell the deeper story", level: "h2" },
-        { type: "paragraph", content: "Use this area for craftsmanship, product education, or campaign narrative." },
-        { type: "image", url: "", alt: "Editorial image", caption: "Add a supporting visual" },
-      ],
-    },
-    {
-      id: "policy",
-      label: "Policy page",
-      description: "Simple, readable stack for shipping, care, or returns.",
-      icon: FileText,
-      body: [
-        { type: "heading", content: "Policy title", level: "h2" },
-        { type: "paragraph", content: "Start with a short summary that tells visitors what this page covers." },
-        { type: "heading", content: "Section heading", level: "h3" },
-        { type: "paragraph", content: "Use concise, readable paragraphs for policy details." },
-      ],
-    },
-  ],
-  post: [
-    {
-      id: "editorial",
-      label: "Editorial story",
-      description: "Long-form post with visual rhythm and quote moments.",
-      icon: Newspaper,
-      body: [
-        { type: "heading", content: "Open with a strong editorial headline", level: "h2" },
-        { type: "paragraph", content: "Set up the story with a warm introduction that invites the reader into the post." },
-        { type: "image", url: "", alt: "Feature image", caption: "Visual supporting the story" },
-        { type: "quote", quote: "Add a memorable founder, customer, or editorial quote here.", cite: "Quote source" },
-        { type: "paragraph", content: "Continue the article with practical details, styling ideas, or behind-the-scenes context." },
-      ],
-    },
-    {
-      id: "seo-guide",
-      label: "SEO guide",
-      description: "Useful structure for FAQ, listicle, or search-intent content.",
-      icon: Sparkles,
-      body: [
-        { type: "heading", content: "Guide headline", level: "h2" },
-        { type: "paragraph", content: "Begin with a concise answer to the main search intent." },
-        { type: "heading", content: "Helpful subtopic", level: "h3" },
-        { type: "paragraph", content: "Expand with practical tips, examples, or comparisons." },
-        { type: "cta", label: "Browse products", href: "/shop", style: "secondary" },
-      ],
-    },
-  ],
-} as const;
+function emptyDateTimeLocal(value: string | null | undefined) {
+  if (!value) return "";
+  const date = new Date(value);
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60_000);
+  return localDate.toISOString().slice(0, 16);
+}
+
+function toIsoString(value: string) {
+  return value ? new Date(value).toISOString() : null;
+}
 
 export function ContentStudio({ pages, posts }: Props) {
   const [mode, setMode] = useState<Mode>("page");
   const [selectedId, setSelectedId] = useState<string>(pages[0]?.id ?? "");
-  const [editor, setEditor] = useState(emptyRecord);
+  const [editor, setEditor] = useState<EditorRecord>(emptyRecord);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<PublishStatus | "all">("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [blogTypeFilter, setBlogTypeFilter] = useState("all");
   const [message, setMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [advancedMode, setAdvancedMode] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const records = mode === "page" ? pages : posts;
+
+  const visibleRecords = useMemo(() => {
+    return records.filter((record) => {
+      const haystack = [
+        record.title,
+        "authorName" in record ? record.authorName ?? "" : "",
+        "category" in record ? record.category : "",
+        "blogType" in record ? record.blogType : "",
+        "tags" in record && Array.isArray(record.tags) ? record.tags.join(" ") : "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      const q = query.trim().toLowerCase();
+      const matchesQuery = !q || haystack.includes(q);
+      if (mode === "page") return matchesQuery;
+      const post = record as BlogPostRecord;
+      const matchesStatus = statusFilter === "all" || post.adminStatus === statusFilter;
+      const matchesCategory = categoryFilter === "all" || post.category === categoryFilter;
+      const matchesType = blogTypeFilter === "all" || post.blogType === blogTypeFilter;
+      return matchesQuery && matchesStatus && matchesCategory && matchesType;
+    });
+  }, [records, query, mode, statusFilter, categoryFilter, blogTypeFilter]);
 
   const selected = useMemo<EditorRecord | null>(() => {
     const record = records.find((item) => item.id === selectedId);
     if (!record) return null;
-    return {
+    const base = {
       id: record.id,
       title: record.title,
       slug: record.slug,
       excerpt: record.excerpt ?? "",
       bodyText: JSON.stringify(record.body ?? [], null, 2),
-      status: record.status,
+      status: mode === "post" ? (record as BlogPostRecord).adminStatus : (record.status as PublishStatus),
       seoTitle: record.seoTitle ?? "",
       seoDescription: record.seoDescription ?? "",
       seoKeywordsText: record.seoKeywords.join(", "),
       canonicalUrl: record.canonicalUrl ?? "",
       coverImageUrl: "coverImageUrl" in record ? String(record.coverImageUrl ?? "") : "",
       authorName: "authorName" in record ? String(record.authorName ?? "") : "",
-      publishedAt: "publishedAt" in record ? String(record.publishedAt ?? "") : "",
+      publishedAt: "publishedAt" in record ? emptyDateTimeLocal(typeof record.publishedAt === "string" ? record.publishedAt : "") : "",
       previewUrl: "previewUrl" in record ? String(record.previewUrl ?? "") : "",
-    };
-  }, [records, selectedId]);
+      blogType: "blogType" in record ? String(record.blogType ?? "Article") : "Article",
+      category: "category" in record ? String(record.category ?? "Editorial") : "Editorial",
+      tagsText: "tags" in record && Array.isArray(record.tags) ? record.tags.join(", ") : "",
+      scheduledFor: "scheduledFor" in record ? emptyDateTimeLocal(typeof record.scheduledFor === "string" ? record.scheduledFor : "") : "",
+      featuredArticle: "featuredArticle" in record ? Boolean(record.featuredArticle) : false,
+      featureOnHomepage: "featureOnHomepage" in record ? Boolean(record.featureOnHomepage) : false,
+      highlightInBlog: "highlightInBlog" in record ? Boolean(record.highlightInBlog) : false,
+    } satisfies EditorRecord;
+    return base;
+  }, [records, selectedId, mode]);
 
   const activeRecord = selected ? { ...selected, ...editor } : editor;
   const normalizedBlocks = useMemo(() => normalizeVisualBlocks(activeRecord.bodyText), [activeRecord.bodyText]);
-  const blockCount = normalizedBlocks.length;
   const sectionCount = new Set(normalizedBlocks.map((block) => block.sectionId)).size;
+  const blockCount = normalizedBlocks.length;
   const seoReady = Boolean(activeRecord.seoTitle && activeRecord.seoDescription);
 
   useEffect(() => {
-    if (selected) {
-      setEditor(selected);
-    }
-    if (!selected && !selectedId) {
-      setEditor(emptyRecord);
-    }
+    if (selected) setEditor(selected);
+    if (!selected && !selectedId) setEditor(emptyRecord);
   }, [selected, selectedId]);
 
+  useEffect(() => {
+    const nextRecords = mode === "page" ? pages : posts;
+    setSelectedId(nextRecords[0]?.id ?? "");
+    setQuery("");
+    setStatusFilter("all");
+    setCategoryFilter("all");
+    setBlogTypeFilter("all");
+    setEditor(emptyRecord);
+  }, [mode, pages, posts]);
+
+  function createNewRecord() {
+    setSelectedId("");
+    setEditor(emptyRecord);
+  }
+
   function applyStarter(templateId: string) {
-    const starter = contentStarters[mode].find((entry) => entry.id === templateId);
+    const starters = mode === "page" ? pageStarters : postStarters;
+    const starter = starters.find((entry) => entry.id === templateId);
     if (!starter) return;
     setEditor((current) => ({
       ...current,
@@ -165,6 +270,10 @@ export function ContentStudio({ pages, posts }: Props) {
   }
 
   async function saveRecord() {
+    return saveRecordWithStatus(activeRecord.status);
+  }
+
+  async function saveRecordWithStatus(status: PublishStatus) {
     const endpoint = mode === "page" ? "/api/admin/content/pages" : "/api/admin/content/posts";
     const hasId = Boolean(activeRecord.id);
     let parsedBody: unknown = [];
@@ -174,27 +283,42 @@ export function ContentStudio({ pages, posts }: Props) {
       setMessage("Content JSON is invalid. Please fix the body blocks before saving.");
       return;
     }
+
+    const payload = {
+      title: activeRecord.title,
+      slug: activeRecord.slug,
+      excerpt: activeRecord.excerpt,
+      body: parsedBody,
+      status: mode === "page" ? status : status === "published" ? "published" : "draft",
+      adminStatus: status,
+      seoTitle: activeRecord.seoTitle,
+      seoDescription: activeRecord.seoDescription,
+      seoKeywords: activeRecord.seoKeywordsText.split(",").map((value) => value.trim()).filter(Boolean),
+      canonicalUrl: activeRecord.canonicalUrl,
+      coverImageUrl: activeRecord.coverImageUrl,
+      authorName: activeRecord.authorName,
+      publishedAt: toIsoString(activeRecord.publishedAt),
+      blogType: activeRecord.blogType,
+      category: activeRecord.category,
+      tags: activeRecord.tagsText.split(",").map((value) => value.trim()).filter(Boolean),
+      scheduledFor: toIsoString(activeRecord.scheduledFor),
+      featuredArticle: activeRecord.featuredArticle,
+      featureOnHomepage: activeRecord.featureOnHomepage,
+      highlightInBlog: activeRecord.highlightInBlog,
+    };
+
     const response = await fetch(hasId ? `${endpoint}/${activeRecord.id}` : endpoint, {
       method: hasId ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: activeRecord.title,
-        slug: activeRecord.slug,
-        excerpt: activeRecord.excerpt,
-        body: parsedBody,
-        status: activeRecord.status,
-        seoTitle: activeRecord.seoTitle,
-        seoDescription: activeRecord.seoDescription,
-        seoKeywords: activeRecord.seoKeywordsText.split(",").map((value) => value.trim()).filter(Boolean),
-        canonicalUrl: activeRecord.canonicalUrl,
-        coverImageUrl: activeRecord.coverImageUrl,
-        authorName: activeRecord.authorName,
-          publishedAt: activeRecord.publishedAt || null,
-      }),
+      body: JSON.stringify(payload),
     });
     const body = await response.json();
-    setMessage(response.ok ? `${mode === "page" ? "Page" : "Post"} saved.` : body.error || "Failed to save content.");
-    if (response.ok) window.location.reload();
+    if (!response.ok) {
+      setMessage(body.error || "Failed to save content.");
+      return;
+    }
+    setMessage(mode === "page" ? "Page saved." : "Post saved.");
+    window.location.reload();
   }
 
   async function deleteRecord() {
@@ -202,9 +326,14 @@ export function ContentStudio({ pages, posts }: Props) {
     const endpoint = mode === "page" ? `/api/admin/content/pages/${activeRecord.id}` : `/api/admin/content/posts/${activeRecord.id}`;
     const response = await fetch(endpoint, { method: "DELETE" });
     const body = await response.json();
-    setMessage(response.ok ? `${mode === "page" ? "Page" : "Post"} deleted.` : body.error || "Failed to delete content.");
-    if (response.ok) window.location.reload();
+    if (!response.ok) {
+      setMessage(body.error || "Failed to delete content.");
+      return;
+    }
+    window.location.reload();
   }
+
+  const starterCards = mode === "page" ? pageStarters : postStarters;
 
   return (
     <div className="grid gap-6 2xl:grid-cols-[320px_minmax(0,1fr)_420px]">
@@ -217,23 +346,84 @@ export function ContentStudio({ pages, posts }: Props) {
             Blog posts
           </button>
         </div>
-        <button
-          type="button"
-          className="brand-btn-outline w-full justify-center px-4 py-3"
-          onClick={() => {
-            setSelectedId("");
-            setEditor({ ...emptyRecord });
-          }}
-        >
-          Create new {mode}
+
+        <button type="button" className="brand-btn-outline w-full justify-center px-4 py-3" onClick={createNewRecord}>
+          {mode === "page" ? "Create page" : "Add article"}
         </button>
+
+        <div className="flex items-center gap-3 rounded-2xl border border-brand-sand/40 bg-[#fcfaf5] px-4 py-3">
+          <Search size={16} className="text-brand-taupe" />
+          <input
+            className="w-full bg-transparent text-sm text-brand-warm outline-none placeholder:text-brand-taupe"
+            placeholder={mode === "page" ? "Search pages" : "Search title, author, category, tag, type"}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </div>
+
+        {mode === "post" ? (
+          <div className="grid gap-3">
+            <select className="brand-input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as PublishStatus | "all")}>
+              <option value="all">All status</option>
+              <option value="draft">Draft</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="published">Published</option>
+            </select>
+            <select className="brand-input" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+              <option value="all">All categories</option>
+              {categoryOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            <select className="brand-input" value={blogTypeFilter} onChange={(event) => setBlogTypeFilter(event.target.value)}>
+              <option value="all">All blog types</option>
+              {blogTypeOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+
         <div className="space-y-3">
-          {records.map((record) => (
-            <button key={record.id} type="button" onClick={() => setSelectedId(record.id)} className={`w-full rounded-2xl border p-4 text-left ${selectedId === record.id ? "border-brand-gold bg-white" : "border-brand-sand/40 bg-[#fcfaf5]"}`}>
-              <div className="font-medium text-brand-brown">{record.title}</div>
-              <div className="mt-1 text-xs uppercase tracking-[0.16em] text-brand-taupe">{record.slug}</div>
+          {visibleRecords.map((record) => (
+            <button
+              key={record.id}
+              type="button"
+              onClick={() => setSelectedId(record.id)}
+              className={`w-full rounded-2xl border p-4 text-left ${selectedId === record.id ? "border-brand-gold bg-white" : "border-brand-sand/40 bg-[#fcfaf5]"}`}
+            >
+              {(() => {
+                const postRecord = mode === "post" ? (record as BlogPostRecord) : null;
+                return (
+                  <>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-medium text-brand-brown">{record.title}</div>
+                        <div className="mt-1 text-xs uppercase tracking-[0.16em] text-brand-taupe">{record.slug}</div>
+                      </div>
+                      {postRecord?.featuredArticle ? <Star size={14} className="mt-1 text-brand-gold" /> : null}
+                    </div>
+                    {postRecord ? (
+                      <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.14em] text-brand-taupe">
+                        <span>{postRecord.blogType}</span>
+                        <span>{postRecord.category}</span>
+                        <span>{postRecord.adminStatus}</span>
+                      </div>
+                    ) : null}
+                  </>
+                );
+              })()}
             </button>
           ))}
+          {visibleRecords.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-brand-sand/50 bg-[#fcfaf5] p-4 text-sm text-brand-warm">
+              No content matches the current search or filters.
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -252,18 +442,70 @@ export function ContentStudio({ pages, posts }: Props) {
             <div className="mt-2 text-sm font-medium text-brand-brown">{seoReady ? "Ready for preview" : "Needs SEO copy"}</div>
           </div>
         </div>
+
         <div className="grid gap-4 md:grid-cols-2">
           <input className="brand-input" value={activeRecord.title} onChange={(event) => setEditor((current) => ({ ...current, title: event.target.value }))} placeholder="Title" />
-          <input className="brand-input" value={activeRecord.slug} onChange={(event) => setEditor((current) => ({ ...current, slug: event.target.value }))} placeholder="Slug" />
+          <input className="brand-input" value={activeRecord.slug} onChange={(event) => setEditor((current) => ({ ...current, slug: event.target.value }))} placeholder="URL handle / slug" />
         </div>
-        <textarea className="brand-input min-h-24" value={activeRecord.excerpt} onChange={(event) => setEditor((current) => ({ ...current, excerpt: event.target.value }))} placeholder="Excerpt" />
-        <div className="grid gap-4 md:grid-cols-2">
-          <select className="brand-input" value={activeRecord.status} onChange={(event) => setEditor((current) => ({ ...current, status: event.target.value as EditorRecord["status"] }))}>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </select>
-          <input className="brand-input" value={activeRecord.canonicalUrl} onChange={(event) => setEditor((current) => ({ ...current, canonicalUrl: event.target.value }))} placeholder="Canonical URL" />
-        </div>
+        <textarea className="brand-input min-h-24" value={activeRecord.excerpt} onChange={(event) => setEditor((current) => ({ ...current, excerpt: event.target.value }))} placeholder="Short excerpt / summary" />
+
+        {mode === "post" ? (
+          <>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <select className="brand-input" value={activeRecord.blogType} onChange={(event) => setEditor((current) => ({ ...current, blogType: event.target.value }))}>
+                {blogTypeOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <select className="brand-input" value={activeRecord.category} onChange={(event) => setEditor((current) => ({ ...current, category: event.target.value }))}>
+                {categoryOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <input className="brand-input" value={activeRecord.authorName} onChange={(event) => setEditor((current) => ({ ...current, authorName: event.target.value }))} placeholder="Author name" />
+              <input className="brand-input" value={activeRecord.tagsText} onChange={(event) => setEditor((current) => ({ ...current, tagsText: event.target.value }))} placeholder="Tags separated by comma" />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <input className="brand-input" value={activeRecord.coverImageUrl} onChange={(event) => setEditor((current) => ({ ...current, coverImageUrl: event.target.value }))} placeholder="Featured image URL" />
+              <select className="brand-input" value={activeRecord.status} onChange={(event) => setEditor((current) => ({ ...current, status: event.target.value as PublishStatus }))}>
+                <option value="draft">Draft</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="published">Published</option>
+              </select>
+              <input className="brand-input" type="datetime-local" value={activeRecord.publishedAt} onChange={(event) => setEditor((current) => ({ ...current, publishedAt: event.target.value }))} placeholder="Publish date" />
+              <input className="brand-input" type="datetime-local" value={activeRecord.scheduledFor} onChange={(event) => setEditor((current) => ({ ...current, scheduledFor: event.target.value }))} placeholder="Schedule publish" />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className="flex items-center justify-between rounded-2xl border border-brand-sand/40 bg-[#fcfaf5] px-4 py-3 text-sm text-brand-warm">
+                Featured article
+                <input type="checkbox" checked={activeRecord.featuredArticle} onChange={(event) => setEditor((current) => ({ ...current, featuredArticle: event.target.checked }))} />
+              </label>
+              <label className="flex items-center justify-between rounded-2xl border border-brand-sand/40 bg-[#fcfaf5] px-4 py-3 text-sm text-brand-warm">
+                Homepage feature
+                <input type="checkbox" checked={activeRecord.featureOnHomepage} onChange={(event) => setEditor((current) => ({ ...current, featureOnHomepage: event.target.checked }))} />
+              </label>
+              <label className="flex items-center justify-between rounded-2xl border border-brand-sand/40 bg-[#fcfaf5] px-4 py-3 text-sm text-brand-warm">
+                Highlight in blog
+                <input type="checkbox" checked={activeRecord.highlightInBlog} onChange={(event) => setEditor((current) => ({ ...current, highlightInBlog: event.target.checked }))} />
+              </label>
+            </div>
+          </>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            <select className="brand-input" value={activeRecord.status} onChange={(event) => setEditor((current) => ({ ...current, status: event.target.value as PublishStatus }))}>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </select>
+            <input className="brand-input" value={activeRecord.canonicalUrl} onChange={(event) => setEditor((current) => ({ ...current, canonicalUrl: event.target.value }))} placeholder="Canonical URL" />
+          </div>
+        )}
+
         {activeRecord.previewUrl ? (
           <div className="flex flex-wrap gap-3 rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4">
             <a href={activeRecord.previewUrl} target="_blank" rel="noreferrer" className="brand-btn-outline px-4 py-2">
@@ -283,25 +525,19 @@ export function ContentStudio({ pages, posts }: Props) {
             </button>
           </div>
         ) : null}
-        {mode === "post" ? (
-          <div className="grid gap-4 md:grid-cols-3">
-            <input className="brand-input" value={activeRecord.authorName} onChange={(event) => setEditor((current) => ({ ...current, authorName: event.target.value }))} placeholder="Author name" />
-            <input className="brand-input" value={activeRecord.coverImageUrl} onChange={(event) => setEditor((current) => ({ ...current, coverImageUrl: event.target.value }))} placeholder="Cover image URL" />
-            <input className="brand-input" type="date" value={activeRecord.publishedAt ? activeRecord.publishedAt.slice(0, 10) : ""} onChange={(event) => setEditor((current) => ({ ...current, publishedAt: event.target.value }))} placeholder="Publish date" />
-          </div>
-        ) : null}
+
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-brand-brown">Visual section composer</p>
-              <p className="text-xs text-brand-taupe">Build pages from reusable visual sections. Raw JSON is now only for advanced fallback editing.</p>
+              <p className="text-xs text-brand-taupe">Build the article or page structure visually. Raw JSON is available as an advanced fallback.</p>
             </div>
             <button type="button" className="brand-btn-outline px-4 py-2" onClick={() => setAdvancedMode((current) => !current)}>
               {advancedMode ? "Hide raw JSON" : "Show raw JSON"}
             </button>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            {contentStarters[mode].map((starter) => {
+            {starterCards.map((starter) => {
               const Icon = starter.icon;
               return (
                 <button key={starter.id} type="button" className="rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4 text-left transition hover:border-brand-gold/50 hover:bg-white" onClick={() => applyStarter(starter.id)}>
@@ -319,17 +555,33 @@ export function ContentStudio({ pages, posts }: Props) {
             <textarea className="brand-input min-h-[220px] font-mono text-xs" value={activeRecord.bodyText} onChange={(event) => setEditor((current) => ({ ...current, bodyText: event.target.value }))} placeholder="JSON content blocks" />
           ) : null}
         </div>
+
         <div className="grid gap-4 md:grid-cols-2">
           <input className="brand-input" value={activeRecord.seoTitle} onChange={(event) => setEditor((current) => ({ ...current, seoTitle: event.target.value }))} placeholder="SEO title" />
           <input className="brand-input" value={activeRecord.seoKeywordsText} onChange={(event) => setEditor((current) => ({ ...current, seoKeywordsText: event.target.value }))} placeholder="SEO keywords" />
         </div>
-        <textarea className="brand-input min-h-24" value={activeRecord.seoDescription} onChange={(event) => setEditor((current) => ({ ...current, seoDescription: event.target.value }))} placeholder="SEO description" />
+        <textarea className="brand-input min-h-24" value={activeRecord.seoDescription} onChange={(event) => setEditor((current) => ({ ...current, seoDescription: event.target.value }))} placeholder="Meta description" />
+
         <div className="flex flex-wrap gap-3">
           <button type="button" className="brand-btn-primary" disabled={isPending} onClick={() => startTransition(async () => void saveRecord())}>
-            {isPending ? "Saving..." : `Save ${mode}`}
+            {isPending ? "Saving..." : mode === "post" ? "Save post" : "Save page"}
           </button>
+          {mode === "post" ? (
+            <>
+              <button type="button" className="brand-btn-outline px-4 py-2" disabled={isPending} onClick={() => startTransition(async () => void saveRecordWithStatus("draft"))}>
+                Save as draft
+              </button>
+              <button type="button" className="brand-btn-outline px-4 py-2" disabled={isPending} onClick={() => startTransition(async () => void saveRecordWithStatus("published"))}>
+                Publish now
+              </button>
+              <button type="button" className="brand-btn-outline px-4 py-2" disabled={isPending} onClick={() => startTransition(async () => void saveRecordWithStatus("scheduled"))}>
+                Schedule
+              </button>
+            </>
+          ) : null}
           {activeRecord.id ? (
-            <button type="button" className="brand-btn-outline border-rose-300 text-rose-700 hover:bg-rose-600 hover:text-white" disabled={isPending} onClick={() => startTransition(async () => void deleteRecord())}>
+            <button type="button" className="brand-btn-outline border-rose-300 text-rose-700 hover:bg-rose-600 hover:text-white" disabled={isPending} onClick={() => setDeleteOpen(true)}>
+              <Trash2 size={15} />
               Delete
             </button>
           ) : null}
@@ -344,6 +596,7 @@ export function ContentStudio({ pages, posts }: Props) {
             <div>{sectionCount ? `${sectionCount} sections composed` : "Add at least one section"}</div>
             <div>{seoReady ? "SEO title and description are set" : "Complete SEO title and description"}</div>
             <div>{activeRecord.slug ? `Slug ready at /${mode === "post" ? "blog/" : ""}${activeRecord.slug}` : "Add a slug for the final URL"}</div>
+            {mode === "post" ? <div>{activeRecord.blogType} in {activeRecord.category}</div> : null}
           </div>
         </div>
         <ContentPreview
@@ -359,6 +612,27 @@ export function ContentStudio({ pages, posts }: Props) {
           seoDescription={activeRecord.seoDescription}
         />
       </div>
+
+      {deleteOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4">
+          <div className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-semibold text-slate-900">{mode === "post" ? "Delete article?" : "Delete page?"}</h3>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              {mode === "post"
+                ? "This article will be removed from the blog and will no longer appear on the website."
+                : "This page will be removed from the content library and storefront if published."}
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" className="rounded-2xl border border-[#d8dde3] px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50" onClick={() => setDeleteOpen(false)}>
+                Cancel
+              </button>
+              <button type="button" className="rounded-2xl bg-rose-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-700" onClick={() => startTransition(async () => void deleteRecord())}>
+                Confirm delete
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
