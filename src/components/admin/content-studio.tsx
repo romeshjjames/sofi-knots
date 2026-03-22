@@ -20,6 +20,9 @@ import { normalizeVisualBlocks } from "@/lib/cms-blocks";
 type Props = {
   pages: PageRecord[];
   posts: BlogPostRecord[];
+  initialMode?: Mode;
+  initialRecordId?: string;
+  standalone?: boolean;
 };
 
 type Mode = "page" | "post";
@@ -165,9 +168,11 @@ function toIsoString(value: string) {
   return value ? new Date(value).toISOString() : null;
 }
 
-export function ContentStudio({ pages, posts }: Props) {
-  const [mode, setMode] = useState<Mode>("page");
-  const [selectedId, setSelectedId] = useState<string>(pages[0]?.id ?? "");
+export function ContentStudio({ pages, posts, initialMode = "page", initialRecordId = "", standalone = false }: Props) {
+  const [mode, setMode] = useState<Mode>(initialMode);
+  const [selectedId, setSelectedId] = useState<string>(
+    initialRecordId || (standalone ? "" : initialMode === "page" ? pages[0]?.id ?? "" : posts[0]?.id ?? ""),
+  );
   const [editor, setEditor] = useState<EditorRecord>(emptyRecord);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<PublishStatus | "all">("all");
@@ -243,6 +248,7 @@ export function ContentStudio({ pages, posts }: Props) {
   }, [selected, selectedId]);
 
   useEffect(() => {
+    if (standalone) return;
     const nextRecords = mode === "page" ? pages : posts;
     setSelectedId(nextRecords[0]?.id ?? "");
     setQuery("");
@@ -336,7 +342,8 @@ export function ContentStudio({ pages, posts }: Props) {
   const starterCards = mode === "page" ? pageStarters : postStarters;
 
   return (
-    <div className="grid gap-6 2xl:grid-cols-[320px_minmax(0,1fr)_420px]">
+    <div className={`grid gap-6 ${standalone ? "xl:grid-cols-[minmax(0,1fr)_420px]" : "2xl:grid-cols-[320px_minmax(0,1fr)_420px]"}`}>
+      {standalone ? null : (
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <button type="button" className={`rounded-2xl px-4 py-3 text-sm ${mode === "page" ? "bg-brand-brown text-white" : "bg-[#fcfaf5] text-brand-warm"}`} onClick={() => setMode("page")}>
@@ -426,6 +433,7 @@ export function ContentStudio({ pages, posts }: Props) {
           ) : null}
         </div>
       </div>
+      )}
 
       <div className="space-y-4">
         <div className="grid gap-3 rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4 md:grid-cols-3">
@@ -589,7 +597,7 @@ export function ContentStudio({ pages, posts }: Props) {
         {message ? <p className="text-sm text-brand-warm">{message}</p> : null}
       </div>
 
-      <div className="2xl:sticky 2xl:top-6 2xl:self-start">
+      <div className={`${standalone ? "xl:sticky xl:top-6 xl:self-start" : "2xl:sticky 2xl:top-6 2xl:self-start"}`}>
         <div className="mb-4 rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4">
           <div className="text-xs uppercase tracking-[0.16em] text-brand-taupe">Preview checklist</div>
           <div className="mt-3 space-y-2 text-sm text-brand-warm">

@@ -31,6 +31,8 @@ type AdminNavKey =
   | "orders"
   | "customers"
   | "discounts"
+  | "pages"
+  | "blog"
   | "content"
   | "reviews"
   | "customOrders"
@@ -65,7 +67,8 @@ const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof La
   { key: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingCart },
   { key: "customers", label: "Customers", href: "/admin/customers", icon: Users2 },
   { key: "discounts", label: "Discounts", href: "/admin/discounts", icon: BadgePercent },
-  { key: "content", label: "Blog / Content", href: "/admin/content", icon: FileText },
+  { key: "pages", label: "Pages", href: "/admin/pages", icon: FileText },
+  { key: "blog", label: "Blog", href: "/admin/blog", icon: Sparkles },
   { key: "reviews", label: "Reviews", href: "/admin/reviews", icon: MessageSquareQuote },
   { key: "customOrders", label: "Custom Orders", href: "/admin/custom-orders", icon: SquarePen },
   { key: "inventory", label: "Inventory", href: "/admin/inventory", icon: Warehouse },
