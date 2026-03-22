@@ -104,12 +104,77 @@ export type SiteSettingsRecord = {
   id: string | null;
   siteName: string;
   siteUrl: string | null;
+  storeDescription: string | null;
+  businessAddress: string | null;
+  businessHours: string | null;
   defaultMetaTitle: string | null;
   defaultMetaDescription: string | null;
   defaultMetaKeywords: string[];
   supportEmail: string | null;
   supportPhone: string | null;
+  whatsappPhone: string | null;
+  contactPageMessage: string | null;
   socialLinks: Record<string, string>;
+  branding: {
+    logoUrl: string | null;
+    faviconUrl: string | null;
+    primaryColor: string;
+    accentColor: string;
+    fontHeading: string | null;
+    fontBody: string | null;
+    footerBrandText: string | null;
+    defaultBannerImageUrl: string | null;
+  };
+  shipping: {
+    methods: string[];
+    shippingChargeInr: number;
+    freeShippingThresholdInr: number;
+    deliveryTimeline: string | null;
+    shippingZones: string[];
+    packagingNotes: string | null;
+  };
+  payments: {
+    enabledMethods: string[];
+    codEnabled: boolean;
+    cardEnabled: boolean;
+    upiEnabled: boolean;
+    walletEnabled: boolean;
+    bankTransferEnabled: boolean;
+    paymentInstructions: string | null;
+  };
+  taxes: {
+    taxRate: number;
+    taxInclusive: boolean;
+    regionRules: string | null;
+    gstin: string | null;
+  };
+  notifications: {
+    adminOrderEmails: boolean;
+    customerOrderConfirmations: boolean;
+    shippingNotifications: boolean;
+    lowStockAlerts: boolean;
+    contactInquiryAlerts: boolean;
+    customOrderAlerts: boolean;
+    notificationEmail: string | null;
+  };
+  seo: {
+    homepageTitle: string | null;
+    homepageDescription: string | null;
+    socialSharingImage: string | null;
+    allowIndexing: boolean;
+  };
+  policies: {
+    privacyPolicy: string | null;
+    termsAndConditions: string | null;
+    shippingPolicy: string | null;
+    returnRefundPolicy: string | null;
+  };
+  adminProfile: {
+    fullName: string | null;
+    email: string | null;
+    phone: string | null;
+    profileImageUrl: string | null;
+  };
 };
 
 export type AuditLogRecord = {
@@ -455,30 +520,147 @@ export async function getSiteSettings() {
     .limit(1)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  if (!data) {
-    return {
-      id: null,
-      siteName: "Sofi Knots",
-      siteUrl: null,
-      defaultMetaTitle: null,
-      defaultMetaDescription: null,
-      defaultMetaKeywords: [],
-      supportEmail: null,
-      supportPhone: null,
-      socialLinks: {},
-    } satisfies SiteSettingsRecord;
-  }
-  return {
-    id: data.id,
-    siteName: data.site_name,
-    siteUrl: data.site_url,
-    defaultMetaTitle: data.default_meta_title,
-    defaultMetaDescription: data.default_meta_description,
-    defaultMetaKeywords: data.default_meta_keywords ?? [],
-    supportEmail: data.support_email,
-    supportPhone: data.support_phone,
-    socialLinks: (data.social_links ?? {}) as Record<string, string>,
+  const defaults = {
+    id: null,
+    siteName: "Sofi Knots",
+    siteUrl: null,
+    storeDescription: "Luxury handcrafted macrame bags, decor, and custom pieces from Sofi Knots.",
+    businessAddress: null,
+    businessHours: null,
+    defaultMetaTitle: null,
+    defaultMetaDescription: null,
+    defaultMetaKeywords: [],
+    supportEmail: null,
+    supportPhone: null,
+    whatsappPhone: null,
+    contactPageMessage: "We usually respond within 24 hours to custom orders, product questions, and care requests.",
+    socialLinks: {},
+    branding: {
+      logoUrl: null,
+      faviconUrl: null,
+      primaryColor: "#1f2933",
+      accentColor: "#c7a05a",
+      fontHeading: "Cormorant Garamond",
+      fontBody: "Manrope",
+      footerBrandText: "Handcrafted in premium fibers with a soft modern macrame aesthetic.",
+      defaultBannerImageUrl: null,
+    },
+    shipping: {
+      methods: ["Standard shipping", "Express shipping"],
+      shippingChargeInr: 120,
+      freeShippingThresholdInr: 1999,
+      deliveryTimeline: "3-7 business days across India",
+      shippingZones: ["India"],
+      packagingNotes: "Premium dust bag packaging with handwritten care card.",
+    },
+    payments: {
+      enabledMethods: ["Razorpay", "UPI", "Cards"],
+      codEnabled: false,
+      cardEnabled: true,
+      upiEnabled: true,
+      walletEnabled: false,
+      bankTransferEnabled: false,
+      paymentInstructions: "All prepaid orders are processed securely through Razorpay.",
+    },
+    taxes: {
+      taxRate: 18,
+      taxInclusive: true,
+      regionRules: "GST applied for domestic orders in India.",
+      gstin: null,
+    },
+    notifications: {
+      adminOrderEmails: true,
+      customerOrderConfirmations: true,
+      shippingNotifications: true,
+      lowStockAlerts: true,
+      contactInquiryAlerts: true,
+      customOrderAlerts: true,
+      notificationEmail: null,
+    },
+    seo: {
+      homepageTitle: null,
+      homepageDescription: null,
+      socialSharingImage: null,
+      allowIndexing: true,
+    },
+    policies: {
+      privacyPolicy: null,
+      termsAndConditions: null,
+      shippingPolicy: null,
+      returnRefundPolicy: null,
+    },
+    adminProfile: {
+      fullName: "Sofi Knots Admin",
+      email: null,
+      phone: null,
+      profileImageUrl: null,
+    },
   } satisfies SiteSettingsRecord;
+
+  const auditEntityId = data?.id ?? "global";
+  const { data: auditEntry, error: auditError } = await supabase
+    .from("audit_logs")
+    .select("payload")
+    .eq("entity_type", "site_settings")
+    .eq("entity_id", auditEntityId)
+    .eq("action", "update")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (auditError) throw new Error(auditError.message);
+
+  const payload = (auditEntry?.payload ?? {}) as Record<string, unknown>;
+  const merged = {
+    ...defaults,
+    ...(data
+      ? {
+          id: data.id,
+          siteName: data.site_name,
+          siteUrl: data.site_url,
+          defaultMetaTitle: data.default_meta_title,
+          defaultMetaDescription: data.default_meta_description,
+          defaultMetaKeywords: data.default_meta_keywords ?? [],
+          supportEmail: data.support_email,
+          supportPhone: data.support_phone,
+          socialLinks: (data.social_links ?? {}) as Record<string, string>,
+        }
+      : {}),
+    ...payload,
+    branding: {
+      ...defaults.branding,
+      ...((payload.branding ?? {}) as Record<string, unknown>),
+    },
+    shipping: {
+      ...defaults.shipping,
+      ...((payload.shipping ?? {}) as Record<string, unknown>),
+    },
+    payments: {
+      ...defaults.payments,
+      ...((payload.payments ?? {}) as Record<string, unknown>),
+    },
+    taxes: {
+      ...defaults.taxes,
+      ...((payload.taxes ?? {}) as Record<string, unknown>),
+    },
+    notifications: {
+      ...defaults.notifications,
+      ...((payload.notifications ?? {}) as Record<string, unknown>),
+    },
+    seo: {
+      ...defaults.seo,
+      ...((payload.seo ?? {}) as Record<string, unknown>),
+    },
+    policies: {
+      ...defaults.policies,
+      ...((payload.policies ?? {}) as Record<string, unknown>),
+    },
+    adminProfile: {
+      ...defaults.adminProfile,
+      ...((payload.adminProfile ?? {}) as Record<string, unknown>),
+    },
+  };
+
+  return merged satisfies SiteSettingsRecord;
 }
 
 export async function getAuditLogs(entityType?: string, entityId?: string) {
