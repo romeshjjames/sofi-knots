@@ -2,9 +2,10 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronDown, ExternalLink, Eye, Filter, PencilLine, Plus, Search, Trash2, Upload, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, Eye, Filter, PencilLine, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 import type { CollectionAdminSettingsRecord, CollectionConditionRecord } from "@/lib/admin-data";
+import { resolveCollectionProducts } from "@/lib/catalog";
 import type { Collection, Product } from "@/types/commerce";
 
 type CollectionListItem = Collection & {
@@ -130,6 +131,37 @@ export function CollectionsAdmin({ collections, products }: Props) {
     [editor.assignedProductIds, products],
   );
 
+  const automatedMatches = useMemo(
+    () =>
+      resolveCollectionProducts({
+        collection: {
+          id: editor.id,
+          title: editor.title || "Untitled collection",
+          slug: editor.slug || "untitled-collection",
+          description: editor.description,
+          image: items[0]?.image ?? collections[0]?.image ?? ({} as Collection["image"]),
+          imageUrl: editor.imageUrl || null,
+          seoTitle: editor.seoTitle || editor.title || "Untitled collection",
+          seoDescription: editor.seoDescription || editor.description || "",
+          seoKeywords: editor.seoKeywords.split(",").map((value) => value.trim()).filter(Boolean),
+        },
+        products,
+        settings: {
+          collectionId: editor.id ?? "new-collection",
+          collectionType: editor.collectionType,
+          status: editor.status,
+          visibility: editor.visibility,
+          onlineStoreEnabled: editor.onlineStoreEnabled,
+          salesChannels: editor.salesChannels,
+          assignedProductIds: editor.assignedProductIds,
+          sortProducts: editor.sortProducts,
+          conditions: editor.conditions,
+          updatedAt: editor.updatedAt,
+        },
+      }),
+    [collections, editor, items, products],
+  );
+
   const assignableProducts = useMemo(() => {
     const base = products.filter((product) => !editor.assignedProductIds.includes(product.id));
     if (!productSearch) return base;
@@ -160,6 +192,18 @@ export function CollectionsAdmin({ collections, products }: Props) {
     setMessage(text);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3200);
+  }
+
+  function moveAssignedProduct(productId: string, direction: "up" | "down") {
+    setEditor((current) => {
+      const index = current.assignedProductIds.indexOf(productId);
+      if (index === -1) return current;
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= current.assignedProductIds.length) return current;
+      const next = [...current.assignedProductIds];
+      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+      return { ...current, assignedProductIds: next };
+    });
   }
 
   async function uploadImage(file: File) {
@@ -222,7 +266,7 @@ export function CollectionsAdmin({ collections, products }: Props) {
         seoTitle: editor.seoTitle || editor.title,
         seoDescription: editor.seoDescription || editor.description,
         seoKeywords: editor.seoKeywords.split(",").map((value) => value.trim()).filter(Boolean),
-        productCount: editor.collectionType === "manual" ? editor.assignedProductIds.length : 0,
+        productCount: editor.collectionType === "manual" ? editor.assignedProductIds.length : automatedMatches.length,
         updatedAt: new Date().toISOString(),
         settings: {
           collectionId: nextId,
@@ -410,7 +454,19 @@ export function CollectionsAdmin({ collections, products }: Props) {
           <section className="rounded-[28px] border border-[#e7eaee] bg-white p-5 shadow-sm">
             <h4 className="text-lg font-semibold text-slate-950">Basic details</h4>
             <div className="mt-4 grid gap-4">
-              <input className="brand-input" placeholder="Collection title" value={editor.title} onChange={(event) => setEditor((current) => ({ ...current, title: event.target.value, slug: current.slug || slugify(event.target.value) }))} />
+              <input
+                className="brand-input"
+                placeholder="Collection title"
+                value={editor.title}
+                onChange={(event) =>
+                  setEditor((current) => ({
+                    ...current,
+                    title: event.target.value,
+                    slug: slugify(event.target.value),
+                    seoTitle: current.seoTitle || `${event.target.value} | Sofi Knots`,
+                  }))
+                }
+              />
               <textarea className="brand-input min-h-28" placeholder="Description" value={editor.description} onChange={(event) => setEditor((current) => ({ ...current, description: event.target.value }))} />
               <select className="brand-input" value={editor.collectionType} onChange={(event) => setEditor((current) => ({ ...current, collectionType: event.target.value as CollectionEditor["collectionType"] }))}>
                 <option value="manual">Manual collection</option>
@@ -441,6 +497,21 @@ export function CollectionsAdmin({ collections, products }: Props) {
           <section className="rounded-[28px] border border-[#e7eaee] bg-white p-5 shadow-sm">
             <h4 className="text-lg font-semibold text-slate-950">Product assignment</h4>
             <div className="mt-4 space-y-4">
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3">
+                <div>
+                  <div className="text-sm font-medium text-slate-900">{editor.collectionType === "manual" ? "Manual collection" : "Automated collection"}</div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {editor.collectionType === "manual"
+                      ? "Save the collection, then browse and add products one by one, just like Shopify."
+                      : "Matching products are pulled automatically from the rules below."}
+                  </div>
+                </div>
+                {editor.collectionType === "manual" ? (
+                  <button type="button" className="rounded-xl border border-[#d9dee5] bg-white px-3 py-2 text-sm font-medium text-slate-700">
+                    Browse / Add products
+                  </button>
+                ) : null}
+              </div>
               <div className="flex items-center gap-3 rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3 text-sm text-slate-500">
                 <Search size={16} />
                 <input className="w-full bg-transparent outline-none placeholder:text-slate-400" placeholder="Search products" value={productSearch} onChange={(event) => setProductSearch(event.target.value)} />
@@ -467,17 +538,46 @@ export function CollectionsAdmin({ collections, products }: Props) {
                             <div className="font-medium text-slate-900">{product.name}</div>
                             <div className="text-sm text-slate-500">{product.shortDescription}</div>
                           </div>
-                          <button type="button" className="rounded-xl p-2 text-slate-400 hover:bg-[#f6f7f8]" onClick={() => setEditor((current) => ({ ...current, assignedProductIds: current.assignedProductIds.filter((id) => id !== product.id) }))}>
-                            <X size={15} />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button type="button" className="rounded-xl p-2 text-slate-400 hover:bg-[#f6f7f8]" onClick={() => moveAssignedProduct(product.id, "up")} title="Move up">
+                              <ArrowUp size={15} />
+                            </button>
+                            <button type="button" className="rounded-xl p-2 text-slate-400 hover:bg-[#f6f7f8]" onClick={() => moveAssignedProduct(product.id, "down")} title="Move down">
+                              <ArrowDown size={15} />
+                            </button>
+                            <button type="button" className="rounded-xl p-2 text-slate-400 hover:bg-[#f6f7f8]" onClick={() => setEditor((current) => ({ ...current, assignedProductIds: current.assignedProductIds.filter((id) => id !== product.id) }))}>
+                              <X size={15} />
+                            </button>
+                          </div>
                         </div>
                       )) : <div className="rounded-2xl border border-dashed border-[#d9dee5] bg-[#fbfcfd] p-4 text-sm text-slate-500">No products selected yet.</div>}
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="rounded-2xl border border-dashed border-[#d9dee5] bg-[#fbfcfd] p-4 text-sm text-slate-500">
-                  Automated collections will match products dynamically from the rules below.
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-dashed border-[#d9dee5] bg-[#fbfcfd] p-4 text-sm text-slate-500">
+                    Automated collections match products dynamically from the rules below.
+                  </div>
+                  <div>
+                    <div className="mb-2 text-sm font-medium text-slate-700">Matched products preview</div>
+                    <div className="space-y-2">
+                      {automatedMatches.length ? (
+                        automatedMatches.slice(0, 8).map((product) => (
+                          <div key={product.id} className="rounded-2xl border border-[#e7eaee] bg-white px-4 py-3">
+                            <div className="font-medium text-slate-900">{product.name}</div>
+                            <div className="mt-1 text-sm text-slate-500">
+                              {product.category} • Rs. {product.price.toLocaleString("en-IN")}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-[#d9dee5] bg-[#fbfcfd] p-4 text-sm text-slate-500">
+                          No products match the current rules yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
               <select className="brand-input" value={editor.sortProducts} onChange={(event) => setEditor((current) => ({ ...current, sortProducts: event.target.value as CollectionEditor["sortProducts"] }))}>
@@ -604,7 +704,7 @@ export function CollectionsAdmin({ collections, products }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-4">
           <div className="w-full max-w-md rounded-[28px] border border-[#e7eaee] bg-white p-6 shadow-2xl">
             <h3 className="text-xl font-semibold text-slate-950">Delete collection?</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">This will remove the collection record. Products currently assigned to it may need to be reorganized afterward.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">This removes the collection page and grouping only. Products inside the collection will remain in the store and will not be deleted.</p>
             <div className="mt-6 flex justify-end gap-3">
               <button type="button" className="brand-btn-outline px-4 py-2" onClick={() => setConfirmDelete(false)}>
                 Cancel

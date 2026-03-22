@@ -6,7 +6,9 @@ import { DataSourceNote } from "@/components/site/data-source-note";
 import { Footer } from "@/components/site/footer";
 import { Navbar } from "@/components/site/navbar";
 import { PageHero } from "@/components/site/page-hero";
-import { getCatalogCollectionBySlug, getCatalogPageBySlug } from "@/lib/catalog";
+import { ProductCard } from "@/components/site/product-card";
+import { getCollectionAdminSettingsMap } from "@/lib/admin-data";
+import { getCatalogCollectionBySlug, getCatalogPageBySlug, getCatalogProducts, resolveCollectionProducts } from "@/lib/catalog";
 import { getCollectionImageSource } from "@/lib/media";
 import { buildMetadata } from "@/lib/seo";
 
@@ -35,8 +37,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function CollectionLandingPage({ params }: { params: { slug: string } }) {
-  const [collectionResult, pageResult] = await Promise.all([
+  const [collectionResult, productsResult, pageResult] = await Promise.all([
     getCatalogCollectionBySlug(params.slug),
+    getCatalogProducts(),
     getCatalogPageBySlug(`collection-${params.slug}`),
   ]);
   const collection = collectionResult.data;
@@ -45,6 +48,16 @@ export default async function CollectionLandingPage({ params }: { params: { slug
   if (!collection) {
     notFound();
   }
+
+  const settingsMap = await getCollectionAdminSettingsMap([collection.id ?? collection.slug]);
+  const settings = settingsMap[collection.id ?? collection.slug];
+  const collectionProducts = settings
+    ? resolveCollectionProducts({
+        collection,
+        products: productsResult.data,
+        settings,
+      })
+    : productsResult.data.filter((product) => product.collectionId === collection.id);
 
   return (
     <div>
@@ -76,6 +89,28 @@ export default async function CollectionLandingPage({ params }: { params: { slug
           ) : (
             <div className="rounded-[28px] border border-brand-sand/40 bg-brand-cream p-8 text-brand-warm">
               Create a page in the admin with slug <strong>{`collection-${collection.slug}`}</strong> to add a custom collection landing page with hero content, storytelling sections, and SEO copy.
+            </div>
+          )}
+        </div>
+      </section>
+      <section className="brand-section pt-0">
+        <div className="brand-container">
+          <div className="mb-8 flex items-end justify-between gap-4">
+            <div>
+              <p className="brand-label">Collection products</p>
+              <h2 className="mt-2 font-serif text-4xl text-brand-brown">Products in {collection.title}</h2>
+            </div>
+            <div className="text-sm text-brand-taupe">{collectionProducts.length} items</div>
+          </div>
+          {collectionProducts.length ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+              {collectionProducts.map((product, index) => (
+                <ProductCard key={product.id} product={product} index={index} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[28px] border border-brand-sand/40 bg-brand-cream p-8 text-brand-warm">
+              No products are currently assigned or matched for this collection.
             </div>
           )}
         </div>

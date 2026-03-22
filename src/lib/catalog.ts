@@ -9,6 +9,7 @@ import {
 import productBag from "@/assets/product-bag.jpeg";
 import productPillow from "@/assets/product-pillow.jpeg";
 import { getCollectionMerchandising, getFeaturedProductMerchandising } from "@/lib/admin-data";
+import type { CollectionAdminSettingsRecord, CollectionConditionRecord } from "@/lib/admin-data";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import type { BlogPost, CmsPage, Collection, Product } from "@/types/commerce";
 
@@ -202,6 +203,80 @@ function mapPageRow(row: PageRow): CmsPage {
     seoDescription: row.seo_description ?? row.excerpt ?? `Read ${row.title} on Sofi Knots.`,
     seoKeywords: row.seo_keywords?.length ? row.seo_keywords : ["sofi knots"],
   };
+}
+
+function matchesCollectionCondition(product: Product, condition: CollectionConditionRecord) {
+  const normalizedValue = condition.value.trim().toLowerCase();
+  if (!normalizedValue) return true;
+
+  if (condition.rule === "price") {
+    const numericValue = Number(normalizedValue);
+    if (Number.isNaN(numericValue)) return false;
+    if (condition.operator === "equals") return product.price === numericValue;
+    if (condition.operator === "greater_than") return product.price > numericValue;
+    if (condition.operator === "less_than") return product.price < numericValue;
+    return false;
+  }
+
+  const source =
+    condition.rule === "title"
+      ? product.name
+      : condition.rule === "type"
+        ? product.category
+        : condition.rule === "vendor"
+          ? "Sofi Knots"
+          : [product.badge, product.category, product.collection, ...(product.seoKeywords ?? [])].filter(Boolean).join(" ");
+
+  const haystack = source.toLowerCase();
+
+  if (condition.operator === "equals") return haystack === normalizedValue;
+  if (condition.operator === "contains") return haystack.includes(normalizedValue);
+  return false;
+}
+
+function sortCollectionProducts(
+  products: Product[],
+  sortProducts: CollectionAdminSettingsRecord["sortProducts"],
+  manualIds: string[] = [],
+) {
+  if (sortProducts === "manual" && manualIds.length) {
+    const orderMap = new Map<string, number>(manualIds.map((id, index) => [id, index]));
+    return [...products].sort((left, right) => {
+      const leftIndex = orderMap.get(left.id);
+      const rightIndex = orderMap.get(right.id);
+      if (leftIndex !== undefined && rightIndex !== undefined) return leftIndex - rightIndex;
+      if (leftIndex !== undefined) return -1;
+      if (rightIndex !== undefined) return 1;
+      return left.name.localeCompare(right.name);
+    });
+  }
+
+  const sorted = [...products];
+  if (sortProducts === "alphabetical") return sorted.sort((left, right) => left.name.localeCompare(right.name));
+  if (sortProducts === "price-asc") return sorted.sort((left, right) => left.price - right.price);
+  if (sortProducts === "price-desc") return sorted.sort((left, right) => right.price - left.price);
+  if (sortProducts === "best-selling") return sorted.sort((left, right) => (right.rating ?? 0) - (left.rating ?? 0));
+  if (sortProducts === "newest") return sorted.sort((left, right) => Number(right.id.slice(-6)) - Number(left.id.slice(-6)));
+  return sorted;
+}
+
+export function resolveCollectionProducts(input: {
+  collection: Collection;
+  products: Product[];
+  settings: CollectionAdminSettingsRecord;
+}) {
+  const { collection, products, settings } = input;
+
+  if (settings.collectionType === "automated") {
+    const matched = products.filter((product) => settings.conditions.every((condition) => matchesCollectionCondition(product, condition)));
+    return sortCollectionProducts(matched, settings.sortProducts);
+  }
+
+  const manualIds = settings.assignedProductIds.length
+    ? settings.assignedProductIds
+    : products.filter((product) => product.collectionId === collection.id).map((product) => product.id);
+  const matched = products.filter((product) => manualIds.includes(product.id));
+  return sortCollectionProducts(matched, settings.sortProducts, manualIds);
 }
 
 async function fetchProductsFromSupabase() {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CollectionsAdmin } from "@/components/admin/collections-admin";
 import { getCollectionAdminSettingsMap } from "@/lib/admin-data";
-import { getCatalogCollections, getCatalogProducts } from "@/lib/catalog";
+import { getCatalogCollections, getCatalogProducts, resolveCollectionProducts } from "@/lib/catalog";
 import { requireAdminPage } from "@/lib/supabase/auth";
 
 export default async function AdminCollectionsPage() {
@@ -29,7 +29,14 @@ export default async function AdminCollectionsPage() {
 
     return {
       ...collection,
-      productCount: settings.collectionType === "manual" ? (settings.assignedProductIds.length || assignedProducts.length) : 0,
+      productCount: resolveCollectionProducts({
+        collection,
+        products: productsResult.data,
+        settings: {
+          ...settings,
+          assignedProductIds: settings.assignedProductIds.length ? settings.assignedProductIds : assignedProducts,
+        },
+      }).length,
       updatedAt: settings.updatedAt,
       settings: {
         ...settings,
@@ -44,6 +51,11 @@ export default async function AdminCollectionsPage() {
       eyebrow="Catalog structure"
       title="Collections"
       description="Create premium product collections, control publishing, define automated rules, and manage search-ready collection pages from one clean workspace."
+      breadcrumbs={[
+        { label: "Home", href: "/admin" },
+        { label: "Products", href: "/admin/products" },
+        { label: "Collections" },
+      ]}
       actions={
         <Link href="/collections" className="brand-btn-outline whitespace-nowrap px-5 py-3">
           Preview collections

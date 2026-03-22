@@ -79,10 +79,19 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
 
   try {
     const supabase = createAdminSupabaseClient();
+    await supabase.from("products").update({ collection_id: null }).eq("collection_id", params.id);
     const { error } = await supabase.from("collections").delete().eq("id", params.id);
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    await createAuditLog({
+      actorUserId: auth.session.user.id,
+      entityType: "collection_admin",
+      entityId: params.id,
+      action: "collection:delete",
+      payload: { deleted: true, productGroupingRemovedOnly: true },
+    });
 
     return NextResponse.json({ deleted: true });
   } catch (error) {
