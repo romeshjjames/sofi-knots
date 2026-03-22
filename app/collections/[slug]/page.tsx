@@ -69,26 +69,6 @@ export default async function CollectionLandingPage({ params }: { params: { slug
         title={page?.title || collection.title}
         description={page?.excerpt || collection.description}
       />
-      <section className="brand-section pt-0">
-        <div className="brand-container">
-          <div className="relative aspect-[16/7] overflow-hidden rounded-[28px] bg-brand-cream">
-            {collection.imageUrl ? (
-              <img
-                src={collection.imageUrl}
-                alt={collection.title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dcc6ad_100%)] p-8 text-center">
-                <div>
-                  <p className="brand-label mb-3">Media needed</p>
-                  <p className="max-w-lg font-serif text-3xl leading-tight text-brand-brown">Add a collection image from Media Library in the Collections admin.</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
       <section className="brand-section">
         <div className="brand-container max-w-5xl">
           {Array.isArray(collectionPageBody) && collectionPageBody.length ? (

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, Eye, Filter, PencilLine, Plus, Search, Trash2, Upload, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Eye, Filter, PencilLine, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 import { ContentPreview } from "@/components/admin/content-preview";
 import { VisualBlockBuilder } from "@/components/admin/visual-block-builder";
@@ -19,6 +19,7 @@ type CollectionListItem = Collection & {
 type Props = {
   collections: CollectionListItem[];
   products: Product[];
+  initialSelectedId?: string | null;
 };
 
 type CollectionEditor = {
@@ -98,10 +99,16 @@ function mapCollectionToEditor(collection: CollectionListItem): CollectionEditor
   };
 }
 
-export function CollectionsAdmin({ collections, products }: Props) {
+export function CollectionsAdmin({ collections, products, initialSelectedId = null }: Props) {
   const [items, setItems] = useState(collections);
-  const [selectedId, setSelectedId] = useState<string | null>(collections[0]?.id ?? null);
-  const [editor, setEditor] = useState<CollectionEditor>(collections[0] ? mapCollectionToEditor(collections[0]) : emptyEditor);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    initialSelectedId && collections.some((item) => item.id === initialSelectedId) ? initialSelectedId : collections[0]?.id ?? null,
+  );
+  const [editor, setEditor] = useState<CollectionEditor>(() => {
+    const selected =
+      (initialSelectedId ? collections.find((item) => item.id === initialSelectedId) : null) ?? collections[0] ?? null;
+    return selected ? mapCollectionToEditor(selected) : emptyEditor;
+  });
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "manual" | "automated">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft">("all");
@@ -413,14 +420,23 @@ export function CollectionsAdmin({ collections, products }: Props) {
                         <td className="px-4 py-4 text-slate-500">{collection.updatedAt ? new Date(collection.updatedAt).toLocaleDateString("en-IN") : "Not saved yet"}</td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2">
-                            <button type="button" className="rounded-xl border border-[#e7eaee] p-2 text-slate-500 hover:bg-[#fbfcfd]" onClick={() => pickCollection(collection.id ?? null)} title="Edit">
+                            <Link
+                              href={`/admin/collections?edit=${collection.id}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded-xl border border-[#e7eaee] p-2 text-slate-500 hover:bg-[#fbfcfd]"
+                              title="Edit in new window"
+                            >
                               <PencilLine size={15} />
-                            </button>
-                            <button type="button" className="rounded-xl border border-[#e7eaee] p-2 text-slate-500 hover:bg-[#fbfcfd]" onClick={() => pickCollection(collection.id ?? null)} title="View">
+                            </Link>
+                            <Link
+                              href={`/collections/${collection.slug}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded-xl border border-[#e7eaee] p-2 text-slate-500 hover:bg-[#fbfcfd]"
+                              title="Preview collection"
+                            >
                               <Eye size={15} />
-                            </button>
-                            <Link href={`/collections/${collection.slug}`} target="_blank" rel="noreferrer" className="rounded-xl border border-[#e7eaee] p-2 text-slate-500 hover:bg-[#fbfcfd]">
-                              <ExternalLink size={15} />
                             </Link>
                             <button
                               type="button"

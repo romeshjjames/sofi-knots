@@ -5,7 +5,11 @@ import { getCollectionAdminSettingsMap, getCollectionPageContentMap } from "@/li
 import { getCatalogCollections, getCatalogProducts, resolveCollectionProducts } from "@/lib/catalog";
 import { requireAdminPage } from "@/lib/supabase/auth";
 
-export default async function AdminCollectionsPage() {
+export default async function AdminCollectionsPage({
+  searchParams,
+}: {
+  searchParams?: { edit?: string };
+}) {
   await requireAdminPage(["super_admin", "catalog_admin", "content_admin", "marketing_admin"]);
 
   const [collectionsResult, productsResult] = await Promise.all([getCatalogCollections(), getCatalogProducts()]);
@@ -73,7 +77,11 @@ export default async function AdminCollectionsPage() {
         { label: "Products linked", value: `${productsResult.data.filter((item) => item.collectionId).length}`, hint: "Products currently assigned to a collection." },
       ]}
     >
-      <CollectionsAdmin collections={collections} products={productsResult.data} />
+      <CollectionsAdmin
+        collections={collections}
+        products={productsResult.data}
+        initialSelectedId={searchParams?.edit ?? null}
+      />
     </AdminShell>
   );
 }
