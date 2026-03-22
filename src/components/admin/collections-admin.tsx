@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ChevronDown, Eye, Filter, PencilLine, Plus, Search, Trash2, Upload, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Copy, Eye, Filter, PencilLine, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 import { ContentPreview } from "@/components/admin/content-preview";
 import { VisualBlockBuilder } from "@/components/admin/visual-block-builder";
@@ -334,6 +334,19 @@ export function CollectionsAdmin({ collections, products, initialSelectedId = nu
     });
   }
 
+  async function cloneCollection(collection: CollectionListItem) {
+    setMessage(null);
+    const response = await fetch(`/api/admin/collections/${collection.id}/clone`, { method: "POST" });
+    const body = await response.json();
+    if (!response.ok) {
+      setMessage(body.error || "Failed to clone collection.");
+      return;
+    }
+    window.open(`/admin/collections?edit=${body.collection.id}`, "_blank", "noopener,noreferrer");
+    showSuccessToast(`Duplicated "${collection.title}".`);
+    window.location.reload();
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -438,6 +451,14 @@ export function CollectionsAdmin({ collections, products, initialSelectedId = nu
                             >
                               <Eye size={15} />
                             </Link>
+                            <button
+                              type="button"
+                              className="rounded-xl border border-[#e7eaee] p-2 text-slate-500 hover:bg-[#fbfcfd]"
+                              title="Clone collection"
+                              onClick={() => void cloneCollection(collection)}
+                            >
+                              <Copy size={15} />
+                            </button>
                             <button
                               type="button"
                               className="rounded-xl border border-rose-200 p-2 text-rose-600 hover:bg-rose-50"

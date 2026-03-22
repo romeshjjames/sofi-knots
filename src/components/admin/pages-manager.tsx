@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Eye, FilePlus2, PencilLine, Search, Trash2 } from "lucide-react";
+import { Copy, Eye, FilePlus2, PencilLine, Search, Trash2 } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 import type { PageRecord } from "@/lib/admin-data";
 
@@ -35,6 +35,19 @@ export function PagesManager({ pages }: { pages: PageRecord[] }) {
     setItems((current) => current.filter((item) => item.id !== deleteCandidate.id));
     setMessage(`Deleted ${deleteCandidate.title}.`);
     setDeleteCandidate(null);
+  }
+
+  async function clonePage(page: PageRecord) {
+    setMessage(null);
+    const response = await fetch(`/api/admin/content/pages/${page.id}/clone`, { method: "POST" });
+    const body = await response.json();
+    if (!response.ok) {
+      setMessage(body.error || "Failed to clone page.");
+      return;
+    }
+    window.open(`/admin/pages/${body.page.id}`, "_blank", "noopener,noreferrer");
+    setMessage(`Duplicated ${page.title}.`);
+    window.location.reload();
   }
 
   return (
@@ -124,6 +137,14 @@ export function PagesManager({ pages }: { pages: PageRecord[] }) {
                       >
                         <Eye size={16} />
                       </Link>
+                      <button
+                        type="button"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#e7eaee] text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                        title="Clone page"
+                        onClick={() => void clonePage(page)}
+                      >
+                        <Copy size={16} />
+                      </button>
                       <button
                         type="button"
                         className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#f0d4d4] text-rose-600 transition hover:bg-rose-50"

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Eye, PencilLine, Save, Search, Trash2 } from "lucide-react";
+import { Copy, Eye, PencilLine, Save, Search, Trash2 } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 import type { Product } from "@/types/commerce";
 
@@ -188,6 +188,19 @@ export function ProductManager({ products }: { products: Product[] }) {
     setMessage(`Deleted "${product.name}".`);
   }
 
+  async function cloneProduct(product: Product) {
+    setMessage(null);
+    const response = await fetch(`/api/admin/products/${product.id}/clone`, { method: "POST" });
+    const body = await response.json();
+    if (!response.ok) {
+      setMessage(body.error || "Product clone failed.");
+      return;
+    }
+    window.open(`/admin/products/${body.product.id}`, "_blank", "noopener,noreferrer");
+    setMessage(`Duplicated "${product.name}".`);
+    window.location.reload();
+  }
+
   const draftCount = items.filter((item) => item.status === "draft").length;
   const archivedCount = items.filter((item) => item.status === "archived").length;
   const activeCount = items.filter((item) => item.status === "active").length;
@@ -325,6 +338,15 @@ export function ProductManager({ products }: { products: Product[] }) {
                       >
                         <Eye size={16} />
                       </Link>
+                      <button
+                        type="button"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#e7eaee] text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                        aria-label={`Clone ${product.name}`}
+                        title="Clone product"
+                        onClick={() => void cloneProduct(product)}
+                      >
+                        <Copy size={16} />
+                      </button>
                       <button
                         type="button"
                         className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#f0d4d4] text-rose-600 transition hover:bg-rose-50"
