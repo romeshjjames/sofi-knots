@@ -167,7 +167,7 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
             </div>
 
             {stats.length ? (
-              <div className={cn("mt-6 grid gap-4", statsVariant === "compact" ? "sm:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-2 2xl:grid-cols-4")}>
+              <div className={cn("mt-6 grid gap-4", statsVariant === "compact" ? "sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5" : "md:grid-cols-2 2xl:grid-cols-4")}>
                 {stats.map((stat) => (
                   <div key={stat.label} className={cn("border border-[#e7eaee] bg-[#fbfcfd] shadow-sm", statsVariant === "compact" ? "rounded-2xl px-4 py-3" : "rounded-3xl px-5 py-4")}>
                     <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{stat.label}</p>
