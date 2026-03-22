@@ -11,6 +11,7 @@
     "seed:orders": "node scripts/seed-orders.mjs",
     "sync:home": "node scripts/sync-homepage-page.mjs",
     "sync:about": "node scripts/sync-about-page.mjs",
+    "populate:page-media": "node scripts/populate-home-about-media.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
