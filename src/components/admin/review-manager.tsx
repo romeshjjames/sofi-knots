@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Eye, MessageSquarePlus, PencilLine, Search, Star, Trash2 } from "lucide-react";
+import { Copy, Eye, MessageSquarePlus, PencilLine, Search, Star, Trash2 } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 import type { ReviewStatus, ReviewSummary } from "@/types/reviews";
 
@@ -75,6 +75,19 @@ export function ReviewManager({ reviews }: { reviews: ReviewSummary[] }) {
     setItems((current) => current.filter((item) => item.id !== deleteCandidate.id));
     setMessage(`Deleted review from ${deleteCandidate.customerName}.`);
     setDeleteCandidate(null);
+  }
+
+  async function cloneReview(review: ReviewSummary) {
+    setMessage(null);
+    const response = await fetch(`/api/admin/reviews/${review.id}/clone`, { method: "POST" });
+    const body = await response.json();
+    if (!response.ok) {
+      setMessage(body.error || "Failed to clone review.");
+      return;
+    }
+    window.open(`/admin/reviews/${body.review.id}`, "_blank", "noopener,noreferrer");
+    setMessage(`Duplicated review from ${review.customerName}.`);
+    window.location.reload();
   }
 
   return (
@@ -163,6 +176,9 @@ export function ReviewManager({ reviews }: { reviews: ReviewSummary[] }) {
                       <Link href={`/product/${review.productSlug}`} target="_blank" rel="noreferrer" className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#e7eaee] text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900" aria-label={`Preview ${review.productName}`} title="Preview product page">
                         <Eye size={16} />
                       </Link>
+                      <button type="button" className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#e7eaee] text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900" aria-label={`Clone review from ${review.customerName}`} title="Clone review" onClick={() => void cloneReview(review)}>
+                        <Copy size={16} />
+                      </button>
                       <button type="button" className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#f0d4d4] text-rose-600 transition hover:bg-rose-50" aria-label={`Delete review from ${review.customerName}`} title="Delete review" onClick={() => setDeleteCandidate(review)}>
                         <Trash2 size={16} />
                       </button>

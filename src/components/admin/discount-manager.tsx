@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Eye, PencilLine, Percent, Search, Trash2, TicketPlus } from "lucide-react";
+import { Copy, Eye, PencilLine, Percent, Search, Trash2, TicketPlus } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 import type { DiscountStatus, DiscountSummary, DiscountType } from "@/types/discounts";
 
@@ -83,6 +83,19 @@ export function DiscountManager({ discounts }: DiscountManagerProps) {
     setItems((current) => current.filter((item) => item.id !== deleteCandidate.id));
     setMessage(`Deleted ${deleteCandidate.code}.`);
     setDeleteCandidate(null);
+  }
+
+  async function cloneDiscount(discount: DiscountSummary) {
+    setMessage(null);
+    const response = await fetch(`/api/admin/discounts/${discount.id}/clone`, { method: "POST" });
+    const body = await response.json();
+    if (!response.ok) {
+      setMessage(body.error || "Failed to clone discount.");
+      return;
+    }
+    window.open(`/admin/discounts/${body.discount.id}`, "_blank", "noopener,noreferrer");
+    setMessage(`Duplicated ${discount.code}.`);
+    window.location.reload();
   }
 
   return (
@@ -211,6 +224,15 @@ export function DiscountManager({ discounts }: DiscountManagerProps) {
                       >
                         <Eye size={16} />
                       </Link>
+                      <button
+                        type="button"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#e7eaee] text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                        aria-label={`Clone ${discount.code}`}
+                        title="Clone discount"
+                        onClick={() => void cloneDiscount(discount)}
+                      >
+                        <Copy size={16} />
+                      </button>
                       <button
                         type="button"
                         className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#f0d4d4] text-rose-600 transition hover:bg-rose-50"
