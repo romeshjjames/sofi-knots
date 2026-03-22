@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Leaf, Quote, ShieldCheck, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Leaf, ShieldCheck, Sparkles, Star } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import { DataSourceNote } from "@/components/site/data-source-note";
 import { ProductCard } from "@/components/site/product-card";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { groupVisualSections, type VisualContentBlock, type VisualSection } from "@/lib/cms-blocks";
-import { getCatalogCollections, getCatalogPageBySlug, getFeaturedProducts, getNewArrivalProducts } from "@/lib/catalog";
+import { getCatalogCollections, getCatalogPageBySlug, getFeaturedProducts } from "@/lib/catalog";
 import { getCollectionImageSource } from "@/lib/media";
 import { getReviews } from "@/lib/reviews";
 
@@ -75,16 +75,14 @@ function getSectionCards(section: VisualSection | null, fallback: HomepageCard[]
 }
 
 export async function HomePage() {
-  const [featuredResult, newArrivalResult, collectionResult, homepageCmsResult, reviews] = await Promise.all([
+  const [featuredResult, collectionResult, homepageCmsResult, reviews] = await Promise.all([
     getFeaturedProducts(),
-    getNewArrivalProducts(),
     getCatalogCollections(),
     getCatalogPageBySlug("home"),
     getReviews().catch(() => []),
   ]);
 
   const featuredProducts = featuredResult.data;
-  const newArrivals = newArrivalResult.data;
   const storefrontCollections = collectionResult.data;
   const homepageCms = homepageCmsResult.data;
 
@@ -94,10 +92,9 @@ export async function HomePage() {
   const introSection = findSection(sections, ["welcome intro", "intro", "brand story"], 1);
   const collectionsSection = findSection(sections, ["collections"], 2);
   const featuredSection = findSection(sections, ["featured products", "bestsellers"], 3);
-  const arrivalsSection = findSection(sections, ["new arrivals", "arrivals"], 4);
-  const valuesSection = findSection(sections, ["why sofi knots", "crafted with intention"], 5);
-  const testimonialsSection = findSection(sections, ["testimonials", "customer love"], 6);
-  const newsletterSection = findSection(sections, ["newsletter", "stay connected"], 7);
+  const valuesSection = findSection(sections, ["why sofi knots", "crafted with intention", "our craft"], 4);
+  const testimonialsSection = findSection(sections, ["testimonials", "customer love", "kind words"], 5);
+  const newsletterSection = findSection(sections, ["newsletter", "stay connected"], 6);
 
   const heroCtas = getSectionCtas(heroSection, [
     { label: "Shop collection", href: "/shop" },
