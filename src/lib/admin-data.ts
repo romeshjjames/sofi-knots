@@ -22,6 +22,21 @@ export type ProductVariantRecord = {
   isDefault: boolean;
 };
 
+export type ProductAdminSettingsRecord = {
+  productId: string;
+  vendor: string | null;
+  tags: string[];
+  costPerItem: number | null;
+  barcode: string | null;
+  inventoryQuantity: number;
+  inventoryTracking: boolean;
+  continueSellingWhenOutOfStock: boolean;
+  physicalProduct: boolean;
+  weight: number | null;
+  salesChannels: string[];
+  updatedAt: string | null;
+};
+
 export type PageRecord = {
   id: string;
   title: string;
@@ -210,6 +225,63 @@ export async function getProductVariants(productId: string) {
         isDefault: row.is_default,
       }) satisfies ProductVariantRecord,
   );
+}
+
+export async function getProductAdminSettingsMap(productIds: string[]) {
+  const uniqueIds = Array.from(new Set(productIds.filter(Boolean)));
+  if (!uniqueIds.length) return {} as Record<string, ProductAdminSettingsRecord>;
+
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("entity_id, payload, created_at")
+    .eq("entity_type", "product_admin")
+    .eq("action", "settings:update")
+    .in("entity_id", uniqueIds)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const map: Record<string, ProductAdminSettingsRecord> = {};
+
+  for (const row of data ?? []) {
+    if (map[row.entity_id]) continue;
+    const payload = (row.payload ?? {}) as Record<string, unknown>;
+    map[row.entity_id] = {
+      productId: row.entity_id,
+      vendor: typeof payload.vendor === "string" ? payload.vendor : null,
+      tags: Array.isArray(payload.tags) ? payload.tags.filter((value): value is string => typeof value === "string") : [],
+      costPerItem: typeof payload.costPerItem === "number" ? payload.costPerItem : null,
+      barcode: typeof payload.barcode === "string" ? payload.barcode : null,
+      inventoryQuantity: typeof payload.inventoryQuantity === "number" ? payload.inventoryQuantity : 0,
+      inventoryTracking: payload.inventoryTracking !== false,
+      continueSellingWhenOutOfStock: payload.continueSellingWhenOutOfStock === true,
+      physicalProduct: payload.physicalProduct !== false,
+      weight: typeof payload.weight === "number" ? payload.weight : null,
+      salesChannels: Array.isArray(payload.salesChannels) ? payload.salesChannels.filter((value): value is string => typeof value === "string") : ["online-store"],
+      updatedAt: row.created_at,
+    } satisfies ProductAdminSettingsRecord;
+  }
+
+  uniqueIds.forEach((productId) => {
+    if (map[productId]) return;
+    map[productId] = {
+      productId,
+      vendor: "Sofi Knots",
+      tags: [],
+      costPerItem: null,
+      barcode: null,
+      inventoryQuantity: 0,
+      inventoryTracking: true,
+      continueSellingWhenOutOfStock: false,
+      physicalProduct: true,
+      weight: null,
+      salesChannels: ["online-store"],
+      updatedAt: null,
+    };
+  });
+
+  return map;
 }
 
 export async function getPages() {

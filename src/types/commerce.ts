@@ -10,10 +10,13 @@ export type Product = SeoEntity & {
   id: string;
   categoryId?: string | null;
   collectionId?: string | null;
+  sku?: string | null;
+  barcode?: string | null;
   slug: string;
   name: string;
   price: number;
   originalPrice?: number;
+  costPerItem?: number | null;
   image: StaticImageData;
   featuredImageUrl?: string | null;
   category: string;
@@ -21,11 +24,19 @@ export type Product = SeoEntity & {
   collection: string;
   collectionSlug: string;
   badge?: string;
+  vendor?: string | null;
+  tags?: string[];
   description: string;
   shortDescription: string;
   rating: number;
   isFeatured?: boolean;
   status?: "draft" | "active" | "archived";
+  inventoryQuantity?: number;
+  inventoryTracking?: boolean;
+  continueSellingWhenOutOfStock?: boolean;
+  physicalProduct?: boolean;
+  weight?: number | null;
+  salesChannels?: string[];
 };
 
 export type Collection = SeoEntity & {

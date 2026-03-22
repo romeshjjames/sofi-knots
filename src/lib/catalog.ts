@@ -31,6 +31,7 @@ type ProductRow = {
   id: string;
   category_id: string | null;
   collection_id: string | null;
+  sku: string | null;
   slug: string;
   name: string;
   short_description: string | null;
@@ -119,6 +120,7 @@ function mapProductRow(row: ProductRow): Product | null {
     id: row.id,
     categoryId: row.category_id,
     collectionId: row.collection_id,
+    sku: row.sku,
     slug: row.slug,
     name: row.name,
     price: row.price_inr,
@@ -289,6 +291,7 @@ async function fetchProductsFromSupabase() {
         id,
         category_id,
         collection_id,
+        sku,
         slug,
         name,
         short_description,
@@ -381,6 +384,7 @@ export async function getCatalogProductBySlug(slug: string): Promise<CatalogResu
           id,
           category_id,
           collection_id,
+          sku,
           slug,
           name,
           short_description,

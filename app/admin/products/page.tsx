@@ -5,7 +5,7 @@ import { FeaturedMerchandisingManager } from "@/components/admin/featured-mercha
 import { ProductManager } from "@/components/admin/product-manager";
 import { TaxonomyManager } from "@/components/admin/taxonomy-manager";
 import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
-import { getCollectionMerchandising, getFeaturedProductMerchandising } from "@/lib/admin-data";
+import { getCollectionMerchandising, getFeaturedProductMerchandising, getProductAdminSettingsMap } from "@/lib/admin-data";
 import { getCatalogCategories, getCatalogCollections, getCatalogProducts } from "@/lib/catalog";
 import { requireAdminPage } from "@/lib/supabase/auth";
 
@@ -18,6 +18,25 @@ export default async function AdminProductsPage() {
     getFeaturedProductMerchandising(),
     getCollectionMerchandising(),
   ]);
+  const settingsMap = await getProductAdminSettingsMap(result.data.map((product) => product.id));
+  const productsWithAdminSettings = result.data.map((product) => {
+    const settings = settingsMap[product.id];
+    return settings
+      ? {
+          ...product,
+          vendor: settings.vendor,
+          tags: settings.tags,
+          costPerItem: settings.costPerItem,
+          barcode: settings.barcode,
+          inventoryQuantity: settings.inventoryQuantity,
+          inventoryTracking: settings.inventoryTracking,
+          continueSellingWhenOutOfStock: settings.continueSellingWhenOutOfStock,
+          physicalProduct: settings.physicalProduct,
+          weight: settings.weight,
+          salesChannels: settings.salesChannels,
+        }
+      : product;
+  });
 
   return (
     <AdminShell
@@ -25,6 +44,10 @@ export default async function AdminProductsPage() {
       eyebrow="Catalog operations"
       title="Products and Inventory"
       description="Manage product records, featured imagery, pricing, merchandising structure, and SEO fields from a more operational catalog workspace."
+      breadcrumbs={[
+        { label: "Home", href: "/admin" },
+        { label: "Products" },
+      ]}
       actions={
         <Link href="/shop" className="brand-btn-outline whitespace-nowrap px-5 py-3">
           Preview storefront
@@ -103,7 +126,7 @@ export default async function AdminProductsPage() {
           description="Browse products on the left, then update content, price, publishing status, and SEO fields in a focused editor pane."
         >
           <ProductManager
-            products={result.data}
+            products={productsWithAdminSettings}
             categories={categoriesResult.data}
             collections={collectionsResult.data.map((item) => ({ id: item.id ?? item.slug, name: item.title, slug: item.slug }))}
           />

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createAuditLog } from "@/lib/admin-data";
 import { requireAdminApi } from "@/lib/supabase/auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
       .insert({
         name: body.name,
         slug: body.slug,
+        sku: body.sku || null,
         category_id: body.categoryId,
         collection_id: body.collectionId,
         short_description: body.shortDescription || null,
@@ -30,7 +32,7 @@ export async function POST(request: Request) {
         badge: body.badge || null,
         featured_image_url: body.featuredImageUrl || null,
         is_featured: Boolean(body.isFeatured),
-        status: "active",
+        status: body.status || "draft",
         seo_title: body.seoTitle || body.name,
         seo_description: body.seoDescription || body.shortDescription || body.description || `Shop ${body.name} from Sofi Knots.`,
         seo_keywords: Array.isArray(body.seoKeywords) ? body.seoKeywords : [],
@@ -41,6 +43,25 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    await createAuditLog({
+      actorUserId: auth.session.user.id,
+      entityType: "product_admin",
+      entityId: data.id,
+      action: "settings:update",
+      payload: {
+        vendor: body.vendor || "Sofi Knots",
+        tags: Array.isArray(body.tags) ? body.tags : [],
+        costPerItem: typeof body.costPerItem === "number" ? body.costPerItem : null,
+        barcode: body.barcode || null,
+        inventoryQuantity: typeof body.inventoryQuantity === "number" ? body.inventoryQuantity : 0,
+        inventoryTracking: body.inventoryTracking !== false,
+        continueSellingWhenOutOfStock: body.continueSellingWhenOutOfStock === true,
+        physicalProduct: body.physicalProduct !== false,
+        weight: typeof body.weight === "number" ? body.weight : null,
+        salesChannels: Array.isArray(body.salesChannels) ? body.salesChannels : ["online-store"],
+      },
+    });
 
     return NextResponse.json({ product: data });
   } catch (error) {

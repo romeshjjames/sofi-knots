@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createAuditLog } from "@/lib/admin-data";
 import { requireAdminApi } from "@/lib/supabase/auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -12,6 +13,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   const updates = {
     name: body.name,
     slug: body.slug,
+    sku: body.sku || null,
     category_id: body.categoryId ?? null,
     collection_id: body.collectionId ?? null,
     short_description: body.shortDescription || null,
@@ -39,6 +41,25 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    await createAuditLog({
+      actorUserId: auth.session.user.id,
+      entityType: "product_admin",
+      entityId: params.id,
+      action: "settings:update",
+      payload: {
+        vendor: body.vendor || "Sofi Knots",
+        tags: Array.isArray(body.tags) ? body.tags : [],
+        costPerItem: typeof body.costPerItem === "number" ? body.costPerItem : null,
+        barcode: body.barcode || null,
+        inventoryQuantity: typeof body.inventoryQuantity === "number" ? body.inventoryQuantity : 0,
+        inventoryTracking: body.inventoryTracking !== false,
+        continueSellingWhenOutOfStock: body.continueSellingWhenOutOfStock === true,
+        physicalProduct: body.physicalProduct !== false,
+        weight: typeof body.weight === "number" ? body.weight : null,
+        salesChannels: Array.isArray(body.salesChannels) ? body.salesChannels : ["online-store"],
+      },
+    });
 
     return NextResponse.json({ product: data });
   } catch (error) {
