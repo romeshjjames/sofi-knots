@@ -23,11 +23,13 @@ export default async function AdminAnalyticsPage() {
         defaultRange={analytics.defaultRange}
         categorySeries={analytics.categorySeries}
         featuredProducts={analytics.featuredProducts}
-        recentActivity={analytics.recentActivity}
-        contentHealth={analytics.contentHealth}
-        rawOrders={analytics.rawOrders}
-        rawEvents={analytics.rawEvents}
-        rawOrderItems={analytics.rawOrderItems}
+      recentActivity={analytics.recentActivity}
+      contentHealth={analytics.contentHealth}
+      rawCustomers={analytics.rawCustomers}
+      rawDiscounts={analytics.rawDiscounts}
+      rawOrders={analytics.rawOrders}
+      rawEvents={analytics.rawEvents}
+      rawOrderItems={analytics.rawOrderItems}
       />
     </AdminShell>
   );

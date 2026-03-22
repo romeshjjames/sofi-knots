@@ -1,6 +1,8 @@
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { getCatalogProducts, getFeaturedProducts } from "@/lib/catalog";
 import { getAuditLogs, getBlogPosts, getPages } from "@/lib/admin-data";
+import { getCustomers } from "@/lib/customers";
+import { getDiscounts } from "@/lib/discounts";
 import { getOrders } from "@/lib/orders";
 
 function formatDayLabel(value: string) {
@@ -11,7 +13,7 @@ function formatMonthLabel(value: string) {
   return new Date(`${value}-01`).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 }
 
-type AnalyticsRangeKey = "7d" | "30d" | "90d" | "all";
+type AnalyticsRangeKey = "today" | "yesterday" | "7d" | "30d" | "thisMonth" | "all";
 
 type AnalyticsEventRow = {
   id: string;
@@ -34,21 +36,25 @@ type OrderItemAnalyticsRow = {
 };
 
 const analyticsRanges: { key: AnalyticsRangeKey; label: string; days: number | null }[] = [
+  { key: "today", label: "Today", days: 1 },
+  { key: "yesterday", label: "Yesterday", days: 1 },
   { key: "7d", label: "Last 7 days", days: 7 },
   { key: "30d", label: "Last 30 days", days: 30 },
-  { key: "90d", label: "Last 90 days", days: 90 },
+  { key: "thisMonth", label: "This month", days: null },
   { key: "all", label: "All time", days: null },
 ];
 
 export async function getAdminAnalytics() {
   const supabase = createAdminSupabaseClient();
-  const [catalogResult, featuredResult, orders, pages, posts, auditLogs, analyticsEventsResult, orderItemsResult] = await Promise.all([
+  const [catalogResult, featuredResult, orders, pages, posts, auditLogs, customers, discounts, analyticsEventsResult, orderItemsResult] = await Promise.all([
     getCatalogProducts(),
     getFeaturedProducts(),
     getOrders(),
     getPages(),
     getBlogPosts(),
     getAuditLogs(),
+    getCustomers(),
+    getDiscounts(),
     supabase
       .from("audit_logs")
       .select("id, action, entity_id, payload, created_at")
@@ -87,11 +93,27 @@ export async function getAdminAnalytics() {
   const rangeSnapshots = Object.fromEntries(
     analyticsRanges.map(({ key, days, label }) => {
       const scopedOrders =
-        days === null
+        key === "thisMonth"
+          ? orders.filter((order) => order.createdAt.slice(0, 7) === new Date().toISOString().slice(0, 7))
+          : key === "yesterday"
+            ? orders.filter((order) => {
+                const target = new Date();
+                target.setDate(target.getDate() - 1);
+                return order.createdAt.slice(0, 10) === target.toISOString().slice(0, 10);
+              })
+            : days === null
           ? orders
           : orders.filter((order) => now - new Date(order.createdAt).getTime() <= days * 24 * 60 * 60 * 1000);
       const scopedEvents =
-        days === null
+        key === "thisMonth"
+          ? analyticsEvents.filter((event) => event.created_at.slice(0, 7) === new Date().toISOString().slice(0, 7))
+          : key === "yesterday"
+            ? analyticsEvents.filter((event) => {
+                const target = new Date();
+                target.setDate(target.getDate() - 1);
+                return event.created_at.slice(0, 10) === target.toISOString().slice(0, 10);
+              })
+            : days === null
           ? analyticsEvents
           : analyticsEvents.filter((event) => now - new Date(event.created_at).getTime() <= days * 24 * 60 * 60 * 1000);
 
@@ -353,6 +375,7 @@ export async function getAdminAnalytics() {
       productName: item.product_name,
       sku: item.sku,
       category: product?.category ?? "Uncategorized",
+      collection: product?.collection ?? "Unassigned",
       quantity: item.quantity,
       lineTotalInr: item.line_total_inr,
       createdAt: order?.created_at ?? null,
@@ -368,6 +391,8 @@ export async function getAdminAnalytics() {
     contentHealth,
     featuredProducts: featuredResult.data.slice(0, 6),
     recentActivity: auditLogs.slice(0, 8),
+    rawCustomers: customers,
+    rawDiscounts: discounts,
     rawOrders,
     rawEvents,
     rawOrderItems,
