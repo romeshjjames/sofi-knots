@@ -1,19 +1,24 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  Bell,
   Box,
+  CirclePercent,
+  FolderKanban,
   FileText,
   Home,
   LayoutDashboard,
   Package,
+  ShieldPlus,
   Search,
   Settings2,
   ShoppingCart,
   Sparkles,
+  Users2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type AdminNavKey = "dashboard" | "products" | "orders" | "merchandising" | "seo" | "content" | "settings";
+type AdminNavKey = "dashboard" | "products" | "collections" | "orders" | "customers" | "discounts" | "merchandising" | "seo" | "content" | "settings";
 
 type AdminStat = {
   label: string;
@@ -33,8 +38,11 @@ type AdminShellProps = {
 
 const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof Home }[] = [
   { key: "dashboard", label: "Overview", href: "/admin", icon: LayoutDashboard },
-  { key: "products", label: "Catalog", href: "/admin/products", icon: Package },
+  { key: "products", label: "Products", href: "/admin/products", icon: Package },
+  { key: "collections", label: "Collections", href: "/admin/collections", icon: FolderKanban },
   { key: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingCart },
+  { key: "customers", label: "Customers", href: "/admin/customers", icon: Users2 },
+  { key: "discounts", label: "Discounts", href: "/admin/discounts", icon: CirclePercent },
   { key: "merchandising", label: "Merchandising", href: "/admin/merchandising", icon: Home },
   { key: "seo", label: "SEO", href: "/admin/seo", icon: Sparkles },
   { key: "content", label: "Content", href: "/admin/content", icon: FileText },
@@ -43,28 +51,20 @@ const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof Ho
 
 export function AdminShell({ active, title, description, children, eyebrow = "Admin workspace", actions, stats = [] }: AdminShellProps) {
   return (
-    <div className="min-h-screen bg-[#f5f1e8] text-brand-brown">
-      <div className="grid min-h-screen lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="border-r border-brand-sand/60 bg-[#1f1914] px-5 py-6 text-white lg:px-6">
-          <Link href="/admin" className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 transition hover:bg-white/10">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#c7a05a] text-[#1f1914]">
+    <div className="min-h-screen bg-[#f6f7f8] text-[#1f2933]">
+      <div className="grid min-h-screen lg:grid-cols-[248px_minmax(0,1fr)]">
+        <aside className="border-r border-[#e7eaee] bg-[#fbfcfd] px-4 py-5 lg:px-5">
+          <Link href="/admin" className="flex items-center gap-3 rounded-2xl border border-[#eceff3] bg-white px-4 py-4 shadow-sm transition hover:border-[#d9dee5]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1f2933] text-white">
               <Box size={20} />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-white/60">Sofi Knots</p>
-              <p className="font-serif text-2xl">Commerce OS</p>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Sofi Knots</p>
+              <p className="font-serif text-2xl text-slate-900">Admin</p>
             </div>
           </Link>
 
-          <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-white/50">Today</p>
-            <p className="mt-2 text-lg font-medium text-white">Store operations hub</p>
-            <p className="mt-2 text-sm leading-relaxed text-white/65">
-              Manage catalog, content, orders, and growth tasks from one workspace instead of scattered admin screens.
-            </p>
-          </div>
-
-          <nav className="mt-8 space-y-2">
+          <nav className="mt-8 space-y-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = item.key === active;
@@ -73,47 +73,63 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition",
-                    isActive ? "bg-[#c7a05a] text-[#1f1914]" : "text-white/72 hover:bg-white/8 hover:text-white",
+                    "flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm transition",
+                    isActive ? "bg-[#eef2f6] text-slate-900 shadow-sm" : "text-slate-600 hover:bg-white hover:text-slate-900",
                   )}
                 >
                   <Icon size={18} />
                   <span className="font-medium">{item.label}</span>
-                  {isActive ? <ArrowRight size={16} className="ml-auto" /> : null}
+                  {isActive ? <ArrowRight size={16} className="ml-auto text-slate-400" /> : null}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="mt-8 rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-transparent p-4">
+          <div className="mt-8 rounded-2xl border border-[#e7eaee] bg-white p-4 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
-                <Settings2 size={18} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f5f7] text-slate-700">
+                <ShieldPlus size={18} />
               </div>
               <div>
-                <p className="text-sm font-medium text-white">Operator mode</p>
-                <p className="text-xs text-white/55">Catalog, payments, SEO</p>
+                <p className="text-sm font-medium text-slate-900">Admin access</p>
+                <p className="text-xs text-slate-500">Catalog, content, campaigns</p>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-white/65">
-              Next milestone: richer media galleries, bulk actions, and deeper CMS workflows.
+            <p className="mt-4 text-sm leading-relaxed text-slate-600">
+              Manage collections, products, publishing, and storefront merchandising from one polished workspace.
             </p>
           </div>
         </aside>
 
         <main className="min-w-0">
-          <header className="border-b border-brand-sand/50 bg-[#fbf8f2]/90 px-5 py-5 backdrop-blur lg:px-8">
+          <header className="border-b border-[#e7eaee] bg-white px-5 py-5 lg:px-8">
+            <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex min-w-[260px] items-center gap-3 rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3 text-sm text-slate-500 shadow-sm">
+                <Search size={16} />
+                <span>Search collections, products, orders</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button type="button" className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] text-slate-600 transition hover:bg-white">
+                  <Bell size={18} />
+                  <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                </button>
+                <div className="flex items-center gap-3 rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-3 py-2.5 shadow-sm">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1f2933] text-sm font-medium text-white">SK</div>
+                  <div className="hidden sm:block">
+                    <p className="text-sm font-medium text-slate-900">Sofi Knots Admin</p>
+                    <p className="text-xs text-slate-500">Store manager</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <div className="max-w-3xl">
-                <p className="text-xs font-medium uppercase tracking-[0.24em] text-brand-gold">{eyebrow}</p>
-                <h1 className="mt-2 font-serif text-4xl tracking-tight text-brand-brown">{title}</h1>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-brand-warm">{description}</p>
+                <p className="text-xs font-medium uppercase tracking-[0.24em] text-slate-400">{eyebrow}</p>
+                <h1 className="mt-2 font-serif text-4xl tracking-tight text-slate-950">{title}</h1>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{description}</p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="flex min-w-[240px] items-center gap-3 rounded-2xl border border-brand-sand/60 bg-white px-4 py-3 text-sm text-brand-taupe shadow-sm">
-                  <Search size={16} />
-                  <span>Search actions, products, orders</span>
-                </div>
                 {actions}
               </div>
             </div>
@@ -121,10 +137,10 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
             {stats.length ? (
               <div className="mt-6 grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
                 {stats.map((stat) => (
-                  <div key={stat.label} className="rounded-3xl border border-brand-sand/60 bg-white px-5 py-4 shadow-[0_10px_30px_rgba(65,42,17,0.06)]">
-                    <p className="text-xs uppercase tracking-[0.22em] text-brand-taupe">{stat.label}</p>
-                    <p className="mt-2 text-3xl font-semibold tracking-tight text-brand-brown">{stat.value}</p>
-                    <p className="mt-2 text-sm text-brand-warm">{stat.hint}</p>
+                  <div key={stat.label} className="rounded-3xl border border-[#e7eaee] bg-[#fbfcfd] px-5 py-4 shadow-sm">
+                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{stat.label}</p>
+                    <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">{stat.value}</p>
+                    <p className="mt-2 text-sm text-slate-600">{stat.hint}</p>
                   </div>
                 ))}
               </div>
@@ -140,11 +156,11 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
 
 export function AdminPanel({ title, description, children, className }: { title: string; description?: string; children: React.ReactNode; className?: string }) {
   return (
-    <section className={cn("rounded-[28px] border border-brand-sand/60 bg-white p-5 shadow-[0_18px_50px_rgba(65,42,17,0.06)] lg:p-6", className)}>
+    <section className={cn("rounded-[28px] border border-[#e7eaee] bg-white p-5 shadow-sm lg:p-6", className)}>
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-serif text-2xl text-brand-brown">{title}</h2>
-          {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-warm">{description}</p> : null}
+          <h2 className="font-serif text-2xl text-slate-950">{title}</h2>
+          {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{description}</p> : null}
         </div>
       </div>
       {children}

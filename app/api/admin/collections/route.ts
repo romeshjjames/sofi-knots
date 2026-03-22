@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createAuditLog } from "@/lib/admin-data";
 import { requireAdminApi } from "@/lib/supabase/auth";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -34,6 +35,30 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    if (Array.isArray(body.assignedProductIds)) {
+      const assignedProductIds = body.assignedProductIds.filter((value: unknown): value is string => typeof value === "string");
+      if (assignedProductIds.length) {
+        await supabase.from("products").update({ collection_id: data.id }).in("id", assignedProductIds);
+      }
+    }
+
+    await createAuditLog({
+      actorUserId: auth.session.user.id,
+      entityType: "collection_admin",
+      entityId: data.id,
+      action: "settings:update",
+      payload: {
+        collectionType: body.collectionType || "manual",
+        status: body.status || "active",
+        visibility: body.visibility || "visible",
+        onlineStoreEnabled: body.onlineStoreEnabled !== false,
+        salesChannels: Array.isArray(body.salesChannels) ? body.salesChannels : ["online-store"],
+        assignedProductIds: Array.isArray(body.assignedProductIds) ? body.assignedProductIds : [],
+        sortProducts: body.sortProducts || "manual",
+        conditions: Array.isArray(body.conditions) ? body.conditions : [],
+      },
+    });
 
     return NextResponse.json({ collection: data });
   } catch (error) {

@@ -95,6 +95,29 @@ export type CollectionMerchandisingRecord = {
   updatedAt: string | null;
 };
 
+export type CollectionConditionRule = "title" | "tag" | "type" | "vendor" | "price";
+export type CollectionConditionOperator = "equals" | "contains" | "greater_than" | "less_than";
+
+export type CollectionConditionRecord = {
+  id: string;
+  rule: CollectionConditionRule;
+  operator: CollectionConditionOperator;
+  value: string;
+};
+
+export type CollectionAdminSettingsRecord = {
+  collectionId: string;
+  collectionType: "manual" | "automated";
+  status: "active" | "draft";
+  visibility: "visible" | "hidden";
+  onlineStoreEnabled: boolean;
+  salesChannels: string[];
+  assignedProductIds: string[];
+  sortProducts: "manual" | "best-selling" | "alphabetical" | "price-asc" | "price-desc" | "newest";
+  conditions: CollectionConditionRecord[];
+  updatedAt: string | null;
+};
+
 export type HomepageSectionKey =
   | "hero"
   | "intro"
@@ -379,6 +402,85 @@ export async function getCollectionMerchandising() {
     collectionIds,
     updatedAt: data?.created_at ?? null,
   } satisfies CollectionMerchandisingRecord;
+}
+
+export async function getCollectionAdminSettingsMap(collectionIds: string[]) {
+  const uniqueIds = Array.from(new Set(collectionIds.filter(Boolean)));
+  if (!uniqueIds.length) return {} as Record<string, CollectionAdminSettingsRecord>;
+
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("entity_id, payload, created_at")
+    .eq("entity_type", "collection_admin")
+    .eq("action", "settings:update")
+    .in("entity_id", uniqueIds)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const map: Record<string, CollectionAdminSettingsRecord> = {};
+
+  for (const row of data ?? []) {
+    if (map[row.entity_id]) continue;
+    const payload = (row.payload ?? {}) as Record<string, unknown>;
+    const conditions = Array.isArray(payload.conditions)
+      ? payload.conditions
+          .map((condition) => {
+            if (!condition || typeof condition !== "object") return null;
+            const entry = condition as Record<string, unknown>;
+            if (typeof entry.id !== "string" || typeof entry.value !== "string") return null;
+            return {
+              id: entry.id,
+              rule: entry.rule === "tag" || entry.rule === "type" || entry.rule === "vendor" || entry.rule === "price" ? entry.rule : "title",
+              operator:
+                entry.operator === "equals" || entry.operator === "greater_than" || entry.operator === "less_than"
+                  ? entry.operator
+                  : "contains",
+              value: entry.value,
+            } satisfies CollectionConditionRecord;
+          })
+          .filter((value): value is CollectionConditionRecord => Boolean(value))
+      : [];
+
+    map[row.entity_id] = {
+      collectionId: row.entity_id,
+      collectionType: payload.collectionType === "automated" ? "automated" : "manual",
+      status: payload.status === "draft" ? "draft" : "active",
+      visibility: payload.visibility === "hidden" ? "hidden" : "visible",
+      onlineStoreEnabled: payload.onlineStoreEnabled !== false,
+      salesChannels: Array.isArray(payload.salesChannels) ? payload.salesChannels.filter((value): value is string => typeof value === "string") : ["online-store"],
+      assignedProductIds: Array.isArray(payload.assignedProductIds) ? payload.assignedProductIds.filter((value): value is string => typeof value === "string") : [],
+      sortProducts:
+        payload.sortProducts === "best-selling" ||
+        payload.sortProducts === "alphabetical" ||
+        payload.sortProducts === "price-asc" ||
+        payload.sortProducts === "price-desc" ||
+        payload.sortProducts === "newest"
+          ? payload.sortProducts
+          : "manual",
+      conditions,
+      updatedAt: row.created_at,
+    } satisfies CollectionAdminSettingsRecord;
+  }
+
+  uniqueIds.forEach((collectionId) => {
+    if (map[collectionId]) return;
+    map[collectionId] = {
+      collectionId,
+      collectionType: "manual",
+      status: "active",
+      visibility: "visible",
+      onlineStoreEnabled: true,
+      salesChannels: ["online-store"],
+      assignedProductIds: [],
+      sortProducts: "manual",
+      conditions: [],
+      updatedAt: null,
+    };
+  });
+
+  return map;
 }
 
 export async function getHomepageMerchandising() {
