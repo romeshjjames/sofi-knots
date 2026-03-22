@@ -43,72 +43,90 @@ export default async function AdminDashboardPage() {
         { label: "Pending custom orders", value: `${metrics.pendingCustomOrders}`, hint: "Concierge requests waiting on action." },
       ]}
     >
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="space-y-6">
-          <AdminPanel title="Best sellers" description="The products currently driving the strongest revenue.">
-            <div className="space-y-3">
-              {metrics.bestSellers.map((item, index) => (
-                <div key={item.id} className="flex items-center justify-between rounded-2xl bg-[#fbfcfd] px-4 py-3 text-sm">
-                  <div>
-                    <p className="font-medium text-slate-900">{index + 1}. {item.name}</p>
-                    <p className="mt-1 text-slate-500">{item.unitsSold} units sold</p>
-                  </div>
-                  <p className="font-medium text-slate-900">Rs. {item.revenueInr.toLocaleString("en-IN")}</p>
+      <div className="grid gap-4 xl:grid-cols-[1fr_1fr_0.9fr]">
+        <AdminPanel title="Best sellers" description="Top revenue-driving products right now." className="lg:p-5">
+          <div className="space-y-2.5">
+            {metrics.bestSellers.slice(0, 4).map((item, index) => (
+              <div key={item.id} className="flex items-center justify-between rounded-2xl bg-[#fbfcfd] px-4 py-3 text-sm">
+                <div>
+                  <p className="font-medium text-slate-900">{index + 1}. {item.name}</p>
+                  <p className="mt-1 text-slate-500">{item.unitsSold} units sold</p>
                 </div>
-              ))}
-            </div>
-          </AdminPanel>
+                <p className="font-medium text-slate-900">Rs. {item.revenueInr.toLocaleString("en-IN")}</p>
+              </div>
+            ))}
+          </div>
+        </AdminPanel>
 
-          <AdminPanel title="Collection performance" description="A compact view of the collection stories converting best.">
-            <div className="space-y-3">
-              {metrics.collectionPerformance.map((collection) => (
-                <div key={collection.id} className="rounded-2xl border border-[#e7eaee] bg-white px-4 py-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="font-medium text-slate-900">{collection.name}</p>
-                    <AdminBadge tone="info">{collection.conversionRate}% CVR</AdminBadge>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-sm text-slate-600">
-                    <span>{collection.visits.toLocaleString("en-IN")} visits</span>
-                    <span>Rs. {collection.revenueInr.toLocaleString("en-IN")}</span>
-                  </div>
+        <AdminPanel title="Collection performance" description="Best-performing collection stories." className="lg:p-5">
+          <div className="space-y-2.5">
+            {metrics.collectionPerformance.slice(0, 4).map((collection) => (
+              <div key={collection.id} className="rounded-2xl border border-[#e7eaee] bg-white px-4 py-3">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="font-medium text-slate-900">{collection.name}</p>
+                  <AdminBadge tone="info">{collection.conversionRate}% CVR</AdminBadge>
                 </div>
-              ))}
+                <div className="mt-2 flex items-center justify-between text-sm text-slate-600">
+                  <span>{collection.visits.toLocaleString("en-IN")} visits</span>
+                  <span>Rs. {collection.revenueInr.toLocaleString("en-IN")}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </AdminPanel>
+
+        <AdminPanel title="Operational priorities" description="What needs attention next." className="lg:p-5">
+          <div className="grid gap-2.5">
+            <div className="rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] p-4">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Fulfillment queue</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">{openOrders}</p>
+              <p className="mt-1 text-sm text-slate-600">Orders still needing packaging, dispatch, or delivery updates.</p>
             </div>
-          </AdminPanel>
-        </div>
+            <div className="rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] p-4">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Catalog watch</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">{metrics.lowStock.length}</p>
+              <p className="mt-1 text-sm text-slate-600">Products that need stock or merchandising attention.</p>
+            </div>
+            <div className="rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] p-4">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Custom requests</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">{metrics.pendingCustomOrders}</p>
+              <p className="mt-1 text-sm text-slate-600">Custom or concierge orders waiting on a response or quote.</p>
+            </div>
+          </div>
+        </AdminPanel>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <AdminPanel title="Recent orders" description="Recent purchases that need review or fulfillment.">
-          <div className="overflow-hidden rounded-[24px] border border-[#e7eaee]">
+      <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <AdminPanel title="Recent orders" description="Recent purchases that need review or fulfillment." className="lg:p-5">
+          <div className="overflow-hidden rounded-[22px] border border-[#e7eaee]">
             <table className="w-full text-left text-sm">
               <thead className="bg-[#fbfcfd] text-slate-500">
                 <tr>
-                  <th className="px-5 py-4 font-medium">Order</th>
-                  <th className="px-5 py-4 font-medium">Customer</th>
-                  <th className="px-5 py-4 font-medium">Payment</th>
-                  <th className="px-5 py-4 font-medium">Total</th>
-                  <th className="px-5 py-4 font-medium">Action</th>
+                  <th className="px-4 py-3 font-medium">Order</th>
+                  <th className="px-4 py-3 font-medium">Customer</th>
+                  <th className="px-4 py-3 font-medium">Payment</th>
+                  <th className="px-4 py-3 font-medium">Total</th>
+                  <th className="px-4 py-3 font-medium">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {metrics.recentOrders.map((order) => (
                   <tr key={order.id} className="border-t border-[#eef1f4] bg-white">
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <div className="font-medium text-slate-900">{order.orderNumber}</div>
                       <div className="mt-1 text-xs text-slate-500">{new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</div>
                     </td>
-                    <td className="px-5 py-4 text-slate-700">
+                    <td className="px-4 py-3 text-slate-700">
                       <div>{order.customerName}</div>
                       <div className="mt-1 text-xs text-slate-500">{order.customerEmail}</div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <AdminBadge tone={order.paymentStatus === "paid" ? "success" : order.paymentStatus === "failed" ? "danger" : "warning"}>
                         {order.paymentStatus}
                       </AdminBadge>
                     </td>
-                    <td className="px-5 py-4 font-medium text-slate-900">Rs. {order.totalInr.toLocaleString("en-IN")}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3 font-medium text-slate-900">Rs. {order.totalInr.toLocaleString("en-IN")}</td>
+                    <td className="px-4 py-3">
                       <Link href={`/admin/orders/${order.id}`} className="text-sm font-medium text-slate-700 transition hover:text-slate-950">
                         Open
                       </Link>
@@ -120,11 +138,25 @@ export default async function AdminDashboardPage() {
           </div>
         </AdminPanel>
 
-        <div className="space-y-6">
-          <AdminPanel title="Low stock products" description="Products that may block sales if replenishment is delayed.">
+        <div className="grid gap-4">
+          <AdminPanel title="Revenue pulse" description="Weekly sales pulse." className="lg:p-5">
+            <div className="grid h-[150px] grid-cols-7 items-end gap-2">
+              {metrics.revenueSeries.map((point) => {
+                const height = Math.max(16, Math.round(point.revenue / 620));
+                return (
+                  <div key={point.label} className="flex h-full flex-col justify-end gap-2">
+                    <div className="rounded-t-2xl bg-gradient-to-t from-[#b98d45] to-[#d7b271]" style={{ height }} />
+                    <div className="text-center text-[10px] text-slate-500">{point.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </AdminPanel>
+
+          <AdminPanel title="Low stock" description="Inventory requiring action." className="lg:p-5">
             <div className="space-y-3">
               {metrics.lowStock.length ? (
-                metrics.lowStock.map((item) => (
+                metrics.lowStock.slice(0, 4).map((item) => (
                   <div key={item.id} className="rounded-2xl bg-[#fbfcfd] p-4 text-sm">
                     <div className="flex items-center justify-between gap-4">
                       <p className="font-medium text-slate-900">{item.name}</p>
@@ -140,48 +172,7 @@ export default async function AdminDashboardPage() {
               )}
             </div>
           </AdminPanel>
-
-          <AdminPanel title="Revenue pulse" description="A light weekly pulse for the latest sales cycle.">
-            <div className="grid h-[180px] grid-cols-7 items-end gap-2">
-              {metrics.revenueSeries.map((point) => {
-                const height = Math.max(18, Math.round(point.revenue / 520));
-                return (
-                  <div key={point.label} className="flex h-full flex-col justify-end gap-2">
-                    <div className="rounded-t-2xl bg-gradient-to-t from-[#b98d45] to-[#d7b271]" style={{ height }} />
-                    <div className="text-center text-[11px] text-slate-500">{point.label}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </AdminPanel>
         </div>
-      </div>
-
-      <div className="mt-6">
-        <AdminPanel title="Operational priorities" description="The most important next actions for the store team.">
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Fulfillment queue</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-900">{openOrders}</p>
-              <p className="mt-1 text-sm text-slate-600">Orders still needing packaging, dispatch, or delivery updates.</p>
-            </div>
-            <div className="rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Catalog watch</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-900">{metrics.lowStock.length}</p>
-              <p className="mt-1 text-sm text-slate-600">Products that should be reviewed for stock or merchandising attention.</p>
-            </div>
-            <div className="rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Custom requests</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-900">{metrics.pendingCustomOrders}</p>
-              <p className="mt-1 text-sm text-slate-600">Custom or concierge orders waiting on a response or quote.</p>
-            </div>
-            <div className="rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Reporting</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-900">Analytics</p>
-              <p className="mt-1 text-sm text-slate-600">Use the dedicated analytics module for funnels, traffic, cohorts, and exports.</p>
-            </div>
-          </div>
-        </AdminPanel>
       </div>
     </AdminShell>
   );

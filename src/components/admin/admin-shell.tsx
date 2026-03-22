@@ -167,12 +167,12 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
             </div>
 
             {stats.length ? (
-              <div className={cn("mt-6 grid gap-4", statsVariant === "compact" ? "sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5" : "md:grid-cols-2 2xl:grid-cols-4")}>
+              <div className={cn("mt-6 grid gap-3", statsVariant === "compact" ? "sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-2 2xl:grid-cols-4")}>
                 {stats.map((stat) => (
-                  <div key={stat.label} className={cn("border border-[#e7eaee] bg-[#fbfcfd] shadow-sm", statsVariant === "compact" ? "rounded-2xl px-4 py-3" : "rounded-3xl px-5 py-4")}>
+                  <div key={stat.label} className={cn("border border-[#e7eaee] bg-[#fbfcfd] shadow-sm", statsVariant === "compact" ? "rounded-2xl px-3.5 py-3" : "rounded-3xl px-5 py-4")}>
                     <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{stat.label}</p>
-                    <p className={cn("font-semibold tracking-tight text-slate-900", statsVariant === "compact" ? "mt-1 text-2xl" : "mt-2 text-3xl")}>{stat.value}</p>
-                    <p className={cn("text-slate-600", statsVariant === "compact" ? "mt-1 text-xs leading-5" : "mt-2 text-sm")}>{stat.hint}</p>
+                    <p className={cn("font-semibold tracking-tight text-slate-900", statsVariant === "compact" ? "mt-1 text-[1.9rem] leading-none" : "mt-2 text-3xl")}>{stat.value}</p>
+                    <p className={cn("text-slate-600", statsVariant === "compact" ? "mt-1 text-[11px] leading-4" : "mt-2 text-sm")}>{stat.hint}</p>
                   </div>
                 ))}
               </div>
