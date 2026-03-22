@@ -7,6 +7,7 @@ import { Navbar } from "@/components/site/navbar";
 import { ProductActionButtons } from "@/components/site/product-action-buttons";
 import { getCatalogProductBySlug } from "@/lib/catalog";
 import { getProductImageSource } from "@/lib/media";
+import { getApprovedReviewsForProduct } from "@/lib/reviews";
 import { buildMetadata, productJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
   if (!product) {
     notFound();
   }
+
+  const reviews = await getApprovedReviewsForProduct({ productId: product.id, productSlug: product.slug });
 
   const imageSource = getProductImageSource(product);
   const jsonLd = productJsonLd({
@@ -87,6 +90,34 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
         </div>
       </section>
+      {reviews.length ? (
+        <section className="brand-section border-t border-brand-sand/30 bg-white">
+          <div className="brand-container">
+            <div className="mb-8">
+              <p className="brand-label mb-3">Customer reviews</p>
+              <h2 className="brand-heading text-[clamp(1.8rem,4vw,3rem)]">What customers are saying</h2>
+            </div>
+            <div className="grid gap-5 lg:grid-cols-3">
+              {reviews.map((review) => (
+                <article key={review.id} className="rounded-sm border border-brand-sand/35 bg-brand-cream px-6 py-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-brand-brown">{review.customerName}</p>
+                      <p className="text-xs uppercase tracking-[0.18em] text-brand-taupe">{review.reviewDate}</p>
+                    </div>
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-brown text-sm font-medium text-white">
+                      {review.customerInitials}
+                    </div>
+                  </div>
+                  <p className="mt-4 text-sm tracking-[0.18em] text-brand-gold">{`${"★".repeat(review.rating)}${"☆".repeat(Math.max(0, 5 - review.rating))}`}</p>
+                  <h3 className="mt-3 text-xl font-medium text-brand-brown">{review.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-brand-warm">{review.message}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
       <Footer />
     </div>
   );
