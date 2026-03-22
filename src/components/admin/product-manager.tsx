@@ -173,96 +173,137 @@ export function ProductManager({ products }: { products: Product[] }) {
 
   const draftCount = items.filter((item) => item.status === "draft").length;
   const archivedCount = items.filter((item) => item.status === "archived").length;
+  const activeCount = items.filter((item) => item.status === "active").length;
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4">
-        <div className="flex items-center gap-3 rounded-2xl border border-brand-sand/50 bg-white px-4 py-3">
-          <Search size={16} className="text-brand-taupe" />
-          <input className="w-full bg-transparent text-sm text-brand-brown outline-none placeholder:text-brand-taupe" placeholder="Search products, SKU, category, vendor" value={query} onChange={(event) => setQuery(event.target.value)} />
-        </div>
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <button type="button" onClick={() => setStatusFilter("all")} className={`rounded-2xl px-3 py-3 text-sm ${statusFilter === "all" ? "bg-brand-brown text-white" : "bg-white text-brand-warm"}`}><div className="font-medium">{items.length}</div><div className="text-xs uppercase tracking-[0.16em] opacity-70">All</div></button>
-          <button type="button" onClick={() => setStatusFilter("draft")} className={`rounded-2xl px-3 py-3 text-sm ${statusFilter === "draft" ? "bg-brand-brown text-white" : "bg-white text-brand-warm"}`}><div className="font-medium">{draftCount}</div><div className="text-xs uppercase tracking-[0.16em] opacity-70">Draft</div></button>
-          <button type="button" onClick={() => setStatusFilter("archived")} className={`rounded-2xl px-3 py-3 text-sm ${statusFilter === "archived" ? "bg-brand-brown text-white" : "bg-white text-brand-warm"}`}><div className="font-medium">{archivedCount}</div><div className="text-xs uppercase tracking-[0.16em] opacity-70">Archived</div></button>
-        </div>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          {presetViews.map(({ value, label }) => (
-            <button key={value} type="button" onClick={() => { setSavedView(value); setActiveSavedViewId(null); }} className={`rounded-2xl px-3 py-2 ${savedView === value ? "bg-brand-gold text-white" : "bg-white text-brand-warm"}`}>{label}</button>
-          ))}
-        </div>
-        <div className="grid gap-2 rounded-2xl border border-brand-sand/40 bg-white p-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.16em] text-brand-taupe">Saved views</p>
-            {activeSavedViewId ? <AdminBadge tone="info">Active</AdminBadge> : null}
+      <div className="rounded-[24px] border border-[#e7eaee] bg-white">
+        <div className="border-b border-[#eef1f4] px-5 py-4">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+            <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3">
+              <Search size={16} className="text-slate-400" />
+              <input
+                className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                placeholder="Search products, SKU, category, vendor"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </div>
+            <select
+              className="min-w-[160px] rounded-2xl border border-[#e7eaee] bg-white px-4 py-3 text-sm text-slate-700 outline-none"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as "all" | "active" | "draft" | "archived")}
+            >
+              <option value="all">All statuses ({items.length})</option>
+              <option value="active">Active ({activeCount})</option>
+              <option value="draft">Draft ({draftCount})</option>
+              <option value="archived">Archived ({archivedCount})</option>
+            </select>
+            <select
+              className="min-w-[160px] rounded-2xl border border-[#e7eaee] bg-white px-4 py-3 text-sm text-slate-700 outline-none"
+              value={savedView}
+              onChange={(event) => {
+                setSavedView(event.target.value as SavedViewPreset);
+                setActiveSavedViewId(null);
+              }}
+            >
+              {presetViews.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <select className="min-w-[190px] rounded-2xl border border-[#e7eaee] bg-white px-4 py-3 text-sm text-slate-700 outline-none" value={bulkAction} onChange={(event) => setBulkAction(event.target.value)}>
+              <option value="set-status">Bulk activate</option>
+              <option value="feature">Mark featured</option>
+              <option value="unfeature">Remove featured</option>
+              <option value="delete">Bulk delete</option>
+            </select>
+            <button type="button" className="rounded-2xl border border-[#d8dde3] px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50" onClick={() => void runBulkAction()}>
+              Apply to {selectedIds.length} selected
+            </button>
           </div>
-          <div className="grid gap-2 md:grid-cols-[1fr_auto]">
-            <input className="brand-input" value={newSavedViewName} onChange={(event) => setNewSavedViewName(event.target.value)} placeholder="Save current filters as..." />
-            <button type="button" className="brand-btn-outline justify-center px-4 py-2" onClick={() => void createSavedView()}><Save size={15} />Save view</button>
+          <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {savedViews.map((view) => (
+                <div key={view.id} className="inline-flex items-center gap-2 rounded-full border border-[#e7eaee] bg-[#fbfcfd] px-3 py-2">
+                  <button type="button" className="text-sm text-slate-700" onClick={() => applySavedView(view)}>
+                    {view.name}
+                  </button>
+                  <button type="button" className="text-xs font-medium text-rose-700" onClick={() => void deleteSavedView(view.id)}>
+                    Remove
+                  </button>
+                </div>
+              ))}
+              {savedViews.length === 0 ? <p className="text-sm text-slate-500">No saved views yet.</p> : null}
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                className="min-w-[220px] rounded-2xl border border-[#e7eaee] bg-white px-4 py-3 text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                value={newSavedViewName}
+                onChange={(event) => setNewSavedViewName(event.target.value)}
+                placeholder="Save current filters as..."
+              />
+              <button type="button" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#d8dde3] px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50" onClick={() => void createSavedView()}>
+                <Save size={15} />
+                Save view
+              </button>
+            </div>
           </div>
-          <div className="space-y-2">
-            {savedViews.length ? savedViews.map((view) => (
-              <div key={view.id} className="flex items-center justify-between gap-3 rounded-2xl bg-[#fcfaf5] px-3 py-2">
-                <button type="button" className="text-left text-sm text-brand-brown" onClick={() => applySavedView(view)}>
-                  <div className="font-medium">{view.name}</div>
-                  <div className="text-xs text-brand-taupe">{view.statusFilter} | {view.presetView} | {view.query || "no query"}</div>
-                </button>
-                <button type="button" className="text-xs font-medium text-rose-700" onClick={() => void deleteSavedView(view.id)}>Delete</button>
-              </div>
-            )) : <p className="text-sm text-brand-warm">No custom saved views yet. Saved views persist per admin user.</p>}
-          </div>
+          {activeSavedViewId ? (
+            <div className="mt-3">
+              <AdminBadge tone="info">Saved view active</AdminBadge>
+            </div>
+          ) : null}
         </div>
-        <div className="grid gap-2 md:grid-cols-[1fr_auto]">
-          <select className="brand-input" value={bulkAction} onChange={(event) => setBulkAction(event.target.value)}>
-            <option value="set-status">Bulk activate</option>
-            <option value="feature">Mark featured</option>
-            <option value="unfeature">Remove featured</option>
-            <option value="delete">Bulk delete</option>
-          </select>
-          <button type="button" className="brand-btn-outline justify-center px-4 py-2" onClick={() => void runBulkAction()}>Apply to {selectedIds.length} selected</button>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-[24px] border border-[#e7eaee] bg-white">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-[#fbfcfd] text-slate-500">
-            <tr>
-              <th className="px-5 py-4 font-medium">Product</th>
-              <th className="px-5 py-4 font-medium">SKU</th>
-              <th className="px-5 py-4 font-medium">Category</th>
-              <th className="px-5 py-4 font-medium">Price</th>
-              <th className="px-5 py-4 font-medium">Status</th>
-              <th className="px-5 py-4 font-medium">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibleItems.map((product) => (
-              <tr key={product.id} className="border-t border-[#eef1f4]">
-                <td className="px-5 py-4">
-                  <label className="flex items-center gap-3">
-                    <input type="checkbox" checked={selectedIds.includes(product.id)} onChange={(event) => setSelectedIds((current) => event.target.checked ? [...new Set([...current, product.id])] : current.filter((id) => id !== product.id))} />
-                    <div>
-                      <div className="font-medium text-slate-900">{product.name}</div>
-                      <div className="mt-1 text-xs text-slate-500">{product.vendor || "Sofi Knots"}</div>
-                    </div>
-                  </label>
-                </td>
-                <td className="px-5 py-4 text-slate-600">{product.sku || "Not set"}</td>
-                <td className="px-5 py-4 text-slate-600">{product.category}</td>
-                <td className="px-5 py-4 font-medium text-slate-900">Rs. {product.price.toLocaleString("en-IN")}</td>
-                <td className="px-5 py-4">
-                  <AdminBadge tone={getStatusTone(product.status)}>{product.status ?? "active"}</AdminBadge>
-                </td>
-                <td className="px-5 py-4">
-                  <Link href={`/admin/products/${product.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-medium text-slate-700 transition hover:text-slate-950">
-                    Edit in new window
-                    <ExternalLink size={15} />
-                  </Link>
-                </td>
+        <div className="overflow-hidden">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-[#fbfcfd] text-slate-500">
+              <tr>
+                <th className="px-5 py-4 font-medium">Product</th>
+                <th className="px-5 py-4 font-medium">SKU</th>
+                <th className="px-5 py-4 font-medium">Category</th>
+                <th className="px-5 py-4 font-medium">Price</th>
+                <th className="px-5 py-4 font-medium">Status</th>
+                <th className="px-5 py-4 font-medium">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {visibleItems.map((product) => (
+                <tr key={product.id} className="border-t border-[#eef1f4]">
+                  <td className="px-5 py-4">
+                    <label className="flex items-center gap-3">
+                      <input type="checkbox" checked={selectedIds.includes(product.id)} onChange={(event) => setSelectedIds((current) => event.target.checked ? [...new Set([...current, product.id])] : current.filter((id) => id !== product.id))} />
+                      <div>
+                        <div className="font-medium text-slate-900">{product.name}</div>
+                        <div className="mt-1 text-xs text-slate-500">{product.vendor || "Sofi Knots"}</div>
+                      </div>
+                    </label>
+                  </td>
+                  <td className="px-5 py-4 text-slate-600">{product.sku || "Not set"}</td>
+                  <td className="px-5 py-4 text-slate-600">{product.category}</td>
+                  <td className="px-5 py-4 font-medium text-slate-900">Rs. {product.price.toLocaleString("en-IN")}</td>
+                  <td className="px-5 py-4">
+                    <AdminBadge tone={getStatusTone(product.status)}>{product.status ?? "active"}</AdminBadge>
+                  </td>
+                  <td className="px-5 py-4">
+                    <Link href={`/admin/products/${product.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-medium text-slate-700 transition hover:text-slate-950">
+                      Edit in new window
+                      <ExternalLink size={15} />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+              {visibleItems.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-10 text-center text-sm text-slate-500">
+                    No products match the current filters.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {message ? <p className="text-sm text-brand-warm">{message}</p> : null}
