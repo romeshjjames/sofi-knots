@@ -112,6 +112,34 @@ const pageStarters = [
     ],
   },
   {
+    id: "aboutpage",
+    label: "About page layout",
+    description: "Premium About Us structure with story, values, founder note, and brand CTA.",
+    icon: Sparkles,
+    body: [
+      { type: "heading", content: "Woven with patience, warmth, and purpose", level: "h2", sectionId: "about-story", sectionLabel: "Brand story", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
+      { type: "paragraph", content: "Use this opening section for the main About Us story and brand philosophy.", sectionId: "about-story", sectionLabel: "Brand story", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
+      { type: "cta", label: "Explore Collections", href: "/collections", style: "secondary", sectionId: "about-story", sectionLabel: "Brand story", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
+      { type: "heading", content: "Crafted with intention", level: "h2", sectionId: "about-values", sectionLabel: "Craft values", sectionTheme: "sand", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "paragraph", content: "Introduce the craftsmanship principles, materials, and making process here.", sectionId: "about-values", sectionLabel: "Craft values", sectionTheme: "sand", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "image", url: "", alt: "Craft values image", caption: "Optional brand or craft image", sectionId: "about-values", sectionLabel: "Craft values", sectionTheme: "sand", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "heading", content: "Organic materials", level: "h3", sectionId: "about-values", sectionLabel: "Craft values", sectionTheme: "sand", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "paragraph", content: "Short supporting text for value point one.", sectionId: "about-values", sectionLabel: "Craft values", sectionTheme: "sand", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "heading", content: "Handmade finish", level: "h3", sectionId: "about-values", sectionLabel: "Craft values", sectionTheme: "sand", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "paragraph", content: "Short supporting text for value point two.", sectionId: "about-values", sectionLabel: "Craft values", sectionTheme: "sand", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "heading", content: "Designed to last", level: "h3", sectionId: "about-values", sectionLabel: "Craft values", sectionTheme: "sand", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "paragraph", content: "Short supporting text for value point three.", sectionId: "about-values", sectionLabel: "Craft values", sectionTheme: "sand", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "heading", content: "A studio rooted in slow craft", level: "h2", sectionId: "about-founder", sectionLabel: "Founder note", sectionTheme: "paper", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "paragraph", content: "Use this section for a founder note, studio point of view, or deeper brand perspective.", sectionId: "about-founder", sectionLabel: "Founder note", sectionTheme: "paper", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "image", url: "", alt: "Founder or studio image", caption: "Optional founder image", sectionId: "about-founder", sectionLabel: "Founder note", sectionTheme: "paper", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "quote", quote: "A short founder quote or signature brand belief can live here.", cite: "Founder note", sectionId: "about-founder", sectionLabel: "Founder note", sectionTheme: "paper", sectionLayout: "split", sectionSpacing: "airy" },
+      { type: "heading", content: "Bring Sofi Knots into your story", level: "h2", sectionId: "about-cta", sectionLabel: "Brand call to action", sectionTheme: "ink", sectionLayout: "stacked", sectionSpacing: "airy" },
+      { type: "paragraph", content: "Close with a warm call to browse collections, contact the studio, or explore custom pieces.", sectionId: "about-cta", sectionLabel: "Brand call to action", sectionTheme: "ink", sectionLayout: "stacked", sectionSpacing: "airy" },
+      { type: "cta", label: "Shop All", href: "/shop", style: "primary", sectionId: "about-cta", sectionLabel: "Brand call to action", sectionTheme: "ink", sectionLayout: "stacked", sectionSpacing: "airy" },
+      { type: "cta", label: "Contact Us", href: "/contact", style: "secondary", sectionId: "about-cta", sectionLabel: "Brand call to action", sectionTheme: "ink", sectionLayout: "stacked", sectionSpacing: "airy" },
+    ],
+  },
+  {
     id: "landing",
     label: "Landing page",
     description: "Hero, story section, image spotlight, and CTA.",
@@ -147,6 +175,13 @@ const homepageSectionGuide = [
   { label: "Why Sofi Knots", description: "Controls the craft story split section with image, copy, and CTA." },
   { label: "Testimonials", description: "Controls the intro above the dark testimonials block. Reviews still come from the Reviews admin." },
   { label: "Newsletter", description: "Controls the newsletter heading, description, and button label." },
+];
+
+const aboutSectionGuide = [
+  { label: "Brand story", description: "Controls the opening story banner with the primary About Us heading, text, and optional CTA." },
+  { label: "Craft values", description: "Controls the premium split section for craftsmanship, supporting image, and H3 value points." },
+  { label: "Founder note", description: "Controls the studio/founder story section with image and optional quote." },
+  { label: "Brand call to action", description: "Controls the dark closing section with invitation text and CTA buttons." },
 ];
 
 const postStarters = [
@@ -284,6 +319,7 @@ export function ContentStudio({ pages, posts, initialMode = "page", initialRecor
 
   const activeRecord = selected ? { ...selected, ...editor } : editor;
   const isHomepagePage = mode === "page" && activeRecord.slug === "home";
+  const isAboutPage = mode === "page" && activeRecord.slug === "about";
   const normalizedBlocks = useMemo(() => normalizeVisualBlocks(activeRecord.bodyText), [activeRecord.bodyText]);
   const sectionCount = new Set(normalizedBlocks.map((block) => block.sectionId)).size;
   const blockCount = normalizedBlocks.length;
@@ -596,6 +632,30 @@ export function ContentStudio({ pages, posts, initialMode = "page", initialRecor
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {homepageSectionGuide.map((section) => (
+                <div key={section.label} className="rounded-2xl border border-brand-sand/40 bg-white px-4 py-3">
+                  <div className="text-sm font-medium text-brand-brown">{section.label}</div>
+                  <div className="mt-1 text-xs leading-6 text-brand-taupe">{section.description}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {isAboutPage ? (
+          <div className="rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-medium text-brand-brown">About page section map</p>
+                <p className="text-xs text-brand-taupe">
+                  The live About Us page reads these labeled sections. Keep the labels below aligned with the blocks you want to control.
+                </p>
+              </div>
+              <button type="button" className="brand-btn-outline px-4 py-2" onClick={() => applyStarter("aboutpage")}>
+                Use about page layout starter
+              </button>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {aboutSectionGuide.map((section) => (
                 <div key={section.label} className="rounded-2xl border border-brand-sand/40 bg-white px-4 py-3">
                   <div className="text-sm font-medium text-brand-brown">{section.label}</div>
                   <div className="mt-1 text-xs leading-6 text-brand-taupe">{section.description}</div>

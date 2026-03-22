@@ -10,6 +10,7 @@
     "seed:catalog": "node scripts/seed-catalog.mjs",
     "seed:orders": "node scripts/seed-orders.mjs",
     "sync:home": "node scripts/sync-homepage-page.mjs",
+    "sync:about": "node scripts/sync-about-page.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
