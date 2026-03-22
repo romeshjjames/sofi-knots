@@ -63,6 +63,18 @@ export async function POST(request: Request) {
       },
     });
 
+    if (Array.isArray(body.pageBody)) {
+      await createAuditLog({
+        actorUserId: auth.session.user.id,
+        entityType: "product_page_content",
+        entityId: data.id,
+        action: "content:update",
+        payload: {
+          body: body.pageBody,
+        },
+      });
+    }
+
     return NextResponse.json({ product: data });
   } catch (error) {
     return NextResponse.json(

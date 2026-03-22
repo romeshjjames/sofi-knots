@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CollectionsAdmin } from "@/components/admin/collections-admin";
-import { getCollectionAdminSettingsMap } from "@/lib/admin-data";
+import { getCollectionAdminSettingsMap, getCollectionPageContentMap } from "@/lib/admin-data";
 import { getCatalogCollections, getCatalogProducts, resolveCollectionProducts } from "@/lib/catalog";
 import { requireAdminPage } from "@/lib/supabase/auth";
 
@@ -10,7 +10,10 @@ export default async function AdminCollectionsPage() {
 
   const [collectionsResult, productsResult] = await Promise.all([getCatalogCollections(), getCatalogProducts()]);
   const collectionIds = collectionsResult.data.map((collection) => collection.id).filter((value): value is string => Boolean(value));
-  const settingsMap = await getCollectionAdminSettingsMap(collectionIds);
+  const [settingsMap, contentMap] = await Promise.all([
+    getCollectionAdminSettingsMap(collectionIds),
+    getCollectionPageContentMap(collectionIds),
+  ]);
 
   const collections = collectionsResult.data.map((collection) => {
     const assignedProducts = productsResult.data.filter((product) => product.collectionId === collection.id).map((product) => product.id);
@@ -38,6 +41,7 @@ export default async function AdminCollectionsPage() {
         },
       }).length,
       updatedAt: settings.updatedAt,
+      pageBody: contentMap[collection.id ?? collection.slug]?.body ?? [],
       settings: {
         ...settings,
         assignedProductIds: settings.assignedProductIds.length ? settings.assignedProductIds : assignedProducts,

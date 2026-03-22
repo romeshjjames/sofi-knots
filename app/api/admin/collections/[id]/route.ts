@@ -65,6 +65,18 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       },
     });
 
+    if (Array.isArray(body.pageBody)) {
+      await createAuditLog({
+        actorUserId: auth.session.user.id,
+        entityType: "collection_page_content",
+        entityId: params.id,
+        action: "content:update",
+        payload: {
+          body: body.pageBody,
+        },
+      });
+    }
+
     return NextResponse.json({ collection: data });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to update collection." }, { status: 500 });

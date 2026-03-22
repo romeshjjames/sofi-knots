@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { DataSourceNote } from "@/components/site/data-source-note";
 import { ProductActionButtons } from "@/components/site/product-action-buttons";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
+import { getProductPageContentMap } from "@/lib/admin-data";
 import { getCatalogProductBySlug } from "@/lib/catalog";
 import { getProductImageSource } from "@/lib/media";
 import { getApprovedReviewsForProduct } from "@/lib/reviews";
@@ -42,6 +44,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   const storefront = await getStorefrontSettings();
   const reviews = await getApprovedReviewsForProduct({ productId: product.id, productSlug: product.slug });
+  const contentMap = await getProductPageContentMap([product.id]);
+  const pageBody = contentMap[product.id]?.body;
 
   const imageSource = getProductImageSource(product);
   const jsonLd = productJsonLd({
@@ -118,6 +122,17 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 </article>
               ))}
             </div>
+          </div>
+        </section>
+      ) : null}
+      {Array.isArray(pageBody) && pageBody.length ? (
+        <section className="brand-section border-t border-brand-sand/30 bg-white">
+          <div className="brand-container max-w-5xl">
+            <div className="mb-8">
+              <p className="brand-label mb-3">Product story</p>
+              <h2 className="brand-heading text-[clamp(1.8rem,4vw,3rem)]">Craft details and editorial content</h2>
+            </div>
+            <CmsPageRenderer bodyText={JSON.stringify(pageBody, null, 2)} />
           </div>
         </section>
       ) : null}

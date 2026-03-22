@@ -6,7 +6,7 @@ import { DataSourceNote } from "@/components/site/data-source-note";
 import { PageHero } from "@/components/site/page-hero";
 import { ProductCard } from "@/components/site/product-card";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
-import { getCollectionAdminSettingsMap } from "@/lib/admin-data";
+import { getCollectionAdminSettingsMap, getCollectionPageContentMap } from "@/lib/admin-data";
 import { getCatalogCollectionBySlug, getCatalogPageBySlug, getCatalogProducts, resolveCollectionProducts } from "@/lib/catalog";
 import { getCollectionImageSource } from "@/lib/media";
 import { buildStorefrontMetadata } from "@/lib/seo";
@@ -48,8 +48,12 @@ export default async function CollectionLandingPage({ params }: { params: { slug
     notFound();
   }
 
-  const settingsMap = await getCollectionAdminSettingsMap([collection.id ?? collection.slug]);
+  const [settingsMap, contentMap] = await Promise.all([
+    getCollectionAdminSettingsMap([collection.id ?? collection.slug]),
+    getCollectionPageContentMap([collection.id ?? collection.slug]),
+  ]);
   const settings = settingsMap[collection.id ?? collection.slug];
+  const collectionPageBody = contentMap[collection.id ?? collection.slug]?.body;
   const collectionProducts = settings
     ? resolveCollectionProducts({
         collection,
@@ -83,7 +87,9 @@ export default async function CollectionLandingPage({ params }: { params: { slug
       </section>
       <section className="brand-section">
         <div className="brand-container max-w-5xl">
-          {page ? (
+          {Array.isArray(collectionPageBody) && collectionPageBody.length ? (
+            <CmsPageRenderer bodyText={JSON.stringify(collectionPageBody, null, 2)} />
+          ) : page ? (
             <CmsPageRenderer bodyText={JSON.stringify(page.body ?? [], null, 2)} />
           ) : (
             <div className="rounded-[28px] border border-brand-sand/40 bg-brand-cream p-8 text-brand-warm">

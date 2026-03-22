@@ -4,6 +4,8 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, Eye, Filter, PencilLine, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
+import { ContentPreview } from "@/components/admin/content-preview";
+import { VisualBlockBuilder } from "@/components/admin/visual-block-builder";
 import type { CollectionAdminSettingsRecord, CollectionConditionRecord } from "@/lib/admin-data";
 import { resolveCollectionProducts } from "@/lib/catalog";
 import type { Collection, Product } from "@/types/commerce";
@@ -36,6 +38,7 @@ type CollectionEditor = {
   seoTitle: string;
   seoDescription: string;
   seoKeywords: string;
+  pageBodyText: string;
   updatedAt: string | null;
 };
 
@@ -55,6 +58,7 @@ const emptyEditor: CollectionEditor = {
   seoTitle: "",
   seoDescription: "",
   seoKeywords: "",
+  pageBodyText: "[]",
   updatedAt: null,
 };
 
@@ -89,6 +93,7 @@ function mapCollectionToEditor(collection: CollectionListItem): CollectionEditor
     seoTitle: collection.seoTitle,
     seoDescription: collection.seoDescription,
     seoKeywords: collection.seoKeywords.join(", "),
+    pageBodyText: JSON.stringify(collection.pageBody ?? [], null, 2),
     updatedAt: collection.updatedAt,
   };
 }
@@ -224,6 +229,19 @@ export function CollectionsAdmin({ collections, products }: Props) {
   }
 
   async function saveCollection(nextStatus?: "draft" | "active") {
+    let parsedPageBody: unknown;
+    try {
+      parsedPageBody = JSON.parse(editor.pageBodyText || "[]");
+    } catch {
+      setMessage("Fix the collection landing content before saving.");
+      return;
+    }
+
+    if (!Array.isArray(parsedPageBody)) {
+      setMessage("Collection landing content must be a valid section list.");
+      return;
+    }
+
     const payload = {
       name: editor.title,
       slug: editor.slug,
@@ -240,6 +258,7 @@ export function CollectionsAdmin({ collections, products }: Props) {
       assignedProductIds: editor.collectionType === "manual" ? editor.assignedProductIds : [],
       sortProducts: editor.sortProducts,
       conditions: editor.collectionType === "automated" ? editor.conditions : [],
+      pageBody: parsedPageBody,
     };
 
     startTransition(async () => {
@@ -266,6 +285,7 @@ export function CollectionsAdmin({ collections, products }: Props) {
         seoTitle: editor.seoTitle || editor.title,
         seoDescription: editor.seoDescription || editor.description,
         seoKeywords: editor.seoKeywords.split(",").map((value) => value.trim()).filter(Boolean),
+        pageBody: parsedPageBody,
         productCount: editor.collectionType === "manual" ? editor.assignedProductIds.length : automatedMatches.length,
         updatedAt: new Date().toISOString(),
         settings: {
@@ -670,6 +690,29 @@ export function CollectionsAdmin({ collections, products }: Props) {
               <input className="brand-input" placeholder="Page title" value={editor.seoTitle} onChange={(event) => setEditor((current) => ({ ...current, seoTitle: event.target.value }))} />
               <textarea className="brand-input min-h-24" placeholder="Meta description" value={editor.seoDescription} onChange={(event) => setEditor((current) => ({ ...current, seoDescription: event.target.value }))} />
               <input className="brand-input" placeholder="URL handle" value={editor.slug} onChange={(event) => setEditor((current) => ({ ...current, slug: slugify(event.target.value) }))} />
+            </div>
+          </section>
+
+          <section className="rounded-[28px] border border-[#e7eaee] bg-white p-5 shadow-sm">
+            <h4 className="text-lg font-semibold text-slate-950">Collection landing content</h4>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              These visual sections appear above the product grid on the public collection page.
+            </p>
+            <div className="mt-4 grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
+              <VisualBlockBuilder
+                bodyText={editor.pageBodyText}
+                onChange={(next) => setEditor((current) => ({ ...current, pageBodyText: next }))}
+              />
+              <ContentPreview
+                mode="page"
+                title={editor.title || "Untitled collection"}
+                slug={`collections/${editor.slug || "new-collection"}`}
+                excerpt={editor.description}
+                bodyText={editor.pageBodyText}
+                coverImageUrl={editor.imageUrl || undefined}
+                seoTitle={editor.seoTitle || editor.title || "Untitled collection"}
+                seoDescription={editor.seoDescription || editor.description}
+              />
             </div>
           </section>
 

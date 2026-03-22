@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Archive, ImagePlus, Trash2, X } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
+import { ContentPreview } from "@/components/admin/content-preview";
 import { ProductGalleryManager } from "@/components/admin/product-gallery-manager";
 import { ProductVariantsManager } from "@/components/admin/product-variants-manager";
+import { VisualBlockBuilder } from "@/components/admin/visual-block-builder";
 import type { Product } from "@/types/commerce";
 
 type Option = {
@@ -45,13 +47,26 @@ export function ProductDetailEditor({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
+  const [pageBodyText, setPageBodyText] = useState(() => JSON.stringify(initialProduct.pageBody ?? [], null, 2));
 
   function updateProduct(patch: Partial<Product>) {
     setProduct((current) => ({ ...current, ...patch }));
   }
 
+  const pageBodyPreview = useMemo(() => {
+    try {
+      return JSON.parse(pageBodyText || "[]");
+    } catch {
+      return null;
+    }
+  }, [pageBodyText]);
+
   async function saveProduct() {
     setMessage(null);
+    if (pageBodyPreview === null || !Array.isArray(pageBodyPreview)) {
+      setMessage("Fix the product storytelling content before saving.");
+      return;
+    }
     startTransition(async () => {
       const response = await fetch(`/api/admin/products/${product.id}`, {
         method: "PATCH",
@@ -82,6 +97,7 @@ export function ProductDetailEditor({
           seoDescription: product.seoDescription,
           seoKeywords: product.seoKeywords,
           status: product.status ?? "active",
+          pageBody: pageBodyPreview,
         }),
       });
 
@@ -310,6 +326,26 @@ export function ProductDetailEditor({
 
           <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6">
             <ProductGalleryManager productId={product.id} />
+          </section>
+
+          <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6">
+            <h4 className="font-serif text-2xl text-brand-brown">Product storytelling sections</h4>
+            <p className="mt-2 text-sm leading-7 text-brand-warm">
+              Build the editorial sections that appear below the core product details on the storefront.
+            </p>
+            <div className="mt-5 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+              <VisualBlockBuilder bodyText={pageBodyText} onChange={setPageBodyText} />
+              <ContentPreview
+                mode="page"
+                title={product.name}
+                slug={`product/${product.slug}`}
+                excerpt={product.shortDescription}
+                bodyText={pageBodyText}
+                coverImageUrl={product.featuredImageUrl ?? undefined}
+                seoTitle={product.seoTitle || product.name}
+                seoDescription={product.seoDescription || product.shortDescription}
+              />
+            </div>
           </section>
 
           <section className="rounded-[28px] border border-brand-sand/60 bg-white p-6">

@@ -37,6 +37,7 @@ export type Product = SeoEntity & {
   physicalProduct?: boolean;
   weight?: number | null;
   salesChannels?: string[];
+  pageBody?: unknown;
 };
 
 export type Collection = SeoEntity & {
@@ -47,6 +48,7 @@ export type Collection = SeoEntity & {
   image: StaticImageData;
   imageUrl?: string | null;
   sortOrder?: number;
+  pageBody?: unknown;
 };
 
 export type BlogPost = SeoEntity & {

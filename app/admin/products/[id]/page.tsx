@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
 import { ProductDetailEditor } from "@/components/admin/product-detail-editor";
-import { getProductAdminSettingsMap } from "@/lib/admin-data";
+import { getProductAdminSettingsMap, getProductPageContentMap } from "@/lib/admin-data";
 import { getCatalogCategories, getCatalogCollections, getCatalogProducts } from "@/lib/catalog";
 import { requireAdminPage } from "@/lib/supabase/auth";
 
@@ -17,8 +17,12 @@ export default async function AdminProductEditPage({ params }: { params: { id: s
   const product = productsResult.data.find((item) => item.id === params.id);
   if (!product) notFound();
 
-  const settingsMap = await getProductAdminSettingsMap([product.id]);
+  const [settingsMap, contentMap] = await Promise.all([
+    getProductAdminSettingsMap([product.id]),
+    getProductPageContentMap([product.id]),
+  ]);
   const settings = settingsMap[product.id];
+  const pageContent = contentMap[product.id];
   const productWithSettings = settings
     ? {
         ...product,
@@ -32,8 +36,9 @@ export default async function AdminProductEditPage({ params }: { params: { id: s
         physicalProduct: settings.physicalProduct,
         weight: settings.weight,
         salesChannels: settings.salesChannels,
+        pageBody: pageContent?.body ?? [],
       }
-    : product;
+    : { ...product, pageBody: pageContent?.body ?? [] };
 
   return (
     <AdminShell

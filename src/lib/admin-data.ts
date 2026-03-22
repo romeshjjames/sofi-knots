@@ -223,6 +223,12 @@ export type CollectionAdminSettingsRecord = {
   updatedAt: string | null;
 };
 
+export type CommercePageContentRecord = {
+  entityId: string;
+  body: unknown;
+  updatedAt: string | null;
+};
+
 export type HomepageSectionKey =
   | "hero"
   | "intro"
@@ -372,6 +378,53 @@ export async function getProductAdminSettingsMap(productIds: string[]) {
   });
 
   return map;
+}
+
+async function getCommercePageContentMap(entityType: "product_page_content" | "collection_page_content", entityIds: string[]) {
+  const uniqueIds = Array.from(new Set(entityIds.filter(Boolean)));
+  if (!uniqueIds.length) return {} as Record<string, CommercePageContentRecord>;
+
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("entity_id, payload, created_at")
+    .eq("entity_type", entityType)
+    .eq("action", "content:update")
+    .in("entity_id", uniqueIds)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const map: Record<string, CommercePageContentRecord> = {};
+
+  for (const row of data ?? []) {
+    if (map[row.entity_id]) continue;
+    const payload = (row.payload ?? {}) as Record<string, unknown>;
+    map[row.entity_id] = {
+      entityId: row.entity_id,
+      body: payload.body ?? [],
+      updatedAt: row.created_at,
+    } satisfies CommercePageContentRecord;
+  }
+
+  uniqueIds.forEach((entityId) => {
+    if (map[entityId]) return;
+    map[entityId] = {
+      entityId,
+      body: [],
+      updatedAt: null,
+    };
+  });
+
+  return map;
+}
+
+export async function getProductPageContentMap(productIds: string[]) {
+  return getCommercePageContentMap("product_page_content", productIds);
+}
+
+export async function getCollectionPageContentMap(collectionIds: string[]) {
+  return getCommercePageContentMap("collection_page_content", collectionIds);
 }
 
 export async function getPages() {
