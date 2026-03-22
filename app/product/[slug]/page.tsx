@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { DataSourceNote } from "@/components/site/data-source-note";
@@ -7,7 +6,6 @@ import { ProductActionButtons } from "@/components/site/product-action-buttons";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { getProductPageContentMap } from "@/lib/admin-data";
 import { getCatalogProductBySlug } from "@/lib/catalog";
-import { getProductImageSource } from "@/lib/media";
 import { getApprovedReviewsForProduct } from "@/lib/reviews";
 import { buildStorefrontMetadata, productJsonLd } from "@/lib/seo";
 import { getStorefrontSettings } from "@/lib/storefront";
@@ -47,11 +45,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const contentMap = await getProductPageContentMap([product.id]);
   const pageBody = contentMap[product.id]?.body;
 
-  const imageSource = getProductImageSource(product);
   const jsonLd = productJsonLd({
     name: product.name,
     description: product.description,
-    image: typeof imageSource === "string" ? imageSource : imageSource.src,
+    image: product.featuredImageUrl || storefront.socialSharingImage || `${storefront.siteUrl}/placeholder.svg`,
     sku: product.slug,
     price: product.price,
     brandName: storefront.siteName,
@@ -66,15 +63,20 @@ export default async function ProductPage({ params }: { params: { slug: string }
       <section className="brand-section">
         <div className="brand-container grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-brand-cream">
-            <Image
-              src={imageSource}
-              alt={product.name}
-              fill
-              sizes="(min-width: 1024px) 52vw, 100vw"
-              className="h-full w-full object-cover"
-              priority
-              placeholder={product.featuredImageUrl ? "empty" : "blur"}
-            />
+            {product.featuredImageUrl ? (
+              <img
+                src={product.featuredImageUrl}
+                alt={product.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dcc6ad_100%)] p-8 text-center">
+                <div>
+                  <p className="brand-label mb-3">Media needed</p>
+                  <p className="max-w-sm font-serif text-3xl leading-tight text-brand-brown">Add a featured product image from the Products admin.</p>
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex flex-col justify-center">
             <p className="brand-label mb-3">{product.category}</p>

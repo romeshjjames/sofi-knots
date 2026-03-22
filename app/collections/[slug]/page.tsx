@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { DataSourceNote } from "@/components/site/data-source-note";
@@ -8,7 +7,6 @@ import { ProductCard } from "@/components/site/product-card";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { getCollectionAdminSettingsMap, getCollectionPageContentMap } from "@/lib/admin-data";
 import { getCatalogCollectionBySlug, getCatalogPageBySlug, getCatalogProducts, resolveCollectionProducts } from "@/lib/catalog";
-import { getCollectionImageSource } from "@/lib/media";
 import { buildStorefrontMetadata } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
@@ -74,14 +72,20 @@ export default async function CollectionLandingPage({ params }: { params: { slug
       <section className="brand-section pt-0">
         <div className="brand-container">
           <div className="relative aspect-[16/7] overflow-hidden rounded-[28px] bg-brand-cream">
-            <Image
-              src={getCollectionImageSource(collection)}
-              alt={collection.title}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              placeholder={collection.imageUrl ? "empty" : "blur"}
-            />
+            {collection.imageUrl ? (
+              <img
+                src={collection.imageUrl}
+                alt={collection.title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dcc6ad_100%)] p-8 text-center">
+                <div>
+                  <p className="brand-label mb-3">Media needed</p>
+                  <p className="max-w-lg font-serif text-3xl leading-tight text-brand-brown">Add a collection image from Media Library in the Collections admin.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>

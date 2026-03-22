@@ -1,13 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Leaf, ShieldCheck, Sparkles, Star } from "lucide-react";
-import heroBg from "@/assets/hero-bg.jpg";
 import { DataSourceNote } from "@/components/site/data-source-note";
 import { ProductCard } from "@/components/site/product-card";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { groupVisualSections, type VisualContentBlock, type VisualSection } from "@/lib/cms-blocks";
 import { getCatalogCollections, getCatalogPageBySlug, getFeaturedProducts } from "@/lib/catalog";
-import { getCollectionImageSource } from "@/lib/media";
 import { getReviews } from "@/lib/reviews";
 
 type HomepageCard = {
@@ -120,7 +117,7 @@ export async function HomePage() {
           {getSectionImageUrl(heroSection) ? (
             <img src={getSectionImageUrl(heroSection) || ""} alt={getSectionHeading(heroSection, "Sofi Knots hero")} className="h-full w-full object-cover" />
           ) : (
-            <Image src={heroBg} alt="Sofi Knots macrame collection" className="h-full w-full object-cover" priority />
+            <div className="h-full w-full bg-[radial-gradient(circle_at_18%_30%,rgba(255,255,255,0.42),transparent_28%),radial-gradient(circle_at_78%_22%,rgba(255,255,255,0.18),transparent_18%),linear-gradient(135deg,#b9946c_0%,#d2b190_42%,#a57f58_100%)]" />
           )}
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(72,54,35,0.48)_0%,rgba(72,54,35,0.18)_34%,rgba(72,54,35,0.04)_58%,rgba(72,54,35,0.02)_100%)]" />
         </div>
@@ -184,12 +181,20 @@ export async function HomePage() {
                 className="group block"
               >
                 <div className="relative aspect-[0.82] overflow-hidden bg-brand-cream">
-                  <Image
-                    src={getCollectionImageSource(collection)}
-                    alt={collection.title}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    placeholder={collection.imageUrl ? "empty" : "blur"}
-                  />
+                  {collection.imageUrl ? (
+                    <img
+                      src={collection.imageUrl}
+                      alt={collection.title}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dfccb5_100%)] p-6 text-center">
+                      <div>
+                        <p className="brand-label mb-3">Media needed</p>
+                        <p className="font-serif text-2xl text-brand-brown">{collection.title}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="px-1 pb-1 pt-4">
                   <h3 className="font-serif text-xl text-brand-brown">{collection.title}</h3>
@@ -228,7 +233,12 @@ export async function HomePage() {
             {getSectionImageUrl(valuesSection) ? (
               <img src={getSectionImageUrl(valuesSection) || ""} alt={getSectionHeading(valuesSection, "Our craft")} className="h-full w-full object-cover" />
             ) : (
-              <Image src={heroBg} alt="Sofi Knots craft story" className="h-full w-full object-cover" />
+              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dcc6ad_100%)] p-8 text-center">
+                <div>
+                  <p className="brand-label mb-3">Media needed</p>
+                  <p className="max-w-sm font-serif text-3xl leading-tight text-brand-brown">Add a craft image from Media Library in the Home page editor.</p>
+                </div>
+              </div>
             )}
           </div>
           <div className="max-w-xl">

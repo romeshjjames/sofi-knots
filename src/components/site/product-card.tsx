@@ -1,10 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingBag, Star } from "lucide-react";
 import { trackAnalyticsEvent } from "@/lib/analytics";
-import { getProductImageSource } from "@/lib/media";
 import type { Product } from "@/types/commerce";
 
 type Props = {
@@ -13,8 +11,6 @@ type Props = {
 };
 
 export function ProductCard({ product, index = 0 }: Props) {
-  const imageSource = getProductImageSource(product);
-
   return (
     <div className="brand-card group animate-fade-in" style={{ animationDelay: `${index * 80}ms` }}>
       <Link
@@ -33,16 +29,22 @@ export function ProductCard({ product, index = 0 }: Props) {
             },
           })
         }
-      >
+        >
         <div className="relative aspect-[3/4] overflow-hidden bg-brand-cream">
-          <Image
-            src={imageSource}
-            alt={product.name}
-            fill
-            sizes="(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 50vw"
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-            placeholder={typeof imageSource === "string" ? "empty" : "blur"}
-          />
+          {product.featuredImageUrl ? (
+            <img
+              src={product.featuredImageUrl}
+              alt={product.name}
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dcc6ad_100%)] p-6 text-center">
+              <div>
+                <p className="brand-label mb-3">Media needed</p>
+                <p className="font-serif text-2xl leading-tight text-brand-brown">{product.name}</p>
+              </div>
+            </div>
+          )}
           {product.badge ? (
             <span className="brand-label absolute left-3 top-3 bg-brand-ivory/90 px-3 py-1 text-[10px] backdrop-blur-sm">
               {product.badge}

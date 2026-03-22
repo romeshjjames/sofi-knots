@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { DataSourceNote } from "@/components/site/data-source-note";
 import { PageHero } from "@/components/site/page-hero";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { getCatalogCollections, getCatalogPageBySlug } from "@/lib/catalog";
-import { getCollectionImageSource } from "@/lib/media";
 import { buildStorefrontMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -46,14 +44,20 @@ export default async function CollectionsPage() {
           {result.data.map((collection) => (
             <Link key={collection.slug} href={`/collections/${collection.slug}`} className="overflow-hidden rounded-sm bg-brand-cream transition hover:-translate-y-1">
               <div className="relative aspect-[3/4]">
-                <Image
-                  src={getCollectionImageSource(collection)}
-                  alt={collection.title}
-                  fill
-                  sizes="(min-width: 768px) 30vw, 100vw"
-                  className="h-full w-full object-cover"
-                  placeholder={collection.imageUrl ? "empty" : "blur"}
-                />
+                {collection.imageUrl ? (
+                  <img
+                    src={collection.imageUrl}
+                    alt={collection.title}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dcc6ad_100%)] p-6 text-center">
+                    <div>
+                      <p className="brand-label mb-3">Media needed</p>
+                      <p className="font-serif text-2xl text-brand-brown">{collection.title}</p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="p-6">
                 <p className="brand-label mb-2">SEO Landing Collection</p>

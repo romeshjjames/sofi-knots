@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Leaf, Sparkles, ShieldCheck } from "lucide-react";
-import heroBg from "@/assets/hero-bg.jpg";
 import { DataSourceNote } from "@/components/site/data-source-note";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { groupVisualSections, type VisualContentBlock, type VisualSection } from "@/lib/cms-blocks";
@@ -130,7 +128,7 @@ export default async function AboutPage() {
               className="h-full w-full object-cover"
             />
           ) : (
-            <Image src={heroBg} alt="Sofi Knots story" className="h-full w-full object-cover" priority />
+            <div className="h-full w-full bg-[radial-gradient(circle_at_18%_30%,rgba(255,255,255,0.42),transparent_28%),radial-gradient(circle_at_78%_22%,rgba(255,255,255,0.18),transparent_18%),linear-gradient(135deg,#b9946c_0%,#d2b190_42%,#a57f58_100%)]" />
           )}
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(72,54,35,0.66)_0%,rgba(72,54,35,0.28)_42%,rgba(72,54,35,0.08)_100%)]" />
         </div>
@@ -177,7 +175,12 @@ export default async function AboutPage() {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <Image src={heroBg} alt="Sofi Knots craftsmanship" className="h-full w-full object-cover" />
+              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dcc6ad_100%)] p-8 text-center">
+                <div>
+                  <p className="brand-label mb-3">Media needed</p>
+                  <p className="max-w-sm font-serif text-3xl leading-tight text-brand-brown">Add a craft image from Media Library in the About page editor.</p>
+                </div>
+              </div>
             )}
           </div>
           <div>
@@ -252,7 +255,12 @@ export default async function AboutPage() {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <Image src={heroBg} alt="Sofi Knots founder story" className="h-full w-full object-cover" />
+              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dcc6ad_100%)] p-8 text-center">
+                <div>
+                  <p className="brand-label mb-3">Media needed</p>
+                  <p className="max-w-sm font-serif text-3xl leading-tight text-brand-brown">Add a founder or studio image from Media Library in the About page editor.</p>
+                </div>
+              </div>
             )}
           </div>
         </div>
