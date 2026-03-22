@@ -342,7 +342,7 @@ export function ContentStudio({ pages, posts, initialMode = "page", initialRecor
   const starterCards = mode === "page" ? pageStarters : postStarters;
 
   return (
-    <div className={`grid gap-6 ${standalone ? "xl:grid-cols-[minmax(0,1fr)_420px]" : "2xl:grid-cols-[320px_minmax(0,1fr)_420px]"}`}>
+    <div className={`grid gap-6 ${standalone ? "2xl:grid-cols-[minmax(0,1fr)_420px]" : "2xl:grid-cols-[320px_minmax(0,1fr)_420px]"}`}>
       {standalone ? null : (
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
@@ -597,7 +597,7 @@ export function ContentStudio({ pages, posts, initialMode = "page", initialRecor
         {message ? <p className="text-sm text-brand-warm">{message}</p> : null}
       </div>
 
-      <div className={`${standalone ? "xl:sticky xl:top-6 xl:self-start" : "2xl:sticky 2xl:top-6 2xl:self-start"}`}>
+      <div className={`${standalone ? "2xl:sticky 2xl:top-6 2xl:self-start" : "2xl:sticky 2xl:top-6 2xl:self-start"}`}>
         <div className="mb-4 rounded-[24px] border border-brand-sand/40 bg-[#fcfaf5] p-4">
           <div className="text-xs uppercase tracking-[0.16em] text-brand-taupe">Preview checklist</div>
           <div className="mt-3 space-y-2 text-sm text-brand-warm">

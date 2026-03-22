@@ -276,8 +276,8 @@ export function VisualBlockBuilder({ bodyText, onChange }: { bodyText: string; o
         {sections.length ? (
           sections.map((section, sectionIndex) => (
             <div key={section.id} className="rounded-[28px] border border-brand-sand/40 bg-white p-4 shadow-[0_18px_40px_rgba(65,42,17,0.05)]">
-              <div className="mb-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto]">
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_160px_160px_160px]">
+              <div className="mb-4 space-y-4">
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_160px_160px_160px]">
                   <input className="brand-input" value={section.label} onChange={(event) => updateSection(section.id, { label: event.target.value })} placeholder="Section label" />
                   <select className="brand-input" value={section.theme} onChange={(event) => updateSection(section.id, { theme: event.target.value as VisualSectionTheme })}>
                     <option value="paper">Paper theme</option>
@@ -295,7 +295,7 @@ export function VisualBlockBuilder({ bodyText, onChange }: { bodyText: string; o
                     <option value="airy">Airy spacing</option>
                   </select>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap justify-end gap-2">
                   <button type="button" className="rounded-xl border border-brand-sand/40 p-2 text-brand-warm" onClick={() => moveSection(section.id, -1)}>
                     <ChevronUp size={15} />
                   </button>
