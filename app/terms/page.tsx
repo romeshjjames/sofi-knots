@@ -9,10 +9,11 @@ const fallback = {
   eyebrow: "Policy",
   heroTitle: "Terms and Conditions",
   heroDescription: "This legal page is part of the storefront trust and SEO foundation.",
-  body: (
+  body: (settings) => (
     <section className="brand-section">
       <div className="brand-container max-w-3xl text-sm leading-relaxed text-brand-warm">
-        Orders, pricing, fulfillment timelines, and refund eligibility should be documented here once the live commerce workflows are finalized.
+        {settings.policies.termsAndConditions ||
+          "Orders, pricing, fulfillment timelines, and refund eligibility should be documented here once the live commerce workflows are finalized."}
       </div>
     </section>
   ),

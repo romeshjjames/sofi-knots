@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
-import { Footer } from "@/components/site/footer";
-import { Navbar } from "@/components/site/navbar";
 import { PageHero } from "@/components/site/page-hero";
+import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { verifyPreviewToken } from "@/lib/preview";
 
@@ -24,14 +23,14 @@ export default async function PreviewPageRoute({ params, searchParams }: { param
 
   return (
     <div>
-      <Navbar />
+      <StorefrontNavbar />
       <PageHero eyebrow="Draft Preview" title={data.title} description={data.excerpt || "Previewing unpublished page content."} />
       <section className="brand-section">
         <div className="brand-container max-w-5xl">
           <CmsPageRenderer bodyText={JSON.stringify(data.body ?? [], null, 2)} />
         </div>
       </section>
-      <Footer />
+      <StorefrontFooter />
     </div>
   );
 }

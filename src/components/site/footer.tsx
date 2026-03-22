@@ -1,36 +1,53 @@
 import Link from "next/link";
 import { Facebook, Instagram, Mail, Phone } from "lucide-react";
-import { siteConfig } from "@/lib/site-config";
 
-export function Footer() {
+type FooterProps = {
+  siteName?: string;
+  footerBrandText?: string;
+  supportEmail?: string;
+  supportPhone?: string;
+  socialLinks?: Record<string, string>;
+};
+
+export function Footer({
+  siteName = "Sofi Knots",
+  footerBrandText = "Handcrafted macrame art made with love, patience, and premium natural materials.",
+  supportEmail = "hello@sofiknots.com",
+  supportPhone = "+91 98765 43210",
+  socialLinks = {},
+}: FooterProps) {
+  const instagramLink = socialLinks.instagram || "#";
+  const facebookLink = socialLinks.facebook || "#";
+  const whatsappLink = socialLinks.whatsapp || "#";
+
   return (
     <footer className="border-t border-brand-sand/40 bg-brand-cream">
       <div className="brand-container py-16 lg:py-20">
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           <div>
             <h3 className="mb-4 font-serif text-2xl font-semibold text-brand-brown">
-              Sofi <span className="text-brand-gold">Knots</span>
+              {siteName}
             </h3>
             <p className="mb-6 text-sm leading-relaxed text-brand-warm">
-              Handcrafted macrame art made with love, patience, and premium natural materials. Each piece tells a story of artisan craftsmanship.
+              {footerBrandText}
             </p>
             <div className="flex gap-3">
               <a
-                href={siteConfig.social.instagram}
+                href={instagramLink}
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-brand-sand text-brand-warm transition-all duration-300 hover:border-transparent hover:bg-brand-gold hover:text-brand-ivory"
                 aria-label="Instagram"
               >
                 <Instagram size={16} />
               </a>
               <a
-                href={siteConfig.social.facebook}
+                href={facebookLink}
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-brand-sand text-brand-warm transition-all duration-300 hover:border-transparent hover:bg-brand-gold hover:text-brand-ivory"
                 aria-label="Facebook"
               >
                 <Facebook size={16} />
               </a>
               <a
-                href={`mailto:${siteConfig.contactEmail}`}
+                href={`mailto:${supportEmail}`}
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-brand-sand text-brand-warm transition-all duration-300 hover:border-transparent hover:bg-brand-gold hover:text-brand-ivory"
                 aria-label="Email"
               >
@@ -72,14 +89,14 @@ export function Footer() {
             <h4 className="brand-label mb-5">Get in Touch</h4>
             <div className="mb-3 flex items-center gap-2 text-sm text-brand-warm">
               <Mail size={14} className="text-brand-gold" />
-              {siteConfig.contactEmail}
+              {supportEmail}
             </div>
             <div className="mb-6 flex items-center gap-2 text-sm text-brand-warm">
               <Phone size={14} className="text-brand-gold" />
-              {siteConfig.contactPhone}
+              {supportPhone}
             </div>
             <a
-              href={siteConfig.social.whatsapp}
+              href={whatsappLink}
               target="_blank"
               rel="noreferrer"
               className="brand-btn-outline px-5 py-2 text-xs"

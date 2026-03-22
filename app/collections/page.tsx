@@ -3,18 +3,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { DataSourceNote } from "@/components/site/data-source-note";
-import { Footer } from "@/components/site/footer";
-import { Navbar } from "@/components/site/navbar";
 import { PageHero } from "@/components/site/page-hero";
+import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { getCatalogCollections, getCatalogPageBySlug } from "@/lib/catalog";
 import { getCollectionImageSource } from "@/lib/media";
-import { buildMetadata } from "@/lib/seo";
+import { buildStorefrontMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const result = await getCatalogPageBySlug("collections");
   const page = result.data;
 
-  return buildMetadata({
+  return buildStorefrontMetadata({
     title: page?.seoTitle || "Macrame Collections",
     description: page?.seoDescription || "Explore Sofi Knots collections curated around bohemian living, earthy styling, gifting, and handmade keepsakes.",
     path: "/collections",
@@ -28,7 +27,7 @@ export default async function CollectionsPage() {
 
   return (
     <div>
-      <Navbar />
+      <StorefrontNavbar />
       <DataSourceNote source={result.source} error={result.error} />
       <PageHero
         eyebrow="Curated"
@@ -65,7 +64,7 @@ export default async function CollectionsPage() {
           ))}
         </div>
       </section>
-      <Footer />
+      <StorefrontFooter />
     </div>
   );
 }

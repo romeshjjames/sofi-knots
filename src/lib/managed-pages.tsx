@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
-import { Footer } from "@/components/site/footer";
-import { Navbar } from "@/components/site/navbar";
 import { PageHero } from "@/components/site/page-hero";
+import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { getCatalogPageBySlug } from "@/lib/catalog";
-import { buildMetadata } from "@/lib/seo";
+import { buildStorefrontMetadata } from "@/lib/seo";
+import { getStorefrontSettings, type StorefrontSettings } from "@/lib/storefront";
 
 type ManagedFallback = {
   title: string;
@@ -15,7 +15,7 @@ type ManagedFallback = {
   eyebrow: string;
   heroTitle: string;
   heroDescription: string;
-  body: ReactNode;
+  body: ReactNode | ((settings: StorefrontSettings) => ReactNode);
 };
 
 export async function getManagedPageMetadata(slug: string, fallback: Omit<ManagedFallback, "eyebrow" | "heroTitle" | "heroDescription" | "body">): Promise<Metadata> {
@@ -23,7 +23,7 @@ export async function getManagedPageMetadata(slug: string, fallback: Omit<Manage
   const page = result.data;
 
   if (!page) {
-    return buildMetadata({
+    return buildStorefrontMetadata({
       title: fallback.title,
       description: fallback.description,
       path: fallback.path,
@@ -31,7 +31,7 @@ export async function getManagedPageMetadata(slug: string, fallback: Omit<Manage
     });
   }
 
-  return buildMetadata({
+  return buildStorefrontMetadata({
     title: page.seoTitle,
     description: page.seoDescription,
     path: fallback.path,
@@ -42,28 +42,30 @@ export async function getManagedPageMetadata(slug: string, fallback: Omit<Manage
 export async function renderManagedPage(slug: string, fallback: ManagedFallback) {
   const result = await getCatalogPageBySlug(slug);
   const page = result.data;
+  const storefront = await getStorefrontSettings();
+  const fallbackBody = typeof fallback.body === "function" ? fallback.body(storefront) : fallback.body;
 
   if (!page) {
     return (
       <div>
-        <Navbar />
+        <StorefrontNavbar />
         <PageHero eyebrow={fallback.eyebrow} title={fallback.heroTitle} description={fallback.heroDescription} />
-        {fallback.body}
-        <Footer />
+        {fallbackBody}
+        <StorefrontFooter />
       </div>
     );
   }
 
   return (
     <div>
-      <Navbar />
+      <StorefrontNavbar />
       <PageHero eyebrow={fallback.eyebrow} title={page.title} description={page.excerpt || fallback.heroDescription} />
       <section className="brand-section">
         <div className="brand-container max-w-5xl">
           <CmsPageRenderer bodyText={JSON.stringify(page.body ?? [], null, 2)} />
         </div>
       </section>
-      <Footer />
+      <StorefrontFooter />
     </div>
   );
 }

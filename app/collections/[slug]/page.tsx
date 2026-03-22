@@ -3,14 +3,13 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { DataSourceNote } from "@/components/site/data-source-note";
-import { Footer } from "@/components/site/footer";
-import { Navbar } from "@/components/site/navbar";
 import { PageHero } from "@/components/site/page-hero";
 import { ProductCard } from "@/components/site/product-card";
+import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { getCollectionAdminSettingsMap } from "@/lib/admin-data";
 import { getCatalogCollectionBySlug, getCatalogPageBySlug, getCatalogProducts, resolveCollectionProducts } from "@/lib/catalog";
 import { getCollectionImageSource } from "@/lib/media";
-import { buildMetadata } from "@/lib/seo";
+import { buildStorefrontMetadata } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const [collectionResult, pageResult] = await Promise.all([
@@ -21,14 +20,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const page = pageResult.data;
 
   if (!collection) {
-    return buildMetadata({
+    return buildStorefrontMetadata({
       title: "Collection Not Found",
       description: "The requested collection could not be found.",
       path: `/collections/${params.slug}`,
     });
   }
 
-  return buildMetadata({
+  return buildStorefrontMetadata({
     title: page?.seoTitle || collection.seoTitle,
     description: page?.seoDescription || collection.seoDescription,
     path: `/collections/${collection.slug}`,
@@ -61,7 +60,7 @@ export default async function CollectionLandingPage({ params }: { params: { slug
 
   return (
     <div>
-      <Navbar />
+      <StorefrontNavbar />
       <DataSourceNote source={collectionResult.source} error={collectionResult.error} />
       <PageHero
         eyebrow="Collection"
@@ -115,7 +114,7 @@ export default async function CollectionLandingPage({ params }: { params: { slug
           )}
         </div>
       </section>
-      <Footer />
+      <StorefrontFooter />
     </div>
   );
 }

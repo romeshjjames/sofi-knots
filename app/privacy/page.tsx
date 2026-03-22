@@ -9,10 +9,11 @@ const fallback = {
   eyebrow: "Policy",
   heroTitle: "Privacy Policy",
   heroDescription: "This page is now ready to be managed from the admin content system.",
-  body: (
+  body: (settings) => (
     <section className="brand-section">
       <div className="brand-container max-w-3xl text-sm leading-relaxed text-brand-warm">
-        We collect customer information needed to fulfill orders, communicate updates, and improve the shopping experience.
+        {settings.policies.privacyPolicy ||
+          "We collect customer information needed to fulfill orders, communicate updates, and improve the shopping experience."}
       </div>
     </section>
   ),

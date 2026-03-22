@@ -4,9 +4,8 @@ import { ArrowRight, Quote, Scissors, Shield, Star, Truck } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { DataSourceNote } from "@/components/site/data-source-note";
-import { Footer } from "@/components/site/footer";
-import { Navbar } from "@/components/site/navbar";
 import { ProductCard } from "@/components/site/product-card";
+import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { defaultHomepageSections, getHomepageMerchandising, type HomepageSectionKey } from "@/lib/admin-data";
 import { getCatalogCollections, getCatalogPageBySlug, getFeaturedProducts, getNewArrivalProducts } from "@/lib/catalog";
 import { getCollectionImageSource } from "@/lib/media";
@@ -48,14 +47,14 @@ export async function HomePage() {
   if (homepageCms) {
     return (
       <div>
-        <Navbar />
+        <StorefrontNavbar />
         <DataSourceNote source={homepageCmsResult.source} error={homepageCmsResult.error} />
         <section className="brand-section pb-0">
           <div className="brand-container max-w-5xl">
             <CmsPageRenderer bodyText={JSON.stringify(homepageCms.body ?? [], null, 2)} />
           </div>
         </section>
-        <Footer />
+        <StorefrontFooter />
       </div>
     );
   }
@@ -252,13 +251,13 @@ export async function HomePage() {
 
   return (
     <div>
-      <Navbar />
+      <StorefrontNavbar />
       <DataSourceNote source={featuredResult.source} error={featuredResult.error} />
       {sectionOrder.map((sectionKey) => (
         <div key={sectionKey}>{sections[sectionKey]}</div>
       ))}
 
-      <Footer />
+      <StorefrontFooter />
     </div>
   );
 }

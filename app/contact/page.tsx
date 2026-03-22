@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { siteConfig } from "@/lib/site-config";
 import { getManagedPageMetadata, renderManagedPage } from "@/lib/managed-pages";
 
 const fallback = {
@@ -10,14 +9,15 @@ const fallback = {
   eyebrow: "Contact",
   heroTitle: "Let Customers Reach You Easily",
   heroDescription: "This page is important for trust, local signals, and conversions. It should always have accurate support details and a simple contact workflow.",
-  body: (
+  body: (settings) => (
     <section className="brand-section">
       <div className="brand-container grid gap-8 lg:grid-cols-2">
         <div className="rounded-sm bg-brand-cream p-8">
           <p className="brand-label mb-3">Support Details</p>
-          <p className="mb-2 text-brand-warm">{siteConfig.contactEmail}</p>
-          <p className="mb-6 text-brand-warm">{siteConfig.contactPhone}</p>
-          <a href={siteConfig.social.whatsapp} target="_blank" rel="noreferrer" className="brand-btn-primary">
+          <p className="mb-4 text-sm leading-relaxed text-brand-warm">{settings.contactMessage}</p>
+          <p className="mb-2 text-brand-warm">{settings.supportEmail}</p>
+          <p className="mb-6 text-brand-warm">{settings.supportPhone}</p>
+          <a href={settings.whatsappLink} target="_blank" rel="noreferrer" className="brand-btn-primary">
             Message on WhatsApp
           </a>
         </div>

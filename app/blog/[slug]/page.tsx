@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
-import { Footer } from "@/components/site/footer";
-import { Navbar } from "@/components/site/navbar";
+import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { getCatalogBlogPostBySlug } from "@/lib/catalog";
-import { buildMetadata } from "@/lib/seo";
+import { buildStorefrontMetadata } from "@/lib/seo";
 
 async function getPostBySlug(slug: string) {
   const result = await getCatalogBlogPostBySlug(slug);
@@ -15,14 +14,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const post = await getPostBySlug(params.slug);
 
   if (!post) {
-    return buildMetadata({
+    return buildStorefrontMetadata({
       title: "Blog Post Not Found",
       description: "The requested article could not be found.",
       path: `/blog/${params.slug}`,
     });
   }
 
-  return buildMetadata({
+  return buildStorefrontMetadata({
     title: post.seoTitle,
     description: post.seoDescription,
     path: `/blog/${post.slug}`,
@@ -39,7 +38,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
   return (
     <div>
-      <Navbar />
+      <StorefrontNavbar />
       <article className="brand-section">
         <div className="brand-container max-w-3xl">
           <p className="brand-label mb-4">{post.category}</p>
@@ -55,7 +54,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           </div>
         </div>
       </article>
-      <Footer />
+      <StorefrontFooter />
     </div>
   );
 }

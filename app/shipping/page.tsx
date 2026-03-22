@@ -9,16 +9,29 @@ const fallback = {
   eyebrow: "Support",
   heroTitle: "Shipping and Returns",
   heroDescription: "This page is now ready to be driven by admin-managed shipping rules and policy content.",
-  body: (
+  body: (settings) => (
     <section className="brand-section">
       <div className="brand-container grid gap-6 lg:grid-cols-2">
         <div className="rounded-sm bg-brand-cream p-8">
           <h2 className="mb-3 font-serif text-3xl text-brand-brown">Shipping</h2>
-          <p className="text-sm leading-relaxed text-brand-warm">Expected delivery timelines, regions served, and free-shipping thresholds will live here.</p>
+          <div className="space-y-3 text-sm leading-relaxed text-brand-warm">
+            <p>{settings.policies.shippingPolicy || "Expected delivery timelines, regions served, and free-shipping thresholds will live here."}</p>
+            <p>
+              Delivery timeline: <strong>{settings.shipping.deliveryTimeline || "Managed from admin settings"}</strong>
+            </p>
+            <p>
+              Free shipping threshold: <strong>Rs. {settings.shipping.freeShippingThresholdInr.toLocaleString("en-IN")}</strong>
+            </p>
+            <p>
+              Standard shipping charge: <strong>Rs. {settings.shipping.shippingChargeInr.toLocaleString("en-IN")}</strong>
+            </p>
+          </div>
         </div>
         <div className="rounded-sm bg-brand-cream p-8">
           <h2 className="mb-3 font-serif text-3xl text-brand-brown">Returns</h2>
-          <p className="text-sm leading-relaxed text-brand-warm">Return eligibility, damaged item flow, and custom-order exceptions will be managed here.</p>
+          <p className="text-sm leading-relaxed text-brand-warm">
+            {settings.policies.returnRefundPolicy || "Return eligibility, damaged item flow, and custom-order exceptions will be managed here."}
+          </p>
         </div>
       </div>
     </section>

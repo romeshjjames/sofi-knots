@@ -1,31 +1,44 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { DataSourceNote } from "@/components/site/data-source-note";
-import { Footer } from "@/components/site/footer";
-import { Navbar } from "@/components/site/navbar";
 import { PageHero } from "@/components/site/page-hero";
-import { getCatalogBlogPosts } from "@/lib/catalog";
-import { buildMetadata } from "@/lib/seo";
+import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
+import { getCatalogBlogPosts, getCatalogPageBySlug } from "@/lib/catalog";
+import { buildStorefrontMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = buildMetadata({
-  title: "Sofi Knots Blog",
-  description: "Read Sofi Knots blog content focused on styling tips, gifting guides, and handmade product care for SEO growth.",
-  path: "/blog",
-  keywords: ["macrame blog", "boho decor tips", "handmade gift guide"],
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const pageResult = await getCatalogPageBySlug("blog");
+  const page = pageResult.data;
+
+  return buildStorefrontMetadata({
+    title: page?.seoTitle || "Sofi Knots Blog",
+    description: page?.seoDescription || "Read Sofi Knots blog content focused on styling tips, gifting guides, and handmade product care for SEO growth.",
+    path: "/blog",
+    keywords: page?.seoKeywords || ["macrame blog", "boho decor tips", "handmade gift guide"],
+  });
+}
 
 export default async function BlogPage() {
-  const result = await getCatalogBlogPosts();
+  const [result, pageResult] = await Promise.all([getCatalogBlogPosts(), getCatalogPageBySlug("blog")]);
+  const page = pageResult.data;
 
   return (
     <div>
-      <Navbar />
+      <StorefrontNavbar />
       <DataSourceNote source={result.source} error={result.error} />
       <PageHero
         eyebrow="Content Marketing"
-        title="Blog Content for SEO Growth"
-        description="Editorial pages help Sofi Knots target informational search queries, build internal links, and support on-page keyword coverage beyond product pages."
+        title={page?.title || "Blog Content for SEO Growth"}
+        description={page?.excerpt || "Editorial pages help Sofi Knots target informational search queries, build internal links, and support on-page keyword coverage beyond product pages."}
       />
+      {page ? (
+        <section className="brand-section pb-0">
+          <div className="brand-container max-w-5xl">
+            <CmsPageRenderer bodyText={JSON.stringify(page.body ?? [], null, 2)} />
+          </div>
+        </section>
+      ) : null}
       <section className="brand-section">
         <div className="brand-container grid gap-6 lg:grid-cols-3">
           {result.data.map((post) => (
@@ -46,7 +59,7 @@ export default async function BlogPage() {
           ))}
         </div>
       </section>
-      <Footer />
+      <StorefrontFooter />
     </div>
   );
 }

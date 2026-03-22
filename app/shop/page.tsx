@@ -1,31 +1,44 @@
 import type { Metadata } from "next";
+import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { DataSourceNote } from "@/components/site/data-source-note";
-import { Footer } from "@/components/site/footer";
-import { Navbar } from "@/components/site/navbar";
 import { PageHero } from "@/components/site/page-hero";
 import { ProductCard } from "@/components/site/product-card";
-import { getCatalogProducts } from "@/lib/catalog";
-import { buildMetadata } from "@/lib/seo";
+import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
+import { getCatalogPageBySlug, getCatalogProducts } from "@/lib/catalog";
+import { buildStorefrontMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = buildMetadata({
-  title: "Shop Handmade Macrame Products",
-  description: "Browse handcrafted macrame bags, home decor, wall art, gifts, and accessories from Sofi Knots.",
-  path: "/shop",
-  keywords: ["shop macrame online", "handmade decor store", "macrame products india"],
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const pageResult = await getCatalogPageBySlug("shop");
+  const page = pageResult.data;
+
+  return buildStorefrontMetadata({
+    title: page?.seoTitle || "Shop Handmade Macrame Products",
+    description: page?.seoDescription || "Browse handcrafted macrame bags, home decor, wall art, gifts, and accessories from Sofi Knots.",
+    path: "/shop",
+    keywords: page?.seoKeywords || ["shop macrame online", "handmade decor store", "macrame products india"],
+  });
+}
 
 export default async function ShopPage() {
-  const result = await getCatalogProducts();
+  const [result, pageResult] = await Promise.all([getCatalogProducts(), getCatalogPageBySlug("shop")]);
+  const page = pageResult.data;
 
   return (
     <div>
-      <Navbar />
+      <StorefrontNavbar />
       <DataSourceNote source={result.source} error={result.error} />
       <PageHero
         eyebrow="Storefront"
-        title="Shop Handmade Macrame"
-        description="Every product in the Sofi Knots catalog is designed to feel artisanal, giftable, and ready for a premium online store experience."
+        title={page?.title || "Shop Handmade Macrame"}
+        description={page?.excerpt || "Every product in the Sofi Knots catalog is designed to feel artisanal, giftable, and ready for a premium online store experience."}
       />
+      {page ? (
+        <section className="brand-section pb-0">
+          <div className="brand-container max-w-5xl">
+            <CmsPageRenderer bodyText={JSON.stringify(page.body ?? [], null, 2)} />
+          </div>
+        </section>
+      ) : null}
       <section className="brand-section">
         <div className="brand-container grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {result.data.map((product, index) => (
@@ -33,7 +46,7 @@ export default async function ShopPage() {
           ))}
         </div>
       </section>
-      <Footer />
+      <StorefrontFooter />
     </div>
   );
 }

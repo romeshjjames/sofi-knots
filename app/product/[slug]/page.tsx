@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { DataSourceNote } from "@/components/site/data-source-note";
-import { Footer } from "@/components/site/footer";
-import { Navbar } from "@/components/site/navbar";
 import { ProductActionButtons } from "@/components/site/product-action-buttons";
+import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { getCatalogProductBySlug } from "@/lib/catalog";
 import { getProductImageSource } from "@/lib/media";
 import { getApprovedReviewsForProduct } from "@/lib/reviews";
-import { buildMetadata, productJsonLd } from "@/lib/seo";
+import { buildStorefrontMetadata, productJsonLd } from "@/lib/seo";
+import { getStorefrontSettings } from "@/lib/storefront";
 
 export const dynamic = "force-dynamic";
 
@@ -17,14 +17,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const product = result.data;
 
   if (!product) {
-    return buildMetadata({
+    return buildStorefrontMetadata({
       title: "Product Not Found",
       description: "The requested product could not be found.",
       path: `/product/${params.slug}`,
     });
   }
 
-  return buildMetadata({
+  return buildStorefrontMetadata({
     title: product.seoTitle,
     description: product.seoDescription,
     path: `/product/${product.slug}`,
@@ -40,6 +40,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
     notFound();
   }
 
+  const storefront = await getStorefrontSettings();
   const reviews = await getApprovedReviewsForProduct({ productId: product.id, productSlug: product.slug });
 
   const imageSource = getProductImageSource(product);
@@ -49,12 +50,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
     image: typeof imageSource === "string" ? imageSource : imageSource.src,
     sku: product.slug,
     price: product.price,
+    brandName: storefront.siteName,
+    siteUrl: storefront.siteUrl,
   });
 
   return (
     <div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <Navbar />
+      <StorefrontNavbar />
       <DataSourceNote source={result.source} error={result.error} />
       <section className="brand-section">
         <div className="brand-container grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -118,7 +121,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
         </section>
       ) : null}
-      <Footer />
+      <StorefrontFooter />
     </div>
   );
 }

@@ -1,13 +1,20 @@
 import type { MetadataRoute } from "next";
-import { siteConfig } from "@/lib/site-config";
+import { getStorefrontSettings } from "@/lib/storefront";
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const storefront = await getStorefrontSettings();
+
   return {
-    rules: {
-      userAgent: "*",
-      allow: "/",
-      disallow: ["/admin", "/api"],
-    },
-    sitemap: `${siteConfig.url}/sitemap.xml`,
+    rules: storefront.seo.allowIndexing
+      ? {
+          userAgent: "*",
+          allow: "/",
+          disallow: ["/admin", "/api"],
+        }
+      : {
+          userAgent: "*",
+          disallow: ["/"],
+        },
+    sitemap: `${storefront.siteUrl}/sitemap.xml`,
   };
 }

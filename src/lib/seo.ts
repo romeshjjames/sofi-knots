@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/lib/site-config";
+import { getStorefrontSettings } from "@/lib/storefront";
 
 type MetadataInput = {
   title: string;
@@ -8,8 +9,26 @@ type MetadataInput = {
   keywords?: string[];
 };
 
-export function absoluteUrl(path = "/") {
-  return new URL(path, siteConfig.url).toString();
+type SeoConfig = {
+  siteName: string;
+  siteUrl: string;
+  defaultKeywords: string[];
+  socialSharingImage?: string | null;
+  faviconUrl?: string | null;
+};
+
+function buildSeoConfig(overrides?: Partial<SeoConfig>): SeoConfig {
+  return {
+    siteName: overrides?.siteName || siteConfig.name,
+    siteUrl: overrides?.siteUrl || siteConfig.url,
+    defaultKeywords: overrides?.defaultKeywords || siteConfig.defaultKeywords,
+    socialSharingImage: overrides?.socialSharingImage,
+    faviconUrl: overrides?.faviconUrl,
+  };
+}
+
+export function absoluteUrl(path = "/", baseUrl = siteConfig.url) {
+  return new URL(path, baseUrl).toString();
 }
 
 export function buildMetadata({
@@ -17,32 +36,50 @@ export function buildMetadata({
   description,
   path = "/",
   keywords = [],
-}: MetadataInput): Metadata {
-  const fullTitle = title.includes(siteConfig.name) ? title : `${title} | ${siteConfig.name}`;
-  const canonical = absoluteUrl(path);
+}: MetadataInput, configOverrides?: Partial<SeoConfig>): Metadata {
+  const config = buildSeoConfig(configOverrides);
+  const fullTitle = title.includes(config.siteName) ? title : `${title} | ${config.siteName}`;
+  const canonical = absoluteUrl(path, config.siteUrl);
+  const openGraphImages = config.socialSharingImage ? [{ url: absoluteUrl(config.socialSharingImage, config.siteUrl) }] : undefined;
+  const icons = config.faviconUrl ? { icon: absoluteUrl(config.faviconUrl, config.siteUrl) } : undefined;
 
   return {
-    metadataBase: new URL(siteConfig.url),
+    metadataBase: new URL(config.siteUrl),
     title: fullTitle,
     description,
-    keywords: [...siteConfig.defaultKeywords, ...keywords],
+    keywords: [...config.defaultKeywords, ...keywords],
     alternates: {
       canonical,
     },
+    icons,
     openGraph: {
       title: fullTitle,
       description,
       url: canonical,
-      siteName: siteConfig.name,
+      siteName: config.siteName,
       locale: "en_IN",
       type: "website",
+      images: openGraphImages,
     },
     twitter: {
       card: "summary_large_image",
       title: fullTitle,
       description,
+      images: openGraphImages?.map((image) => image.url),
     },
   };
+}
+
+export async function buildStorefrontMetadata(input: MetadataInput): Promise<Metadata> {
+  const storefront = await getStorefrontSettings();
+
+  return buildMetadata(input, {
+    siteName: storefront.siteName,
+    siteUrl: storefront.siteUrl,
+    defaultKeywords: storefront.defaultKeywords,
+    socialSharingImage: storefront.socialSharingImage,
+    faviconUrl: storefront.faviconUrl,
+  });
 }
 
 export function productJsonLd(input: {
@@ -51,6 +88,8 @@ export function productJsonLd(input: {
   image: string;
   sku: string;
   price: number;
+  brandName?: string;
+  siteUrl?: string;
 }) {
   return {
     "@context": "https://schema.org",
@@ -61,14 +100,14 @@ export function productJsonLd(input: {
     sku: input.sku,
     brand: {
       "@type": "Brand",
-      name: siteConfig.name,
+      name: input.brandName || siteConfig.name,
     },
     offers: {
       "@type": "Offer",
       priceCurrency: "INR",
       price: input.price,
       availability: "https://schema.org/InStock",
-      url: siteConfig.url,
+      url: input.siteUrl || siteConfig.url,
     },
   };
 }

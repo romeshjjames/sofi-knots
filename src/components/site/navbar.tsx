@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation";
 import { Heart, Menu, Search, ShoppingBag, X } from "lucide-react";
 import { useState } from "react";
 
+type NavbarProps = {
+  siteName?: string;
+};
+
 const navLinks = [
   { label: "Home", path: "/" },
   { label: "Shop", path: "/shop" },
@@ -14,7 +18,7 @@ const navLinks = [
   { label: "Contact", path: "/contact" },
 ];
 
-export function Navbar() {
+export function Navbar({ siteName = "Sofi Knots" }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -31,7 +35,7 @@ export function Navbar() {
 
         <Link href="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0">
           <span className="font-serif text-2xl font-semibold tracking-tight text-brand-brown lg:text-3xl">
-            Sofi <span className="text-brand-gold">Knots</span>
+            {siteName}
           </span>
         </Link>
 
