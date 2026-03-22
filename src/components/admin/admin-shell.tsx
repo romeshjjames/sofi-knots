@@ -54,6 +54,7 @@ type AdminShellProps = {
   eyebrow?: string;
   actions?: React.ReactNode;
   stats?: AdminStat[];
+  statsVariant?: "default" | "compact";
   breadcrumbs?: { label: string; href?: string }[];
 };
 
@@ -72,7 +73,7 @@ const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof La
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings2 },
 ];
 
-export function AdminShell({ active, title, description, children, eyebrow = "Admin workspace", actions, stats = [], breadcrumbs }: AdminShellProps) {
+export function AdminShell({ active, title, description, children, eyebrow = "Admin workspace", actions, stats = [], statsVariant = "default", breadcrumbs }: AdminShellProps) {
   return (
     <div className="min-h-screen bg-[#f6f7f8] text-[#1f2933]">
       <div className="grid min-h-screen lg:grid-cols-[248px_minmax(0,1fr)]">
@@ -166,12 +167,12 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
             </div>
 
             {stats.length ? (
-              <div className="mt-6 grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+              <div className={cn("mt-6 grid gap-4", statsVariant === "compact" ? "sm:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-2 2xl:grid-cols-4")}>
                 {stats.map((stat) => (
-                  <div key={stat.label} className="rounded-3xl border border-[#e7eaee] bg-[#fbfcfd] px-5 py-4 shadow-sm">
+                  <div key={stat.label} className={cn("border border-[#e7eaee] bg-[#fbfcfd] shadow-sm", statsVariant === "compact" ? "rounded-2xl px-4 py-3" : "rounded-3xl px-5 py-4")}>
                     <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{stat.label}</p>
-                    <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">{stat.value}</p>
-                    <p className="mt-2 text-sm text-slate-600">{stat.hint}</p>
+                    <p className={cn("font-semibold tracking-tight text-slate-900", statsVariant === "compact" ? "mt-1 text-2xl" : "mt-2 text-3xl")}>{stat.value}</p>
+                    <p className={cn("text-slate-600", statsVariant === "compact" ? "mt-1 text-xs leading-5" : "mt-2 text-sm")}>{stat.hint}</p>
                   </div>
                 ))}
               </div>

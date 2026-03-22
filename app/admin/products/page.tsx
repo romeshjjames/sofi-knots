@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import { ProductManager } from "@/components/admin/product-manager";
 import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
 import { getProductAdminSettingsMap } from "@/lib/admin-data";
@@ -44,20 +43,17 @@ export default async function AdminProductsPage() {
       ]}
       actions={
         <div className="flex flex-wrap gap-3">
-          <Link href="/admin/products/new" target="_blank" rel="noreferrer" className="rounded-2xl bg-[#1f2933] px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800">
-            <span className="inline-flex items-center gap-2"><Plus size={16} /> Add product</span>
-          </Link>
-          <Link href="/shop" className="brand-btn-outline whitespace-nowrap px-5 py-3">
+          <Link href="/shop" target="_blank" rel="noreferrer" className="brand-btn-outline whitespace-nowrap px-5 py-3">
             Preview storefront
           </Link>
         </div>
       }
+      statsVariant="compact"
       stats={[
         { label: "Products", value: `${result.data.length}`, hint: "All product records currently available in the admin." },
         { label: "Active", value: `${activeCount}`, hint: "Products currently visible on the storefront." },
         { label: "Draft", value: `${draftCount}`, hint: "Products saved but not yet published." },
         { label: "Archived", value: `${archivedCount}`, hint: "Products removed from active selling." },
-        { label: "Data source", value: result.source === "supabase" ? "Live" : "Fallback", hint: result.error || "Catalog is reading from the active data source." },
       ]}
     >
       <div className="space-y-6">
