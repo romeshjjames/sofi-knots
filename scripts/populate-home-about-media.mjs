@@ -38,38 +38,58 @@ const assetRoot = resolve(process.cwd(), "src", "assets");
 const uploads = [
   {
     key: "homeHero",
+    mediaId: "page-media-home-hero",
     filePath: resolve(assetRoot, "hero-bg.jpg"),
     storagePath: "media-library/pages/home/home-hero.jpg",
     contentType: "image/jpeg",
     alt: "Sofi Knots homepage hero",
+    fileName: "home-hero.jpg",
+    category: "Pages",
+    tags: ["home", "hero", "banner"],
   },
   {
     key: "homeCraft",
+    mediaId: "page-media-home-craft",
     filePath: resolve(assetRoot, "product-wallhanging.jpeg"),
     storagePath: "media-library/pages/home/home-craft.jpeg",
     contentType: "image/jpeg",
     alt: "Sofi Knots craft section image",
+    fileName: "home-craft.jpeg",
+    category: "Pages",
+    tags: ["home", "craft", "story"],
   },
   {
     key: "aboutHero",
+    mediaId: "page-media-about-hero",
     filePath: resolve(assetRoot, "product-wallart.jpg"),
     storagePath: "media-library/pages/about/about-hero.jpg",
     contentType: "image/jpeg",
     alt: "Sofi Knots about hero image",
+    fileName: "about-hero.jpg",
+    category: "Pages",
+    tags: ["about", "hero", "brand-story"],
   },
   {
     key: "aboutValues",
+    mediaId: "page-media-about-values",
     filePath: resolve(assetRoot, "product-wallhanging.jpeg"),
     storagePath: "media-library/pages/about/about-values.jpeg",
     contentType: "image/jpeg",
     alt: "Sofi Knots craftsmanship image",
+    fileName: "about-values.jpeg",
+    category: "Pages",
+    tags: ["about", "craft", "values"],
   },
   {
     key: "aboutFounder",
+    mediaId: "page-media-about-founder",
     filePath: resolve(assetRoot, "product-bag.jpeg"),
     storagePath: "media-library/pages/about/about-founder.jpeg",
     contentType: "image/jpeg",
     alt: "Sofi Knots founder note image",
+    fileName: "about-founder.jpeg",
+    category: "Pages",
+    tags: ["about", "founder", "studio"],
   },
 ];
 
@@ -82,6 +102,27 @@ async function uploadAsset(input) {
   if (error) throw new Error(error.message);
   const { data } = supabase.storage.from(bucket).getPublicUrl(input.storagePath);
   return data.publicUrl;
+}
+
+async function registerMediaAsset(input, publicUrl) {
+  const { error } = await supabase.from("audit_logs").insert({
+    actor_user_id: null,
+    entity_type: "media_library",
+    entity_id: input.mediaId,
+    action: "upload",
+    payload: {
+      id: input.mediaId,
+      fileName: input.fileName,
+      path: input.storagePath,
+      publicUrl,
+      altText: input.alt,
+      category: input.category,
+      tags: input.tags,
+      mediaType: "image",
+    },
+  });
+
+  if (error) throw new Error(error.message);
 }
 
 function updateImageBlock(body, sectionId, nextUrl, nextAlt) {
@@ -150,6 +191,7 @@ async function updatePage(slug, updater) {
 const uploaded = {};
 for (const entry of uploads) {
   uploaded[entry.key] = await uploadAsset(entry);
+  await registerMediaAsset(entry, uploaded[entry.key]);
 }
 
 const homePageId = await updatePage("home", (body) => {
