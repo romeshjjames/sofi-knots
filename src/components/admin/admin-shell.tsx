@@ -1,24 +1,44 @@
 import Link from "next/link";
 import {
+  BadgePercent,
   ArrowRight,
   Bell,
   Box,
-  CirclePercent,
   FolderKanban,
   FileText,
-  Home,
+  Gem,
+  LineChart,
   LayoutDashboard,
+  MessageSquareQuote,
   Package,
+  Palette,
   ShieldPlus,
   Search,
   Settings2,
   ShoppingCart,
   Sparkles,
+  SquarePen,
   Users2,
+  Warehouse,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
 
-type AdminNavKey = "dashboard" | "products" | "collections" | "orders" | "customers" | "discounts" | "merchandising" | "seo" | "content" | "settings";
+type AdminNavKey =
+  | "dashboard"
+  | "products"
+  | "collections"
+  | "orders"
+  | "customers"
+  | "discounts"
+  | "content"
+  | "reviews"
+  | "customOrders"
+  | "inventory"
+  | "analytics"
+  | "merchandising"
+  | "seo"
+  | "settings";
 
 type AdminStat = {
   label: string;
@@ -34,29 +54,32 @@ type AdminShellProps = {
   eyebrow?: string;
   actions?: React.ReactNode;
   stats?: AdminStat[];
+  breadcrumbs?: { label: string; href?: string }[];
 };
 
-const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof Home }[] = [
-  { key: "dashboard", label: "Overview", href: "/admin", icon: LayoutDashboard },
+const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof LayoutDashboard }[] = [
+  { key: "dashboard", label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { key: "products", label: "Products", href: "/admin/products", icon: Package },
   { key: "collections", label: "Collections", href: "/admin/collections", icon: FolderKanban },
   { key: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingCart },
   { key: "customers", label: "Customers", href: "/admin/customers", icon: Users2 },
-  { key: "discounts", label: "Discounts", href: "/admin/discounts", icon: CirclePercent },
-  { key: "merchandising", label: "Merchandising", href: "/admin/merchandising", icon: Home },
-  { key: "seo", label: "SEO", href: "/admin/seo", icon: Sparkles },
-  { key: "content", label: "Content", href: "/admin/content", icon: FileText },
+  { key: "discounts", label: "Discounts", href: "/admin/discounts", icon: BadgePercent },
+  { key: "content", label: "Blog / Content", href: "/admin/content", icon: FileText },
+  { key: "reviews", label: "Reviews", href: "/admin/reviews", icon: MessageSquareQuote },
+  { key: "customOrders", label: "Custom Orders", href: "/admin/custom-orders", icon: SquarePen },
+  { key: "inventory", label: "Inventory", href: "/admin/inventory", icon: Warehouse },
+  { key: "analytics", label: "Analytics", href: "/admin/analytics", icon: LineChart },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings2 },
 ];
 
-export function AdminShell({ active, title, description, children, eyebrow = "Admin workspace", actions, stats = [] }: AdminShellProps) {
+export function AdminShell({ active, title, description, children, eyebrow = "Admin workspace", actions, stats = [], breadcrumbs }: AdminShellProps) {
   return (
     <div className="min-h-screen bg-[#f6f7f8] text-[#1f2933]">
       <div className="grid min-h-screen lg:grid-cols-[248px_minmax(0,1fr)]">
         <aside className="border-r border-[#e7eaee] bg-[#fbfcfd] px-4 py-5 lg:px-5">
           <Link href="/admin" className="flex items-center gap-3 rounded-2xl border border-[#eceff3] bg-white px-4 py-4 shadow-sm transition hover:border-[#d9dee5]">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1f2933] text-white">
-              <Box size={20} />
+              <Gem size={20} />
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Sofi Knots</p>
@@ -104,11 +127,18 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
         <main className="min-w-0">
           <header className="border-b border-[#e7eaee] bg-white px-5 py-5 lg:px-8">
             <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex min-w-[260px] items-center gap-3 rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3 text-sm text-slate-500 shadow-sm">
+              <label className="flex min-w-[260px] items-center gap-3 rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3 text-sm text-slate-500 shadow-sm">
                 <Search size={16} />
-                <span>Search collections, products, orders</span>
-              </div>
+                <input
+                  aria-label="Global admin search"
+                  placeholder="Search products, collections, orders, customers"
+                  className="w-full bg-transparent outline-none placeholder:text-slate-400"
+                />
+              </label>
               <div className="flex items-center gap-3">
+                <Link href="/admin/products" className="rounded-2xl bg-[#1f2933] px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800">
+                  Add Product
+                </Link>
                 <button type="button" className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] text-slate-600 transition hover:bg-white">
                   <Bell size={18} />
                   <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500" />
@@ -125,6 +155,7 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
 
             <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <div className="max-w-3xl">
+                {breadcrumbs?.length ? <AdminBreadcrumbs items={breadcrumbs} /> : null}
                 <p className="text-xs font-medium uppercase tracking-[0.24em] text-slate-400">{eyebrow}</p>
                 <h1 className="mt-2 font-serif text-4xl tracking-tight text-slate-950">{title}</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{description}</p>
