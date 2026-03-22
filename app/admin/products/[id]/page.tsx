@@ -3,18 +3,18 @@ import { notFound } from "next/navigation";
 import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
 import { ProductDetailEditor } from "@/components/admin/product-detail-editor";
 import { getProductAdminSettingsMap, getProductPageContentMap } from "@/lib/admin-data";
-import { getCatalogCategories, getCatalogCollections, getCatalogProducts } from "@/lib/catalog";
+import { getCatalogCategories, getCatalogCollections, getCatalogProductById } from "@/lib/catalog";
 import { requireAdminPage } from "@/lib/supabase/auth";
 
 export default async function AdminProductEditPage({ params }: { params: { id: string } }) {
   await requireAdminPage(["super_admin", "catalog_admin"]);
-  const [productsResult, categoriesResult, collectionsResult] = await Promise.all([
-    getCatalogProducts(),
+  const [productResult, categoriesResult, collectionsResult] = await Promise.all([
+    getCatalogProductById(params.id),
     getCatalogCategories(),
     getCatalogCollections(),
   ]);
 
-  const product = productsResult.data.find((item) => item.id === params.id);
+  const product = productResult.data;
   if (!product) notFound();
 
   const [settingsMap, contentMap] = await Promise.all([

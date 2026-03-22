@@ -361,6 +361,75 @@ async function fetchProductsFromSupabase() {
     .order("created_at", { ascending: false });
 }
 
+export async function getCatalogProductById(id: string): Promise<CatalogResult<Product | null>> {
+  try {
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select(
+        `
+          id,
+          category_id,
+          collection_id,
+          sku,
+          slug,
+          name,
+          short_description,
+          description,
+          price_inr,
+          compare_at_price_inr,
+          featured_image_url,
+          badge,
+          rating,
+          is_featured,
+          seo_title,
+          seo_description,
+          seo_keywords,
+          status
+        `,
+      )
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error || !data) {
+      return {
+        data: null,
+        source: "fallback",
+        error: error?.message ?? "Product not found in Supabase",
+      };
+    }
+
+    const row = data as ProductRow;
+    const productWithRelations: ProductRow = { ...row, categories: null, collections: null };
+
+    if (row.category_id) {
+      const { data: category } = await supabase
+        .from("categories")
+        .select("name, slug")
+        .eq("id", row.category_id)
+        .maybeSingle();
+      productWithRelations.categories = category ? [category] : null;
+    }
+
+    if (row.collection_id) {
+      const { data: collection } = await supabase
+        .from("collections")
+        .select("name, slug")
+        .eq("id", row.collection_id)
+        .maybeSingle();
+      productWithRelations.collections = collection ? [collection] : null;
+    }
+
+    return { data: mapProductRow(productWithRelations), source: "supabase" };
+  } catch (error) {
+    return {
+      data: null,
+      source: "fallback",
+      error: error instanceof Error ? error.message : "Unknown product lookup error",
+    };
+  }
+}
+
 export async function getCatalogProducts(): Promise<CatalogResult<Product[]>> {
   try {
     const { data, error } = await fetchProductsFromSupabase();
