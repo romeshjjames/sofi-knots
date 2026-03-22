@@ -20,6 +20,7 @@ import {
   SquarePen,
   Users2,
   Warehouse,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
@@ -37,6 +38,7 @@ type AdminNavKey =
   | "reviews"
   | "customOrders"
   | "inventory"
+  | "media"
   | "analytics"
   | "merchandising"
   | "seo"
@@ -69,6 +71,7 @@ const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof La
   { key: "discounts", label: "Discounts", href: "/admin/discounts", icon: BadgePercent },
   { key: "pages", label: "Pages", href: "/admin/pages", icon: FileText },
   { key: "blog", label: "Blog", href: "/admin/blog", icon: Sparkles },
+  { key: "media", label: "Media Library", href: "/admin/media", icon: Images },
   { key: "reviews", label: "Reviews", href: "/admin/reviews", icon: MessageSquareQuote },
   { key: "customOrders", label: "Custom Orders", href: "/admin/custom-orders", icon: SquarePen },
   { key: "inventory", label: "Inventory", href: "/admin/inventory", icon: Warehouse },
