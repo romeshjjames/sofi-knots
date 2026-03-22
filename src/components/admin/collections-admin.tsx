@@ -399,7 +399,7 @@ export function CollectionsAdmin({ collections, products }: Props) {
                             <button type="button" className="rounded-xl border border-[#e7eaee] p-2 text-slate-500 hover:bg-[#fbfcfd]" onClick={() => pickCollection(collection.id ?? null)} title="View">
                               <Eye size={15} />
                             </button>
-                            <Link href={`/collections/${collection.slug}`} className="rounded-xl border border-[#e7eaee] p-2 text-slate-500 hover:bg-[#fbfcfd]">
+                            <Link href={`/collections/${collection.slug}`} target="_blank" rel="noreferrer" className="rounded-xl border border-[#e7eaee] p-2 text-slate-500 hover:bg-[#fbfcfd]">
                               <ExternalLink size={15} />
                             </Link>
                             <button
