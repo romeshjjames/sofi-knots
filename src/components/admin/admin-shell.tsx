@@ -136,7 +136,7 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
                 />
               </label>
               <div className="flex items-center gap-3">
-                <Link href="/admin/products" className="rounded-2xl bg-[#1f2933] px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800">
+                <Link href="/admin/products/new" target="_blank" rel="noreferrer" className="rounded-2xl bg-[#1f2933] px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800">
                   Add Product
                 </Link>
                 <button type="button" className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] text-slate-600 transition hover:bg-white">

@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { ExternalLink, Plus } from "lucide-react";
 import { CollectionMerchandisingManager } from "@/components/admin/collection-merchandising-manager";
-import { ProductCreateForm } from "@/components/admin/product-create-form";
 import { FeaturedMerchandisingManager } from "@/components/admin/featured-merchandising-manager";
 import { ProductManager } from "@/components/admin/product-manager";
 import { TaxonomyManager } from "@/components/admin/taxonomy-manager";
@@ -43,15 +43,20 @@ export default async function AdminProductsPage() {
       active="products"
       eyebrow="Catalog operations"
       title="Products and Inventory"
-      description="Manage product records, featured imagery, pricing, merchandising structure, and SEO fields from a more operational catalog workspace."
+      description="Manage product records, featured imagery, pricing, inventory, merchandising structure, and SEO fields from one cleaner catalog workspace."
       breadcrumbs={[
         { label: "Home", href: "/admin" },
         { label: "Products" },
       ]}
       actions={
-        <Link href="/shop" className="brand-btn-outline whitespace-nowrap px-5 py-3">
-          Preview storefront
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/admin/products/new" target="_blank" rel="noreferrer" className="rounded-2xl bg-[#1f2933] px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800">
+            <span className="inline-flex items-center gap-2"><Plus size={16} /> Add product</span>
+          </Link>
+          <Link href="/shop" className="brand-btn-outline whitespace-nowrap px-5 py-3">
+            Preview storefront
+          </Link>
+        </div>
       }
       stats={[
         { label: "Products", value: `${result.data.length}`, hint: "All product records currently available in the admin." },
@@ -61,37 +66,44 @@ export default async function AdminProductsPage() {
       ]}
     >
       <div className="space-y-6">
-        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <AdminPanel
-            title="Create product"
-            description="Add a new catalog record with pricing, descriptions, SEO content, and a featured image. This form is the fast path for launching a new item."
-          >
-            <ProductCreateForm
-              categories={categoriesResult.data}
-              collections={collectionsResult.data.map((item) => ({ id: item.id ?? item.slug, name: item.title, slug: item.slug }))}
-            />
-          </AdminPanel>
-          <AdminPanel
-            title="Merchandising structure"
-            description="Keep categories and collections clean so storefront navigation, campaigns, and on-page SEO landing pages stay organized."
-          >
-            <div className="grid gap-6 lg:grid-cols-2">
-              <TaxonomyManager title="Categories" endpoint="/api/admin/categories" items={categoriesResult.data} />
-              <TaxonomyManager
-                title="Collections"
-                endpoint="/api/admin/collections"
-                items={collectionsResult.data.map((item) => ({
-                  id: item.id ?? item.slug,
-                  name: item.title,
-                  slug: item.slug,
-                  description: item.description,
-                  imageUrl: item.imageUrl,
-                  sortOrder: item.sortOrder,
-                }))}
-              />
+        <AdminPanel
+          title="Create products in a dedicated workspace"
+          description="To keep the main catalog screen fast and uncluttered, product creation now opens in its own page, similar to Shopify's full-page product editor."
+        >
+          <div className="flex flex-col gap-4 rounded-[24px] border border-[#e7eaee] bg-[#fbfcfd] p-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h3 className="text-xl font-medium text-slate-950">Open Add Product</h3>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Use the dedicated product editor for title, media, pricing, inventory, shipping, channels, variants, and SEO without crowding this page.
+              </p>
             </div>
-          </AdminPanel>
-        </div>
+            <Link href="/admin/products/new" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#1f2933] px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800">
+              Open in new window
+              <ExternalLink size={16} />
+            </Link>
+          </div>
+        </AdminPanel>
+
+        <AdminPanel
+          title="Merchandising structure"
+          description="Keep categories and collections clean so storefront navigation, campaigns, and on-page SEO landing pages stay organized."
+        >
+          <div className="grid gap-6 xl:grid-cols-2">
+            <TaxonomyManager title="Categories" endpoint="/api/admin/categories" items={categoriesResult.data} />
+            <TaxonomyManager
+              title="Collections"
+              endpoint="/api/admin/collections"
+              items={collectionsResult.data.map((item) => ({
+                id: item.id ?? item.slug,
+                name: item.title,
+                slug: item.slug,
+                description: item.description,
+                imageUrl: item.imageUrl,
+                sortOrder: item.sortOrder,
+              }))}
+            />
+          </div>
+        </AdminPanel>
 
         <AdminPanel
           title="Featured merchandising"
@@ -123,7 +135,7 @@ export default async function AdminProductsPage() {
 
         <AdminPanel
           title="Catalog editor"
-          description="Browse products on the left, then update content, price, publishing status, and SEO fields in a focused editor pane."
+          description="Browse products on the left, then update content, pricing, inventory, publishing status, and SEO fields in a focused editor pane."
         >
           <ProductManager
             products={productsWithAdminSettings}
