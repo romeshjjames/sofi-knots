@@ -18,7 +18,8 @@ type OrderRow = {
   razorpay_payment_id: string | null;
   shipping_address: Record<string, string> | null;
   billing_address: Record<string, string> | null;
-  customers: { full_name: string | null; email: string | null }[] | null;
+  customer_id?: string | null;
+  customers: { id?: string | null; full_name: string | null; email: string | null; phone?: string | null }[] | null;
   order_items?: {
     id: string;
     product_name: string;
@@ -29,7 +30,89 @@ type OrderRow = {
   }[];
 };
 
-function mapOrderSummary(row: OrderRow): OrderSummary {
+type OrderWorkflowState = {
+  tags: string[];
+  internalComments: string | null;
+  customItemNotes: string | null;
+  shippingPartner: string | null;
+  trackingNumber: string | null;
+  shippingMethod: string | null;
+  estimatedDelivery: string | null;
+  cancellationReason: string | null;
+  refundReason: string | null;
+  refundAmountInr: number | null;
+  refundShipping: boolean;
+  restockItems: boolean;
+  archived: boolean;
+};
+
+const defaultOrderWorkflowState: OrderWorkflowState = {
+  tags: [],
+  internalComments: null,
+  customItemNotes: null,
+  shippingPartner: null,
+  trackingNumber: null,
+  shippingMethod: null,
+  estimatedDelivery: null,
+  cancellationReason: null,
+  refundReason: null,
+  refundAmountInr: null,
+  refundShipping: false,
+  restockItems: true,
+  archived: false,
+};
+
+function normalizeOrderWorkflowState(payload: Record<string, unknown> | null | undefined): OrderWorkflowState {
+  return {
+    tags: Array.isArray(payload?.tags) ? payload.tags.filter((value): value is string => typeof value === "string") : [],
+    internalComments: typeof payload?.internalComments === "string" ? payload.internalComments : null,
+    customItemNotes: typeof payload?.customItemNotes === "string" ? payload.customItemNotes : null,
+    shippingPartner: typeof payload?.shippingPartner === "string" ? payload.shippingPartner : null,
+    trackingNumber: typeof payload?.trackingNumber === "string" ? payload.trackingNumber : null,
+    shippingMethod: typeof payload?.shippingMethod === "string" ? payload.shippingMethod : null,
+    estimatedDelivery: typeof payload?.estimatedDelivery === "string" ? payload.estimatedDelivery : null,
+    cancellationReason: typeof payload?.cancellationReason === "string" ? payload.cancellationReason : null,
+    refundReason: typeof payload?.refundReason === "string" ? payload.refundReason : null,
+    refundAmountInr: typeof payload?.refundAmountInr === "number" ? payload.refundAmountInr : null,
+    refundShipping: payload?.refundShipping === true,
+    restockItems: payload?.restockItems !== false,
+    archived: payload?.archived === true,
+  };
+}
+
+async function getOrderWorkflowStateMap(orderIds: string[]) {
+  const uniqueIds = Array.from(new Set(orderIds.filter(Boolean)));
+  if (!uniqueIds.length) return {} as Record<string, OrderWorkflowState>;
+
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("entity_id, payload, created_at")
+    .eq("entity_type", "order_workflow")
+    .eq("action", "workflow:update")
+    .in("entity_id", uniqueIds)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const map: Record<string, OrderWorkflowState> = {};
+  for (const row of data ?? []) {
+    if (map[row.entity_id]) continue;
+    map[row.entity_id] = normalizeOrderWorkflowState((row.payload ?? {}) as Record<string, unknown>);
+  }
+
+  uniqueIds.forEach((orderId) => {
+    if (!map[orderId]) {
+      map[orderId] = defaultOrderWorkflowState;
+    }
+  });
+
+  return map;
+}
+
+function mapOrderSummary(row: OrderRow, workflow: OrderWorkflowState): OrderSummary {
   const customer = row.customers?.[0];
   return {
     id: row.id,
@@ -41,14 +124,17 @@ function mapOrderSummary(row: OrderRow): OrderSummary {
     createdAt: row.created_at,
     customerName: customer?.full_name || "Guest Customer",
     customerEmail: customer?.email || "No email",
+    customerPhone: customer?.phone || null,
     razorpayOrderId: row.razorpay_order_id,
     razorpayPaymentId: row.razorpay_payment_id,
+    isArchived: workflow.archived,
+    tags: workflow.tags,
   };
 }
 
-function mapOrderDetail(row: OrderRow): OrderDetail {
+function mapOrderDetail(row: OrderRow, workflow: OrderWorkflowState): OrderDetail {
   return {
-    ...mapOrderSummary(row),
+    ...mapOrderSummary(row, workflow),
     subtotalInr: row.subtotal_inr,
     shippingInr: row.shipping_inr,
     discountInr: row.discount_inr,
@@ -56,6 +142,17 @@ function mapOrderDetail(row: OrderRow): OrderDetail {
     notes: row.notes,
     shippingAddress: row.shipping_address,
     billingAddress: row.billing_address,
+    internalComments: workflow.internalComments,
+    customItemNotes: workflow.customItemNotes,
+    shippingPartner: workflow.shippingPartner,
+    trackingNumber: workflow.trackingNumber,
+    shippingMethod: workflow.shippingMethod,
+    estimatedDelivery: workflow.estimatedDelivery,
+    cancellationReason: workflow.cancellationReason,
+    refundReason: workflow.refundReason,
+    refundAmountInr: workflow.refundAmountInr,
+    refundShipping: workflow.refundShipping,
+    restockItems: workflow.restockItems,
     items: (row.order_items ?? []).map((item) => ({
       id: item.id,
       productName: item.product_name,
@@ -74,6 +171,7 @@ export async function getOrders() {
     .select(
       `
         id,
+        customer_id,
         order_number,
         status,
         payment_status,
@@ -89,7 +187,7 @@ export async function getOrders() {
         razorpay_payment_id,
         shipping_address,
         billing_address,
-        customers(full_name, email)
+        customers(id, full_name, email, phone)
       `,
     )
     .order("created_at", { ascending: false });
@@ -98,7 +196,11 @@ export async function getOrders() {
     throw new Error(error.message);
   }
 
-  return (data ?? []).map((row) => mapOrderSummary(row as OrderRow));
+  const rows = (data ?? []) as OrderRow[];
+  const workflowMap = await getOrderWorkflowStateMap(rows.map((row) => row.id));
+  return rows
+    .map((row) => mapOrderSummary(row, workflowMap[row.id] ?? defaultOrderWorkflowState))
+    .filter((order) => !order.isArchived);
 }
 
 export async function getOrderById(id: string) {
@@ -108,6 +210,7 @@ export async function getOrderById(id: string) {
     .select(
       `
         id,
+        customer_id,
         order_number,
         status,
         payment_status,
@@ -123,7 +226,7 @@ export async function getOrderById(id: string) {
         razorpay_payment_id,
         shipping_address,
         billing_address,
-        customers(full_name, email),
+        customers(id, full_name, email, phone),
         order_items(id, product_name, sku, quantity, unit_price_inr, line_total_inr)
       `,
     )
@@ -133,12 +236,48 @@ export async function getOrderById(id: string) {
   if (error) {
     throw new Error(error.message);
   }
-
-  return mapOrderDetail(data as OrderRow);
+  const workflowMap = await getOrderWorkflowStateMap([id]);
+  return mapOrderDetail(data as OrderRow, workflowMap[id] ?? defaultOrderWorkflowState);
 }
 
-export async function updateOrderStatuses(id: string, updates: { status?: string; paymentStatus?: string; fulfillmentStatus?: string; notes?: string }) {
+export async function updateOrderStatuses(
+  id: string,
+  updates: {
+    status?: string;
+    paymentStatus?: string;
+    fulfillmentStatus?: string;
+    notes?: string;
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    shippingAddress?: Record<string, string> | null;
+    billingAddress?: Record<string, string> | null;
+    tags?: string[];
+    internalComments?: string;
+    customItemNotes?: string;
+    shippingPartner?: string;
+    trackingNumber?: string;
+    shippingMethod?: string;
+    estimatedDelivery?: string;
+    cancellationReason?: string;
+    refundReason?: string;
+    refundAmountInr?: number | null;
+    refundShipping?: boolean;
+    restockItems?: boolean;
+    archived?: boolean;
+  },
+) {
   const supabase = createAdminSupabaseClient();
+  const { data: currentOrder, error: currentOrderError } = await supabase
+    .from("orders")
+    .select("id, order_number, customer_id")
+    .eq("id", id)
+    .single();
+
+  if (currentOrderError) {
+    throw new Error(currentOrderError.message);
+  }
+
   const { data, error } = await supabase
     .from("orders")
     .update({
@@ -146,6 +285,8 @@ export async function updateOrderStatuses(id: string, updates: { status?: string
       payment_status: updates.paymentStatus,
       fulfillment_status: updates.fulfillmentStatus,
       notes: updates.notes,
+      shipping_address: updates.shippingAddress,
+      billing_address: updates.billingAddress,
     })
     .eq("id", id)
     .select("id, order_number")
@@ -153,6 +294,47 @@ export async function updateOrderStatuses(id: string, updates: { status?: string
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (currentOrder.customer_id && (updates.customerName || updates.customerEmail || updates.customerPhone !== undefined)) {
+    const { error: customerError } = await supabase
+      .from("customers")
+      .update({
+        full_name: updates.customerName,
+        email: updates.customerEmail,
+        phone: updates.customerPhone || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", currentOrder.customer_id);
+
+    if (customerError) {
+      throw new Error(customerError.message);
+    }
+  }
+
+  const { error: workflowError } = await supabase.from("audit_logs").insert({
+    entity_type: "order_workflow",
+    entity_id: id,
+    action: "workflow:update",
+    payload: {
+      tags: updates.tags ?? [],
+      internalComments: updates.internalComments || null,
+      customItemNotes: updates.customItemNotes || null,
+      shippingPartner: updates.shippingPartner || null,
+      trackingNumber: updates.trackingNumber || null,
+      shippingMethod: updates.shippingMethod || null,
+      estimatedDelivery: updates.estimatedDelivery || null,
+      cancellationReason: updates.cancellationReason || null,
+      refundReason: updates.refundReason || null,
+      refundAmountInr: typeof updates.refundAmountInr === "number" ? updates.refundAmountInr : null,
+      refundShipping: updates.refundShipping === true,
+      restockItems: updates.restockItems !== false,
+      archived: updates.archived === true,
+    },
+  });
+
+  if (workflowError) {
+    throw new Error(workflowError.message);
   }
 
   return data;

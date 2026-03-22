@@ -11,9 +11,23 @@ export default async function AdminOrdersPage() {
   const revenue = orders.reduce((sum, order) => sum + order.totalInr, 0);
 
   const paymentTone = (value: string) =>
-    value === "paid" ? "success" : value === "failed" ? "danger" : value === "authorized" ? "info" : "warning";
+    value === "paid"
+      ? "success"
+      : value === "failed"
+        ? "danger"
+        : value === "authorized" || value === "partially_paid"
+          ? "info"
+          : value.includes("refund")
+            ? "warning"
+            : "warning";
   const fulfillmentTone = (value: string) =>
-    value === "delivered" ? "success" : value === "shipped" ? "info" : value === "returned" ? "danger" : "warning";
+    value === "delivered" || value === "fulfilled"
+      ? "success"
+      : value === "shipped" || value === "ready_to_ship" || value === "partially_fulfilled"
+        ? "info"
+        : value === "returned" || value === "cancelled"
+          ? "danger"
+          : "warning";
 
   return (
     <AdminShell
@@ -21,6 +35,7 @@ export default async function AdminOrdersPage() {
       eyebrow="Order operations"
       title="Orders and Payments"
       description="Track every order from payment capture through fulfillment, with customer context and Razorpay references in a single operational queue."
+      statsVariant="compact"
       stats={[
         { label: "Total orders", value: `${orders.length}`, hint: "All orders currently visible in the admin." },
         { label: "Open orders", value: `${openOrders.length}`, hint: "Orders still moving through fulfillment." },
@@ -38,6 +53,7 @@ export default async function AdminOrdersPage() {
               <tr>
                 <th className="px-5 py-4 font-medium text-brand-brown">Order</th>
                 <th className="px-5 py-4 font-medium text-brand-brown">Customer</th>
+                <th className="px-5 py-4 font-medium text-brand-brown">Date</th>
                 <th className="px-5 py-4 font-medium text-brand-brown">Payment</th>
                 <th className="px-5 py-4 font-medium text-brand-brown">Fulfillment</th>
                 <th className="px-5 py-4 font-medium text-brand-brown">Total</th>
@@ -54,6 +70,9 @@ export default async function AdminOrdersPage() {
                   <td className="px-5 py-4 align-top text-brand-warm">
                     <div>{order.customerName}</div>
                     <div className="mt-1 text-xs text-brand-taupe">{order.customerEmail}</div>
+                  </td>
+                  <td className="px-5 py-4 align-top text-brand-warm">
+                    {new Date(order.createdAt).toLocaleDateString("en-IN")}
                   </td>
                   <td className="px-5 py-4 align-top">
                     <AdminBadge tone={paymentTone(order.paymentStatus)}>{order.paymentStatus}</AdminBadge>

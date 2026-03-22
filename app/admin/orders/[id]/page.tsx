@@ -14,9 +14,22 @@ function formatAddress(address?: Record<string, string> | null) {
 export default async function AdminOrderDetailPage({ params }: { params: { id: string } }) {
   await requireAdminPage(["super_admin", "order_admin"]);
   const [order, auditLogs] = await Promise.all([getOrderById(params.id), getAuditLogs("order", params.id)]);
-  const paymentTone = order.paymentStatus === "paid" ? "success" : order.paymentStatus === "failed" ? "danger" : "warning";
+  const paymentTone =
+    order.paymentStatus === "paid"
+      ? "success"
+      : order.paymentStatus === "failed"
+        ? "danger"
+        : order.paymentStatus.includes("refund")
+          ? "warning"
+          : "info";
   const fulfillmentTone =
-    order.fulfillmentStatus === "delivered" ? "success" : order.fulfillmentStatus === "shipped" ? "info" : order.fulfillmentStatus === "returned" ? "danger" : "warning";
+    order.fulfillmentStatus === "delivered" || order.fulfillmentStatus === "fulfilled"
+      ? "success"
+      : order.fulfillmentStatus === "shipped" || order.fulfillmentStatus === "ready_to_ship" || order.fulfillmentStatus === "partially_fulfilled"
+        ? "info"
+        : order.fulfillmentStatus === "returned" || order.status === "cancelled"
+          ? "danger"
+          : "warning";
 
   return (
     <AdminShell
@@ -29,6 +42,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
           Back to orders
         </Link>
       }
+      statsVariant="compact"
       stats={[
         { label: "Total", value: `Rs. ${order.totalInr.toLocaleString("en-IN")}`, hint: "Final order value including shipping and discounts." },
         { label: "Payment", value: order.paymentStatus, hint: order.razorpayPaymentId || "No payment id linked yet." },
@@ -90,6 +104,8 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
             <div className="space-y-2 text-sm text-brand-warm">
               <div className="text-lg font-medium text-brand-brown">{order.customerName}</div>
               <div>{order.customerEmail}</div>
+              {order.customerPhone ? <div>{order.customerPhone}</div> : null}
+              {order.tags?.length ? <div className="text-xs text-brand-taupe">Tags: {order.tags.join(", ")}</div> : null}
             </div>
           </AdminPanel>
 
@@ -119,6 +135,14 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
                 <div key={line}>{line}</div>
               ))}
             </div>
+            {order.shippingPartner || order.trackingNumber || order.shippingMethod || order.estimatedDelivery ? (
+              <div className="mt-4 rounded-2xl border border-brand-sand/30 bg-[#fcfaf5] p-4 text-sm text-brand-warm">
+                {order.shippingPartner ? <div>Courier: {order.shippingPartner}</div> : null}
+                {order.trackingNumber ? <div>Tracking: {order.trackingNumber}</div> : null}
+                {order.shippingMethod ? <div>Method: {order.shippingMethod}</div> : null}
+                {order.estimatedDelivery ? <div>ETA: {order.estimatedDelivery}</div> : null}
+              </div>
+            ) : null}
           </AdminPanel>
           <AdminPanel title="Billing address" description="Billing details stored for payment and invoicing.">
             <div className="space-y-1 text-sm text-brand-warm">
@@ -134,6 +158,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
                   <div key={log.id} className="rounded-2xl border border-brand-sand/30 bg-[#fcfaf5] p-4">
                     <div className="text-sm font-medium text-brand-brown">{log.action}</div>
                     <div className="mt-1 text-xs text-brand-taupe">{new Date(log.createdAt).toLocaleString("en-IN")}</div>
+                    {Object.keys(log.payload).length ? <div className="mt-2 text-xs text-brand-taupe">{JSON.stringify(log.payload)}</div> : null}
                   </div>
                 ))
               ) : (
