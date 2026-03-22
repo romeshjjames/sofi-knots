@@ -56,6 +56,27 @@ function sectionParagraph(content: string, sectionId: string, label: string): Vi
   };
 }
 
+function sectionImage(
+  alt: string,
+  caption: string,
+  sectionId: string,
+  label: string,
+  layout: "stacked" | "split" | "banner" = "split",
+  theme: "paper" | "sand" | "ink" = "paper",
+): VisualContentBlock {
+  return {
+    type: "image",
+    url: "",
+    alt,
+    caption,
+    sectionId,
+    sectionLabel: label,
+    sectionTheme: theme,
+    sectionLayout: layout,
+    sectionSpacing: "airy",
+  };
+}
+
 function sectionCta(labelText: string, href: string, sectionId: string, label: string): VisualContentBlock {
   return {
     type: "cta",
@@ -223,6 +244,13 @@ export function buildCoreStorefrontPages(settings: SettingsLike): CoreStorefront
           "collections-intro",
           "Collections intro",
         ),
+        sectionImage(
+          "Collections landing image",
+          "Optional collections landing image",
+          "collections-intro",
+          "Collections intro",
+          "banner",
+        ),
       ],
     },
     {
@@ -242,6 +270,7 @@ export function buildCoreStorefrontPages(settings: SettingsLike): CoreStorefront
           "blog-intro",
           "Blog intro",
         ),
+        sectionImage("Blog landing image", "Optional blog banner image", "blog-intro", "Blog intro", "banner"),
       ],
     },
     {
@@ -351,6 +380,14 @@ export function buildCoreStorefrontPages(settings: SettingsLike): CoreStorefront
           "contact-support",
           "Support details",
         ),
+        sectionImage(
+          "Contact page support image",
+          "Optional support or studio image",
+          "contact-support",
+          "Support details",
+          "split",
+        ),
+        sectionCta("Message on WhatsApp", `https://wa.me/${supportPhone.replace(/[^0-9]/g, "")}`, "contact-support", "Support details"),
       ],
     },
     {
