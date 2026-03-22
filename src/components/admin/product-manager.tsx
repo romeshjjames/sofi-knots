@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { ExternalLink, Save, Search } from "lucide-react";
+import { Eye, PencilLine, Save, Search, Trash2 } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 import type { Product } from "@/types/commerce";
 
@@ -32,7 +32,7 @@ function getStatusTone(status?: Product["status"]) {
 }
 
 export function ProductManager({ products }: { products: Product[] }) {
-  const [items] = useState(products);
+  const [items, setItems] = useState(products);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -42,6 +42,7 @@ export function ProductManager({ products }: { products: Product[] }) {
   const [activeSavedViewId, setActiveSavedViewId] = useState<string | null>(null);
   const [newSavedViewName, setNewSavedViewName] = useState("");
   const [bulkAction, setBulkAction] = useState("set-status");
+  const [deleteCandidate, setDeleteCandidate] = useState<Product | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -171,6 +172,22 @@ export function ProductManager({ products }: { products: Product[] }) {
     });
   }
 
+  async function deleteProduct(product: Product) {
+    setMessage(null);
+    const response = await fetch(`/api/admin/products/${product.id}?mode=delete`, {
+      method: "DELETE",
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      setMessage(body.error || "Product delete failed.");
+      return;
+    }
+    setItems((current) => current.filter((item) => item.id !== product.id));
+    setSelectedIds((current) => current.filter((id) => id !== product.id));
+    setDeleteCandidate(null);
+    setMessage(`Deleted "${product.name}".`);
+  }
+
   const draftCount = items.filter((item) => item.status === "draft").length;
   const archivedCount = items.filter((item) => item.status === "archived").length;
   const activeCount = items.filter((item) => item.status === "active").length;
@@ -287,10 +304,37 @@ export function ProductManager({ products }: { products: Product[] }) {
                     <AdminBadge tone={getStatusTone(product.status)}>{product.status ?? "active"}</AdminBadge>
                   </td>
                   <td className="px-5 py-4">
-                    <Link href={`/admin/products/${product.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-medium text-slate-700 transition hover:text-slate-950">
-                      Edit in new window
-                      <ExternalLink size={15} />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/admin/products/${product.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#e7eaee] text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                        aria-label={`Edit ${product.name}`}
+                        title="Edit product"
+                      >
+                        <PencilLine size={16} />
+                      </Link>
+                      <Link
+                        href={`/product/${product.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#e7eaee] text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                        aria-label={`Preview ${product.name}`}
+                        title="Preview product"
+                      >
+                        <Eye size={16} />
+                      </Link>
+                      <button
+                        type="button"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#f0d4d4] text-rose-600 transition hover:bg-rose-50"
+                        aria-label={`Delete ${product.name}`}
+                        title="Delete product"
+                        onClick={() => setDeleteCandidate(product)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -307,6 +351,33 @@ export function ProductManager({ products }: { products: Product[] }) {
       </div>
 
       {message ? <p className="text-sm text-brand-warm">{message}</p> : null}
+
+      {deleteCandidate ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4">
+          <div className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-semibold text-slate-900">Delete product?</h3>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              This will permanently remove <span className="font-medium text-slate-900">{deleteCandidate.name}</span> from the catalog and storefront.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                className="rounded-2xl border border-[#d8dde3] px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                onClick={() => setDeleteCandidate(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded-2xl bg-rose-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-700"
+                onClick={() => void deleteProduct(deleteCandidate)}
+              >
+                Delete product
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
