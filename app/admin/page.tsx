@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Boxes, FileText, LineChart, Package, ShoppingCart, SquarePen, Users } from "lucide-react";
 import { AdminBadge, AdminPanel, AdminShell } from "@/components/admin/admin-shell";
 import { buildDashboardMetrics } from "@/lib/admin-suite-data";
 import { getCatalogCollections, getCatalogProducts } from "@/lib/catalog";
@@ -14,21 +13,6 @@ export const metadata: Metadata = buildMetadata({
   path: "/admin",
   keywords: ["shopify style admin dashboard", "ecommerce operations admin", "premium store dashboard"],
 });
-
-const quickModuleLinks: {
-  title: string;
-  description: string;
-  href: string;
-  icon: typeof Package;
-}[] = [
-  { title: "Products", description: "Manage pricing, imagery, tags, status, and SEO across the full catalog.", href: "/admin/products", icon: Package },
-  { title: "Collections", description: "Organize premium collections, landing pages, and automated merchandising sets.", href: "/admin/collections", icon: Boxes },
-  { title: "Orders", description: "Review payment status, fulfillment state, customer issues, and operational notes.", href: "/admin/orders", icon: ShoppingCart },
-  { title: "Customers", description: "Track repeat buyers, VIPs, and customer relationship history.", href: "/admin/customers", icon: Users },
-  { title: "Content", description: "Publish blog stories, editorial pages, and homepage storytelling content.", href: "/admin/content", icon: FileText },
-  { title: "Analytics", description: "Monitor revenue, conversion, traffic, cohorts, and attribution.", href: "/admin/analytics", icon: LineChart },
-  { title: "Custom Orders", description: "Handle bespoke client inquiries for premium macrame commissions.", href: "/admin/custom-orders", icon: SquarePen },
-];
 
 export default async function AdminDashboardPage() {
   await requireAdminPage();
@@ -60,27 +44,6 @@ export default async function AdminDashboardPage() {
       ]}
     >
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <AdminPanel title="Quick actions" description="Jump straight into the core operating workflows.">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {quickModuleLinks.map(({ title, description, href, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="group rounded-[22px] border border-[#e7eaee] bg-[#fbfcfd] p-4 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-slate-700 shadow-sm">
-                    <Icon size={18} />
-                  </div>
-                  <ArrowRight size={18} className="text-slate-400 transition group-hover:text-slate-700" />
-                </div>
-                <h3 className="mt-4 font-serif text-xl text-slate-950">{title}</h3>
-                <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
-              </Link>
-            ))}
-          </div>
-        </AdminPanel>
-
         <div className="space-y-6">
           <AdminPanel title="Best sellers" description="The products currently driving the strongest revenue.">
             <div className="space-y-3">
@@ -194,7 +157,7 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.8fr]">
+      <div className="mt-6">
         <AdminPanel title="Operational priorities" description="The most important next actions for the store team.">
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] p-4">
@@ -217,32 +180,6 @@ export default async function AdminDashboardPage() {
               <p className="mt-2 text-2xl font-semibold text-slate-900">Analytics</p>
               <p className="mt-1 text-sm text-slate-600">Use the dedicated analytics module for funnels, traffic, cohorts, and exports.</p>
             </div>
-          </div>
-        </AdminPanel>
-
-        <AdminPanel title="Deeper modules" description="Keep the home dashboard lightweight and move detailed analysis into the right workspace.">
-          <div className="space-y-3">
-            <Link href="/admin/analytics" className="flex items-center justify-between rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3 transition hover:border-slate-300 hover:bg-white">
-              <div>
-                <div className="font-medium text-slate-900">Analytics dashboard</div>
-                <div className="mt-1 text-sm text-slate-600">Revenue, traffic, attribution, cohorts, and product conversion.</div>
-              </div>
-              <ArrowRight size={18} className="text-slate-400" />
-            </Link>
-            <Link href="/admin/orders" className="flex items-center justify-between rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3 transition hover:border-slate-300 hover:bg-white">
-              <div>
-                <div className="font-medium text-slate-900">Order management</div>
-                <div className="mt-1 text-sm text-slate-600">Review payments, fulfillment, refunds, and shipping updates.</div>
-              </div>
-              <ArrowRight size={18} className="text-slate-400" />
-            </Link>
-            <Link href="/admin/content" className="flex items-center justify-between rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3 transition hover:border-slate-300 hover:bg-white">
-              <div>
-                <div className="font-medium text-slate-900">Content studio</div>
-                <div className="mt-1 text-sm text-slate-600">Pages, blog posts, previews, and editorial publishing.</div>
-              </div>
-              <ArrowRight size={18} className="text-slate-400" />
-            </Link>
           </div>
         </AdminPanel>
       </div>
