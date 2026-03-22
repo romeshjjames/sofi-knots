@@ -112,11 +112,7 @@ export default async function AdminProductsPage() {
           title="Catalog editor"
           description="Browse products on the left, then update content, pricing, inventory, publishing status, and SEO fields in a focused editor pane."
         >
-          <ProductManager
-            products={productsWithAdminSettings}
-            categories={categoriesResult.data}
-            collections={collectionsResult.data.map((item) => ({ id: item.id ?? item.slug, name: item.title, slug: item.slug }))}
-          />
+          <ProductManager products={productsWithAdminSettings} />
         </AdminPanel>
       </div>
     </AdminShell>
