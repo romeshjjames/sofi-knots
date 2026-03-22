@@ -1,6 +1,7 @@
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { getPreviewUrl } from "@/lib/preview";
 import type { AdminRole } from "@/lib/supabase/auth";
+import { buildCoreStorefrontPages, coreStorefrontRoutes } from "@/lib/storefront-page-templates";
 
 export type ProductImageRecord = {
   id: string;
@@ -50,6 +51,9 @@ export type PageRecord = {
   canonicalUrl: string | null;
   updatedAt: string;
   previewUrl: string;
+  isCoreStorefrontPage: boolean;
+  storefrontRoute: string;
+  storefrontLabel: string;
 };
 
 export type BlogPostRecord = {
@@ -371,15 +375,17 @@ export async function getProductAdminSettingsMap(productIds: string[]) {
 }
 
 export async function getPages() {
+  await ensureCoreStorefrontPages();
   const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("pages")
     .select("id, title, slug, excerpt, body, status, seo_title, seo_description, seo_keywords, canonical_url, updated_at")
     .order("updated_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return (data ?? []).map(
-    (row) =>
-      ({
+  const mapped = (data ?? []).map(
+    (row) => {
+      const coreRoute = coreStorefrontRoutes.find((item) => item.slug === row.slug);
+      return {
         id: row.id,
         title: row.title,
         slug: row.slug,
@@ -392,8 +398,18 @@ export async function getPages() {
         canonicalUrl: row.canonical_url,
         updatedAt: row.updated_at,
         previewUrl: getPreviewUrl("page", row.id),
-      }) satisfies PageRecord,
+        isCoreStorefrontPage: Boolean(coreRoute),
+        storefrontRoute: coreRoute?.route || `/${row.slug}`,
+        storefrontLabel: coreRoute?.label || "Custom page",
+      } satisfies PageRecord;
+    },
   );
+
+  return mapped.sort((left, right) => {
+    if (left.isCoreStorefrontPage && !right.isCoreStorefrontPage) return -1;
+    if (!left.isCoreStorefrontPage && right.isCoreStorefrontPage) return 1;
+    return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+  });
 }
 
 export async function getBlogPosts() {
@@ -661,6 +677,35 @@ export async function getSiteSettings() {
   };
 
   return merged satisfies SiteSettingsRecord;
+}
+
+export async function ensureCoreStorefrontPages() {
+  const supabase = createAdminSupabaseClient();
+  const settings = await getSiteSettings();
+  const definitions = buildCoreStorefrontPages(settings);
+  const { data, error } = await supabase.from("pages").select("slug").in("slug", definitions.map((item) => item.slug));
+  if (error) throw new Error(error.message);
+
+  const existingSlugs = new Set((data ?? []).map((row) => row.slug));
+  const missing = definitions.filter((definition) => !existingSlugs.has(definition.slug));
+
+  if (!missing.length) return;
+
+  const { error: insertError } = await supabase.from("pages").insert(
+    missing.map((definition) => ({
+      title: definition.title,
+      slug: definition.slug,
+      excerpt: definition.excerpt,
+      body: definition.body,
+      status: "published",
+      seo_title: definition.seoTitle,
+      seo_description: definition.seoDescription,
+      seo_keywords: definition.seoKeywords,
+      canonical_url: definition.canonicalUrl,
+    })),
+  );
+
+  if (insertError) throw new Error(insertError.message);
 }
 
 export async function getAuditLogs(entityType?: string, entityId?: string) {

@@ -8,9 +8,10 @@ import {
 } from "@/data/products";
 import productBag from "@/assets/product-bag.jpeg";
 import productPillow from "@/assets/product-pillow.jpeg";
-import { getCollectionMerchandising, getFeaturedProductMerchandising } from "@/lib/admin-data";
+import { ensureCoreStorefrontPages, getCollectionMerchandising, getFeaturedProductMerchandising } from "@/lib/admin-data";
 import type { CollectionAdminSettingsRecord, CollectionConditionRecord } from "@/lib/admin-data";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { isCoreStorefrontPageSlug } from "@/lib/storefront-page-templates";
 import type { BlogPost, CmsPage, Collection, Product } from "@/types/commerce";
 
 type CatalogResult<T> = {
@@ -625,12 +626,22 @@ export async function getCatalogBlogPostBySlug(slug: string): Promise<CatalogRes
 export async function getCatalogPageBySlug(slug: string): Promise<CatalogResult<CmsPage | null>> {
   try {
     const supabase = createAdminSupabaseClient();
-    const { data, error } = await supabase
-      .from("pages")
-      .select("id, slug, title, excerpt, body, seo_title, seo_description, seo_keywords, canonical_url, status")
-      .eq("slug", slug)
-      .eq("status", "published")
-      .maybeSingle();
+    const queryPage = async () =>
+      supabase
+        .from("pages")
+        .select("id, slug, title, excerpt, body, seo_title, seo_description, seo_keywords, canonical_url, status")
+        .eq("slug", slug)
+        .eq("status", "published")
+        .maybeSingle();
+
+    let { data, error } = await queryPage();
+
+    if ((!data || error) && isCoreStorefrontPageSlug(slug)) {
+      await ensureCoreStorefrontPages();
+      const retry = await queryPage();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error || !data) {
       return { data: null, source: "fallback", error: error?.message ?? "Page not found in Supabase" };

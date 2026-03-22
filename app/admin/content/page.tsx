@@ -1,29 +1,31 @@
 import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
-import { HomepageSectionsManager } from "@/components/admin/homepage-sections-manager";
-import { defaultHomepageSections, getHomepageMerchandising } from "@/lib/admin-data";
+import { StorefrontMap } from "@/components/admin/storefront-map";
+import { getPages } from "@/lib/admin-data";
 import { requireAdminPage } from "@/lib/supabase/auth";
 
 export default async function AdminContentPage() {
   await requireAdminPage(["super_admin", "content_admin", "marketing_admin"]);
-  const homepageMerchandising = await getHomepageMerchandising();
+  const pages = await getPages();
 
   return (
     <AdminShell
       active="pages"
-      eyebrow="Homepage content"
-      title="Homepage Sections"
-      description="Keep homepage storytelling and section ordering separate from page management and editorial blog publishing."
+      eyebrow="Storefront coverage"
+      title="Frontend Management"
+      description="Verify which admin workspace controls each public route and keep the storefront fully editable from admin."
       breadcrumbs={[
         { label: "Home", href: "/admin" },
-        { label: "Homepage Sections" },
+        { label: "Frontend Management" },
+      ]}
+      statsVariant="compact"
+      stats={[
+        { label: "Core pages", value: `${pages.filter((page) => page.isCoreStorefrontPage).length}`, hint: "Provisioned storefront pages in the CMS." },
+        { label: "Published", value: `${pages.filter((page) => page.isCoreStorefrontPage && page.status === "published").length}`, hint: "Core storefront pages currently live." },
+        { label: "Custom pages", value: `${pages.filter((page) => !page.isCoreStorefrontPage).length}`, hint: "Additional landing pages created from admin." },
       ]}
     >
-      <AdminPanel title="Homepage layout" description="Reorder homepage storytelling sections so campaign priorities can shift without another code change.">
-        <HomepageSectionsManager
-          sections={defaultHomepageSections}
-          initialSectionOrder={homepageMerchandising.sectionOrder}
-          updatedAt={homepageMerchandising.updatedAt}
-        />
+      <AdminPanel title="Storefront route ownership" description="Use this map to verify page-by-page coverage and jump directly into the correct admin editor for each public route.">
+        <StorefrontMap pages={pages} />
       </AdminPanel>
     </AdminShell>
   );

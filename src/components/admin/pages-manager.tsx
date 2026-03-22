@@ -72,7 +72,7 @@ export function PagesManager({ pages }: { pages: PageRecord[] }) {
           </div>
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
             <span>{visiblePages.length} pages</span>
-            <span>Pages are managed separately from editorial blog content to keep the publishing workflow cleaner.</span>
+            <span>Core storefront pages are provisioned here automatically so Home, Shop, Collections, Blog, and policy pages can all be edited from admin.</span>
           </div>
         </div>
         <div className="overflow-hidden">
@@ -90,10 +90,16 @@ export function PagesManager({ pages }: { pages: PageRecord[] }) {
               {visiblePages.map((page) => (
                 <tr key={page.id} className="border-t border-[#eef1f4] bg-white">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-slate-900">{page.title}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="font-medium text-slate-900">{page.title}</div>
+                      {page.isCoreStorefrontPage ? <AdminBadge tone="info">Core storefront</AdminBadge> : null}
+                    </div>
                     <div className="mt-1 text-xs text-slate-500">{page.excerpt || "No summary added yet."}</div>
                   </td>
-                  <td className="px-4 py-3 text-slate-700">/{page.slug}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    <div>{page.storefrontRoute}</div>
+                    <div className="mt-1 text-xs text-slate-500">{page.storefrontLabel}</div>
+                  </td>
                   <td className="px-4 py-3">
                     <AdminBadge tone={page.status === "published" ? "success" : "warning"}>{page.status}</AdminBadge>
                   </td>
