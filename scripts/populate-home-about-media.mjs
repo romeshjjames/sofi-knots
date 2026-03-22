@@ -85,8 +85,12 @@ async function uploadAsset(input) {
 }
 
 function updateImageBlock(body, sectionId, nextUrl, nextAlt) {
-  return (Array.isArray(body) ? body : []).map((block) => {
+  const blocks = Array.isArray(body) ? [...body] : [];
+  let found = false;
+
+  const mapped = blocks.map((block) => {
     if (block && typeof block === "object" && block.type === "image" && block.sectionId === sectionId) {
+      found = true;
       return {
         ...block,
         url: nextUrl,
@@ -95,6 +99,31 @@ function updateImageBlock(body, sectionId, nextUrl, nextAlt) {
     }
     return block;
   });
+
+  if (!found) {
+    mapped.push({
+      type: "image",
+      url: nextUrl,
+      alt: nextAlt,
+      caption: "Media Library image",
+      sectionId,
+      sectionLabel:
+        sectionId === "home-hero"
+          ? "Handcrafted with intention"
+          : sectionId === "home-values"
+            ? "Our craft"
+            : sectionId === "about-story"
+              ? "Brand story"
+              : sectionId === "about-values"
+                ? "Craft values"
+                : "Founder note",
+      sectionTheme: "paper",
+      sectionLayout: sectionId === "home-hero" || sectionId === "about-story" ? "banner" : "split",
+      sectionSpacing: "airy",
+    });
+  }
+
+  return mapped;
 }
 
 async function updatePage(slug, updater) {

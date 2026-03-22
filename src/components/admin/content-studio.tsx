@@ -84,6 +84,7 @@ const pageStarters = [
     body: [
       { type: "heading", content: "Where Every Knot Tells a Story", level: "h2", sectionId: "home-hero", sectionLabel: "Homepage hero", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
       { type: "paragraph", content: "Artisan macrame pieces crafted from organic cotton for the spaces and moments you cherish most.", sectionId: "home-hero", sectionLabel: "Homepage hero", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
+      { type: "image", url: "", alt: "Homepage hero image", caption: "Optional hero image", sectionId: "home-hero", sectionLabel: "Homepage hero", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
       { type: "cta", label: "Shop Now", href: "/shop", style: "primary", sectionId: "home-hero", sectionLabel: "Homepage hero", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
       { type: "cta", label: "Explore Collections", href: "/collections", style: "secondary", sectionId: "home-hero", sectionLabel: "Homepage hero", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
       { type: "heading", content: "Trust strip items", level: "h2", sectionId: "home-intro", sectionLabel: "Welcome intro", sectionTheme: "paper", sectionLayout: "stacked", sectionSpacing: "compact" },
@@ -119,6 +120,7 @@ const pageStarters = [
     body: [
       { type: "heading", content: "Woven with patience, warmth, and purpose", level: "h2", sectionId: "about-story", sectionLabel: "Brand story", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
       { type: "paragraph", content: "Use this opening section for the main About Us story and brand philosophy.", sectionId: "about-story", sectionLabel: "Brand story", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
+      { type: "image", url: "", alt: "About hero image", caption: "Optional about hero image", sectionId: "about-story", sectionLabel: "Brand story", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
       { type: "cta", label: "Explore Collections", href: "/collections", style: "secondary", sectionId: "about-story", sectionLabel: "Brand story", sectionTheme: "paper", sectionLayout: "banner", sectionSpacing: "airy" },
       { type: "heading", content: "Crafted with intention", level: "h2", sectionId: "about-values", sectionLabel: "Craft values", sectionTheme: "sand", sectionLayout: "split", sectionSpacing: "airy" },
       { type: "paragraph", content: "Introduce the craftsmanship principles, materials, and making process here.", sectionId: "about-values", sectionLabel: "Craft values", sectionTheme: "sand", sectionLayout: "split", sectionSpacing: "airy" },

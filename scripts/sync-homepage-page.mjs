@@ -54,6 +54,17 @@ const homeBody = [
     sectionSpacing: "airy",
   },
   {
+    type: "image",
+    url: "",
+    alt: "Homepage hero image",
+    caption: "Optional hero image",
+    sectionId: "home-hero",
+    sectionLabel: "Handcrafted with intention",
+    sectionTheme: "paper",
+    sectionLayout: "banner",
+    sectionSpacing: "airy",
+  },
+  {
     type: "cta",
     label: "Shop Now",
     href: "/shop",

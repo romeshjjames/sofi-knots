@@ -53,6 +53,17 @@ const aboutBody = [
     sectionSpacing: "airy",
   },
   {
+    type: "image",
+    url: "",
+    alt: "About hero image",
+    caption: "Optional about hero image",
+    sectionId: "about-story",
+    sectionLabel: "Brand story",
+    sectionTheme: "paper",
+    sectionLayout: "banner",
+    sectionSpacing: "airy",
+  },
+  {
     type: "cta",
     label: "Explore Collections",
     href: "/collections",
