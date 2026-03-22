@@ -1,11 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Quote, Scissors, Shield, Star, Truck } from "lucide-react";
+import { ArrowRight, Leaf, Quote, ShieldCheck, Sparkles, Star } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import { DataSourceNote } from "@/components/site/data-source-note";
 import { ProductCard } from "@/components/site/product-card";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
-import { defaultHomepageSections, getHomepageMerchandising, type HomepageSectionKey } from "@/lib/admin-data";
 import { groupVisualSections, type VisualContentBlock, type VisualSection } from "@/lib/cms-blocks";
 import { getCatalogCollections, getCatalogPageBySlug, getFeaturedProducts, getNewArrivalProducts } from "@/lib/catalog";
 import { getCollectionImageSource } from "@/lib/media";
@@ -76,12 +75,11 @@ function getSectionCards(section: VisualSection | null, fallback: HomepageCard[]
 }
 
 export async function HomePage() {
-  const [featuredResult, newArrivalResult, collectionResult, homepageCmsResult, homepageMerchandising, reviews] = await Promise.all([
+  const [featuredResult, newArrivalResult, collectionResult, homepageCmsResult, reviews] = await Promise.all([
     getFeaturedProducts(),
     getNewArrivalProducts(),
     getCatalogCollections(),
     getCatalogPageBySlug("home"),
-    getHomepageMerchandising().catch(() => ({ sectionOrder: [], updatedAt: null })),
     getReviews().catch(() => []),
   ]);
 
@@ -89,9 +87,6 @@ export async function HomePage() {
   const newArrivals = newArrivalResult.data;
   const storefrontCollections = collectionResult.data;
   const homepageCms = homepageCmsResult.data;
-  const sectionOrder = homepageMerchandising.sectionOrder.length
-    ? homepageMerchandising.sectionOrder
-    : defaultHomepageSections.map((section) => section.key);
 
   const sections = getSectionsFromBody(homepageCms?.body);
 
@@ -108,232 +103,200 @@ export async function HomePage() {
     { label: "Shop collection", href: "/shop" },
     { label: "Our story", href: "/about" },
   ]);
-  const valuesCards = getSectionCards(valuesSection, [
-    { title: "Handmade with Love", description: "Every knot is tied by hand with care and patience." },
-    { title: "Premium Materials", description: "We use natural cotton cord and carefully selected accessories." },
-    { title: "Thoughtful Packaging", description: "Every order is packed beautifully for gifting and safe delivery." },
+  const introCards = getSectionCards(introSection, [
+    { title: "Free Shipping Over 375", description: "Set the trust signals that help customers convert faster." },
+    { title: "Artisan Guarantee", description: "Use this slot for your handmade quality promise." },
+    { title: "Organic Materials", description: "Highlight premium fibers or material sourcing." },
+    { title: "4.9 Customer Rating", description: "Surface your strongest social-proof metric." },
   ]);
+  const craftCtas = getSectionCtas(valuesSection, [{ label: "Our story", href: "/about" }]);
   const featuredReviews = reviews
     .filter((review) => review.status === "approved" && review.homepageFeature)
     .slice(0, 3);
 
-  const renderedSections: Record<HomepageSectionKey, React.ReactNode> = {
-    hero: (
-      <section className="relative flex min-h-[85vh] items-center overflow-hidden">
+  return (
+    <div>
+      <StorefrontNavbar />
+      <DataSourceNote source={homepageCmsResult.source} error={homepageCmsResult.error || featuredResult.error} />
+      <section className="relative min-h-[68vh] overflow-hidden border-b border-brand-sand/30 bg-[#e9ddce] lg:min-h-[78vh]">
         <div className="absolute inset-0">
           {getSectionImageUrl(heroSection) ? (
             <img src={getSectionImageUrl(heroSection) || ""} alt={getSectionHeading(heroSection, "Sofi Knots hero")} className="h-full w-full object-cover" />
           ) : (
             <Image src={heroBg} alt="Sofi Knots macrame collection" className="h-full w-full object-cover" priority />
           )}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(135deg, hsla(40,33%,97%,0.88) 0%, hsla(40,33%,97%,0.55) 60%, transparent 100%)",
-            }}
-          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(72,54,35,0.48)_0%,rgba(72,54,35,0.18)_34%,rgba(72,54,35,0.04)_58%,rgba(72,54,35,0.02)_100%)]" />
         </div>
-        <div className="brand-container relative max-w-2xl py-24 lg:py-32">
-          <p className="brand-label mb-4 animate-fade-in" style={{ animationDelay: "200ms" }}>
-            {heroSection?.label || "Homepage hero"}
-          </p>
-          <h1 className="brand-heading mb-6 text-5xl sm:text-6xl lg:text-7xl animate-fade-in" style={{ animationDelay: "400ms" }}>
-            {getSectionHeading(heroSection, "Handcrafted for modern living")}
-          </h1>
-          <p className="brand-subheading mb-8 max-w-lg animate-fade-in" style={{ animationDelay: "600ms" }}>
-            {getSectionParagraph(heroSection, "Discover handcrafted macrame pieces that bring warmth, texture, and artisan charm to your world.")}
-          </p>
-          <div className="flex flex-wrap gap-3 animate-fade-in" style={{ animationDelay: "800ms" }}>
-            {heroCtas.map((cta) => (
-              <Link
-                key={`${cta.href}-${cta.label}`}
-                href={cta.href}
-                className={cta.style === "secondary" ? "brand-btn-outline" : "brand-btn-primary"}
-              >
-                {cta.label}
-                {cta.style === "secondary" ? null : <ArrowRight size={16} className="ml-2" />}
-              </Link>
-            ))}
+        <div className="brand-container relative flex min-h-[68vh] items-center py-16 lg:min-h-[78vh] lg:py-24">
+          <div className="max-w-xl text-brand-ivory">
+            <p className="mb-5 text-[10px] uppercase tracking-[0.34em] text-brand-ivory/80">
+              {heroSection?.label || "Handcrafted with intention"}
+            </p>
+            <h1 className="max-w-lg font-serif text-[clamp(3rem,7vw,5.5rem)] leading-[0.92] tracking-[-0.03em] text-white">
+              {getSectionHeading(heroSection, "Where Every Knot Tells a Story")}
+            </h1>
+            <p className="mt-6 max-w-md text-sm leading-7 text-brand-ivory/86 sm:text-base">
+              {getSectionParagraph(heroSection, "Artisan macrame pieces crafted from premium fibers for the spaces and moments you cherish most.")}
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              {heroCtas.map((cta) => (
+                <Link
+                  key={`${cta.href}-${cta.label}`}
+                  href={cta.href}
+                  className={
+                    cta.style === "secondary"
+                      ? "inline-flex items-center justify-center border border-white/40 px-6 py-3 text-[11px] font-medium uppercase tracking-[0.24em] text-white transition hover:bg-white hover:text-brand-brown"
+                      : "inline-flex items-center justify-center bg-white px-6 py-3 text-[11px] font-medium uppercase tracking-[0.24em] text-brand-brown transition hover:bg-brand-cream"
+                  }
+                >
+                  {cta.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </section>
-    ),
-    intro: (
-      <section className="brand-section">
-        <div className="brand-container mx-auto max-w-2xl text-center">
-          <p className="brand-label mb-3">{introSection?.label || "Welcome intro"}</p>
-          <h2 className="brand-heading mb-4">{getSectionHeading(introSection, "Welcome to Sofi Knots")}</h2>
-          <div className="brand-divider mb-6" />
-          <p className="leading-relaxed text-brand-warm">
-            {getSectionParagraph(introSection, "Every piece in our collection is lovingly handcrafted using premium natural cotton cord and age-old knotting techniques.")}
-          </p>
+
+      <section className="border-b border-brand-sand/20 bg-[#fbf7f1]">
+        <div className="brand-container grid grid-cols-2 gap-4 py-5 text-center md:grid-cols-4">
+          {[Sparkles, ShieldCheck, Leaf, Star].map((Icon, index) => {
+            const card = introCards[index] ?? introCards[0];
+            return (
+              <div key={`${card.title}-${index}`} className="flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.18em] text-brand-warm">
+                <Icon size={13} className="text-brand-gold" />
+                <span>{card.title}</span>
+              </div>
+            );
+          })}
         </div>
       </section>
-    ),
-    collections: (
-      <section className="brand-section bg-brand-cream pt-0">
+
+      <section className="bg-[#fcfaf5] py-20 lg:py-24">
         <div className="brand-container">
           <div className="mb-12 text-center">
-            <p className="brand-label mb-3">{collectionsSection?.label || "Collections"}</p>
-            <h2 className="brand-heading">{getSectionHeading(collectionsSection, "Our Collections")}</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-brand-warm">
-              {getSectionParagraph(collectionsSection, "Explore curated handcrafted collections organized by mood, gifting intent, and everyday styling.")}
-            </p>
+            <p className="brand-label mb-3">{collectionsSection?.label || "Curated for you"}</p>
+            <h2 className="font-serif text-[clamp(2.3rem,4vw,3.6rem)] text-brand-brown">
+              {getSectionHeading(collectionsSection, "Our Collections")}
+            </h2>
           </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {storefrontCollections.map((collection, index) => (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            {storefrontCollections.slice(0, 4).map((collection, index) => (
               <Link
                 key={collection.slug}
                 href={`/collections/${collection.slug}`}
-                className="group relative aspect-[3/4] overflow-hidden rounded-sm animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="group block"
               >
-                <Image
-                  src={getCollectionImageSource(collection)}
-                  alt={collection.title}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  placeholder={collection.imageUrl ? "empty" : "blur"}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-foreground/10 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <p className="mb-1 text-xs uppercase tracking-[0.2em]" style={{ color: "hsla(40,33%,97%,0.8)" }}>
-                    {collection.description}
-                  </p>
-                  <h3 className="font-serif text-2xl font-medium text-brand-ivory">{collection.title}</h3>
+                <div className="relative aspect-[0.82] overflow-hidden bg-brand-cream">
+                  <Image
+                    src={getCollectionImageSource(collection)}
+                    alt={collection.title}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    placeholder={collection.imageUrl ? "empty" : "blur"}
+                  />
+                </div>
+                <div className="px-1 pb-1 pt-4">
+                  <h3 className="font-serif text-xl text-brand-brown">{collection.title}</h3>
+                  <p className="mt-1 text-sm text-brand-taupe">{index + 8} pieces</p>
                 </div>
               </Link>
             ))}
           </div>
         </div>
       </section>
-    ),
-    "featured-products": (
-      <section className="brand-section">
+
+      <section className="bg-[#f8f3ea] py-20 lg:py-24">
         <div className="brand-container">
           <div className="mb-10 flex items-end justify-between gap-4">
             <div>
-              <p className="brand-label mb-2">{featuredSection?.label || "Featured products"}</p>
-              <h2 className="brand-heading">{getSectionHeading(featuredSection, "Bestsellers")}</h2>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-brand-warm">
-                {getSectionParagraph(featuredSection, "Highlight the products customers return to again and again with a short editorial introduction.")}
-              </p>
+              <p className="brand-label mb-3">{featuredSection?.label || "Most loved"}</p>
+              <h2 className="font-serif text-[clamp(2.2rem,4vw,3.4rem)] text-brand-brown">
+                {getSectionHeading(featuredSection, "Best Sellers")}
+              </h2>
             </div>
-            <Link href="/shop" className="hidden items-center gap-1 text-sm font-medium text-brand-gold transition-colors hover:text-brand-warm sm:flex">
-              View All <ArrowRight size={14} />
+            <Link href="/shop" className="hidden items-center gap-2 text-[11px] font-medium uppercase tracking-[0.22em] text-brand-warm transition hover:text-brand-gold md:inline-flex">
+              View all <ArrowRight size={14} />
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
-            {featuredProducts.map((product, index) => (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            {featuredProducts.slice(0, 4).map((product, index) => (
               <ProductCard key={product.id} product={product} index={index} />
             ))}
           </div>
         </div>
       </section>
-    ),
-    "new-arrivals": (
-      <section className="brand-section bg-brand-cream pt-0">
-        <div className="brand-container">
-          <div className="mb-10 flex items-end justify-between gap-4">
-            <div>
-              <p className="brand-label mb-2">{arrivalsSection?.label || "New arrivals"}</p>
-              <h2 className="brand-heading">{getSectionHeading(arrivalsSection, "New Arrivals")}</h2>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-brand-warm">
-                {getSectionParagraph(arrivalsSection, "Use this section to frame new launches, seasonal drops, or limited small-batch releases.")}
-              </p>
+
+      <section className="bg-[#fcfaf5] py-20 lg:py-24">
+        <div className="brand-container grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <div className="relative aspect-[1.08] overflow-hidden bg-brand-cream">
+            {getSectionImageUrl(valuesSection) ? (
+              <img src={getSectionImageUrl(valuesSection) || ""} alt={getSectionHeading(valuesSection, "Our craft")} className="h-full w-full object-cover" />
+            ) : (
+              <Image src={heroBg} alt="Sofi Knots craft story" className="h-full w-full object-cover" />
+            )}
+          </div>
+          <div className="max-w-xl">
+            <p className="brand-label mb-4">{valuesSection?.label || "Our craft"}</p>
+            <h2 className="font-serif text-[clamp(2.4rem,4vw,4rem)] leading-[1.02] text-brand-brown">
+              {getSectionHeading(valuesSection, "Made by Hand, Made with Heart")}
+            </h2>
+            <p className="mt-6 text-sm leading-7 text-brand-warm sm:text-base">
+              {getSectionParagraph(valuesSection, "Every Sofi Knots piece begins with a single strand of premium fiber and hours of careful knotting, shaped into keepsake pieces for modern homes and gifting.")}
+            </p>
+            <div className="mt-8">
+              <Link
+                href={craftCtas[0]?.href || "/about"}
+                className="inline-flex items-center gap-3 border-b border-brand-brown pb-2 text-[11px] font-medium uppercase tracking-[0.24em] text-brand-brown transition hover:text-brand-gold hover:border-brand-gold"
+              >
+                {craftCtas[0]?.label || "Our story"} <ArrowRight size={14} />
+              </Link>
             </div>
-            <Link href="/shop" className="hidden items-center gap-1 text-sm font-medium text-brand-gold transition-colors hover:text-brand-warm sm:flex">
-              View All <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
-            {newArrivals.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
-            ))}
           </div>
         </div>
       </section>
-    ),
-    "value-props": (
-      <section className="brand-section">
+
+      <section className="bg-[#453d35] py-20 text-white lg:py-24">
         <div className="brand-container">
           <div className="mb-14 text-center">
-            <p className="brand-label mb-3">{valuesSection?.label || "Why Sofi Knots"}</p>
-            <h2 className="brand-heading">{getSectionHeading(valuesSection, "Crafted with Intention")}</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-brand-warm">
-              {getSectionParagraph(valuesSection, "Introduce the values that make the brand feel premium and personal.")}
-            </p>
+            <p className="mb-4 text-[10px] uppercase tracking-[0.34em] text-white/60">{testimonialsSection?.label || "Kind words"}</p>
+            <h2 className="font-serif text-[clamp(2.3rem,4vw,3.7rem)] text-white">
+              {getSectionHeading(testimonialsSection, "What Our Customers Say")}
+            </h2>
           </div>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 lg:gap-12">
-            {[Scissors, Shield, Truck].map((Icon, index) => {
-              const card = valuesCards[index] ?? valuesCards[0];
-              return (
-                <div key={`${card.title}-${index}`} className="text-center animate-fade-in" style={{ animationDelay: `${index * 120}ms` }}>
-                  <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream">
-                    <Icon size={22} className="text-brand-gold" />
-                  </div>
-                  <h3 className="mb-2 font-serif text-xl text-brand-brown">{card.title}</h3>
-                  <p className="text-sm leading-relaxed text-brand-warm">{card.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-    ),
-    testimonials: (
-      <section className="brand-section bg-brand-cream">
-        <div className="brand-container">
-          <div className="mb-14 text-center">
-            <p className="brand-label mb-3">{testimonialsSection?.label || "Testimonials"}</p>
-            <h2 className="brand-heading">{getSectionHeading(testimonialsSection, "What Our Customers Say")}</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-brand-warm">
-              {getSectionParagraph(testimonialsSection, "Approved featured reviews from the Reviews admin appear here automatically.")}
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3 lg:gap-8">
-            {(featuredReviews.length ? featuredReviews : reviews.filter((review) => review.status === "approved").slice(0, 3)).map((review, index) => (
-              <div key={review.id} className="rounded-sm bg-brand-ivory p-8 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-                <Quote size={24} className="mb-4 text-brand-gold/40" />
-                <p className="mb-5 text-sm leading-relaxed text-brand-warm">{review.message}</p>
-                <div className="mb-2 flex items-center gap-1">
-                  {Array.from({ length: review.rating }).map((_, starIndex) => (
-                    <Star key={starIndex} size={12} className="fill-brand-gold text-brand-gold" />
+          <div className="grid gap-6 md:grid-cols-3">
+            {(featuredReviews.length ? featuredReviews : reviews.filter((review) => review.status === "approved").slice(0, 3)).map((review) => (
+              <article key={review.id} className="border border-white/10 px-6 py-8">
+                <div className="mb-4 flex items-center gap-1 text-brand-gold">
+                  {Array.from({ length: review.rating }).map((_, index) => (
+                    <Star key={index} size={11} className="fill-current" />
                   ))}
                 </div>
-                <p className="font-serif text-base text-brand-brown">{review.customerName}</p>
-              </div>
+                <p className="text-sm leading-7 text-white/82">{review.message}</p>
+                <div className="mt-8 border-t border-white/10 pt-5">
+                  <p className="font-serif text-lg text-white">{review.customerName}</p>
+                </div>
+              </article>
             ))}
           </div>
         </div>
       </section>
-    ),
-    newsletter: (
-      <section className="brand-section">
-        <div className="brand-container mx-auto max-w-xl text-center">
-          <p className="brand-label mb-3">{newsletterSection?.label || "Newsletter"}</p>
-          <h2 className="brand-heading mb-4">{getSectionHeading(newsletterSection, "Join the Sofi Knots Family")}</h2>
-          <p className="mb-8 text-sm text-brand-warm">
-            {getSectionParagraph(newsletterSection, "Subscribe for early access to new collections, styling inspiration, and exclusive offers.")}
+
+      <section className="bg-[#fcfaf5] py-20 lg:py-24">
+        <div className="brand-container mx-auto max-w-3xl text-center">
+          <p className="brand-label mb-4">{newsletterSection?.label || "Stay connected"}</p>
+          <h2 className="font-serif text-[clamp(2.2rem,4vw,3.4rem)] text-brand-brown">
+            {getSectionHeading(newsletterSection, "Join Our Circle")}
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-brand-warm">
+            {getSectionParagraph(newsletterSection, "Be the first to know about new collections, artisan stories, and exclusive offers.")}
           </p>
-          <form className="flex flex-col gap-3 sm:flex-row">
-            <input type="email" placeholder="Your email address" className="brand-input flex-1" />
-            <button type="submit" className="brand-btn-primary whitespace-nowrap">
+          <form className="mx-auto mt-10 flex max-w-xl flex-col gap-3 sm:flex-row">
+            <input type="email" placeholder="Your email address" className="brand-input flex-1 bg-transparent" />
+            <button type="submit" className="brand-btn-primary min-w-[160px] whitespace-nowrap">
               {getSectionCtas(newsletterSection, [{ label: "Subscribe", href: "#" }])[0]?.label || "Subscribe"}
             </button>
           </form>
         </div>
       </section>
-    ),
-  };
-
-  return (
-    <div>
-      <StorefrontNavbar />
-      <DataSourceNote source={homepageCmsResult.source} error={homepageCmsResult.error || featuredResult.error} />
-      {sectionOrder.map((sectionKey) => (
-        <div key={sectionKey}>{renderedSections[sectionKey]}</div>
-      ))}
       <StorefrontFooter />
     </div>
   );
