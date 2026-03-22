@@ -1,22 +1,19 @@
 import Link from "next/link";
 import { ExternalLink, Plus } from "lucide-react";
-import { CollectionMerchandisingManager } from "@/components/admin/collection-merchandising-manager";
 import { FeaturedMerchandisingManager } from "@/components/admin/featured-merchandising-manager";
 import { ProductManager } from "@/components/admin/product-manager";
-import { TaxonomyManager } from "@/components/admin/taxonomy-manager";
 import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
-import { getCollectionMerchandising, getFeaturedProductMerchandising, getProductAdminSettingsMap } from "@/lib/admin-data";
+import { getFeaturedProductMerchandising, getProductAdminSettingsMap } from "@/lib/admin-data";
 import { getCatalogCategories, getCatalogCollections, getCatalogProducts } from "@/lib/catalog";
 import { requireAdminPage } from "@/lib/supabase/auth";
 
 export default async function AdminProductsPage() {
   await requireAdminPage(["super_admin", "catalog_admin"]);
-  const [result, categoriesResult, collectionsResult, featuredMerchandising, collectionMerchandising] = await Promise.all([
+  const [result, categoriesResult, collectionsResult, featuredMerchandising] = await Promise.all([
     getCatalogProducts(),
     getCatalogCategories(),
     getCatalogCollections(),
     getFeaturedProductMerchandising(),
-    getCollectionMerchandising(),
   ]);
   const settingsMap = await getProductAdminSettingsMap(result.data.map((product) => product.id));
   const productsWithAdminSettings = result.data.map((product) => {
@@ -85,23 +82,19 @@ export default async function AdminProductsPage() {
         </AdminPanel>
 
         <AdminPanel
-          title="Merchandising structure"
-          description="Keep categories and collections clean so storefront navigation, campaigns, and on-page SEO landing pages stay organized."
+          title="Catalog structure"
+          description="Categories and collections now live in the dedicated Collections area so the products page stays focused on product management."
         >
-          <div className="grid gap-6 xl:grid-cols-2">
-            <TaxonomyManager title="Categories" endpoint="/api/admin/categories" items={categoriesResult.data} />
-            <TaxonomyManager
-              title="Collections"
-              endpoint="/api/admin/collections"
-              items={collectionsResult.data.map((item) => ({
-                id: item.id ?? item.slug,
-                name: item.title,
-                slug: item.slug,
-                description: item.description,
-                imageUrl: item.imageUrl,
-                sortOrder: item.sortOrder,
-              }))}
-            />
+          <div className="flex flex-col gap-4 rounded-[24px] border border-[#e7eaee] bg-[#fbfcfd] p-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h3 className="text-xl font-medium text-slate-950">Manage categories and collections separately</h3>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Product editing stays cleaner when taxonomy management lives in the Collections workspace instead of the main products screen.
+              </p>
+            </div>
+            <Link href="/admin/collections" className="brand-btn-outline whitespace-nowrap px-5 py-3">
+              Open Collections
+            </Link>
           </div>
         </AdminPanel>
 
@@ -115,24 +108,6 @@ export default async function AdminProductsPage() {
             updatedAt={featuredMerchandising.updatedAt}
           />
         </AdminPanel>
-
-        <AdminPanel
-          title="Collection merchandising"
-          description="Control the order of collection cards across the homepage and collections landing page with drag-and-drop persistence."
-        >
-          <CollectionMerchandisingManager
-            collections={collectionsResult.data.map((item) => ({
-              id: item.id,
-              title: item.title,
-              slug: item.slug,
-              description: item.description,
-              imageUrl: item.imageUrl,
-            }))}
-            initialCollectionIds={collectionMerchandising.collectionIds}
-            updatedAt={collectionMerchandising.updatedAt}
-          />
-        </AdminPanel>
-
         <AdminPanel
           title="Catalog editor"
           description="Browse products on the left, then update content, pricing, inventory, publishing status, and SEO fields in a focused editor pane."
