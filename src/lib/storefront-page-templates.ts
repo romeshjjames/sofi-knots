@@ -31,11 +31,11 @@ type SettingsLike = Pick<
   "siteName" | "storeDescription" | "supportEmail" | "supportPhone" | "contactPageMessage" | "shipping" | "policies"
 >;
 
-function sectionHeading(content: string, sectionId: string, label: string): VisualContentBlock {
+function sectionHeading(content: string, sectionId: string, label: string, level: "h2" | "h3" = "h2"): VisualContentBlock {
   return {
     type: "heading",
     content,
-    level: "h2",
+    level,
     sectionId,
     sectionLabel: label,
     sectionTheme: "paper",
@@ -109,16 +109,71 @@ export function buildCoreStorefrontPages(settings: SettingsLike): CoreStorefront
       seoKeywords: ["handmade macrame", siteName.toLowerCase(), "artisan home decor", "macrame bags"],
       canonicalUrl: "/",
       body: [
-        sectionHeading(`Welcome to ${siteName}`, "home-hero", "Homepage hero"),
+        sectionHeading("Handcrafted for modern living", "home-hero", "Homepage hero"),
         sectionParagraph(siteDescription, "home-hero", "Homepage hero"),
         sectionCta("Shop the collection", "/shop", "home-hero", "Homepage hero"),
-        sectionHeading("Crafted for soulful homes and thoughtful gifting", "home-story", "Brand story"),
+        sectionCta("Discover our story", "/about", "home-hero", "Homepage hero"),
+        sectionHeading(`Welcome to ${siteName}`, "home-intro", "Welcome intro"),
         sectionParagraph(
-          "Use this homepage page entry to tell the story of the brand, introduce your latest campaign, and guide visitors toward collections, products, and editorial content.",
-          "home-story",
-          "Brand story",
+          "Use this section to introduce the craft, highlight the handmade philosophy, and set the tone for the storefront before shoppers browse collections.",
+          "home-intro",
+          "Welcome intro",
         ),
-        sectionCta("Explore collections", "/collections", "home-story", "Brand story"),
+        sectionHeading("Curated collections for every mood and space", "home-collections", "Collections"),
+        sectionParagraph(
+          "This intro appears above the live collection grid. Use it to guide discovery and support SEO around your collection themes.",
+          "home-collections",
+          "Collections",
+        ),
+        sectionHeading("Most loved pieces", "home-featured", "Featured products"),
+        sectionParagraph(
+          "Highlight the products customers return to again and again with a short editorial introduction.",
+          "home-featured",
+          "Featured products",
+        ),
+        sectionHeading("Freshly added to the studio", "home-arrivals", "New arrivals"),
+        sectionParagraph(
+          "Use this section to frame new launches, seasonal drops, or limited small-batch releases.",
+          "home-arrivals",
+          "New arrivals",
+        ),
+        sectionHeading("Crafted with intention", "home-values", "Why Sofi Knots"),
+        sectionParagraph(
+          "Introduce the values that make the brand feel premium and personal.",
+          "home-values",
+          "Why Sofi Knots",
+        ),
+        sectionHeading("Handmade with care", "home-values", "Why Sofi Knots", "h3"),
+        sectionParagraph(
+          "Describe the artistry, time, and care behind each knot and finish.",
+          "home-values",
+          "Why Sofi Knots",
+        ),
+        sectionHeading("Premium materials", "home-values", "Why Sofi Knots", "h3"),
+        sectionParagraph(
+          "Call out fibers, hardware, or finishing details that elevate the product.",
+          "home-values",
+          "Why Sofi Knots",
+        ),
+        sectionHeading("Thoughtful packaging", "home-values", "Why Sofi Knots", "h3"),
+        sectionParagraph(
+          "Explain your gifting experience, packaging quality, or delivery care.",
+          "home-values",
+          "Why Sofi Knots",
+        ),
+        sectionHeading("Customer love", "home-testimonials", "Testimonials"),
+        sectionParagraph(
+          "Approved featured reviews from the Reviews admin appear in this section automatically.",
+          "home-testimonials",
+          "Testimonials",
+        ),
+        sectionHeading("Stay connected", "home-newsletter", "Newsletter"),
+        sectionParagraph(
+          "Invite visitors to subscribe for launches, editorial stories, and exclusive updates.",
+          "home-newsletter",
+          "Newsletter",
+        ),
+        sectionCta("Contact us", "/contact", "home-newsletter", "Newsletter"),
       ],
     },
     {
