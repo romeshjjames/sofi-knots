@@ -57,10 +57,11 @@ export default async function AdminCollectionsPage() {
         { label: "Collections" },
       ]}
       actions={
-        <Link href="/collections" className="brand-btn-outline whitespace-nowrap px-5 py-3">
+        <Link href="/collections" target="_blank" rel="noreferrer" className="brand-btn-outline whitespace-nowrap px-5 py-3">
           Preview collections
         </Link>
       }
+      statsVariant="compact"
       stats={[
         { label: "Collections", value: `${collections.length}`, hint: "Organized product groups available across the storefront." },
         { label: "Manual", value: `${collections.filter((item) => item.settings.collectionType === "manual").length}`, hint: "Collections with curated product assignment." },
