@@ -6,7 +6,6 @@ import {
   Box,
   FolderKanban,
   FileText,
-  Gem,
   LineChart,
   LayoutDashboard,
   MessageSquareQuote,
@@ -83,7 +82,7 @@ const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof La
 
 export function AdminShell({ active, title, description, children, eyebrow = "Admin workspace", actions, stats = [], statsVariant = "default", breadcrumbs }: AdminShellProps) {
   return (
-    <div className="min-h-screen bg-[#f6f7f8] text-[#1f2933]">
+    <div className="min-h-screen bg-[#f3f1ec] text-[#1f2933]">
       <div className="grid min-h-screen lg:grid-cols-[248px_minmax(0,1fr)]">
         <aside className="border-r border-[#e7eaee] bg-[#fbfcfd] px-4 py-5 lg:px-5">
           <Link href="/admin" className="flex items-center gap-3 rounded-2xl border border-[#eceff3] bg-white px-4 py-4 shadow-sm transition hover:border-[#d9dee5]">
@@ -128,21 +127,21 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
         </aside>
 
         <main className="min-w-0">
-          <header className="border-b border-[#e7eaee] bg-white px-5 py-5 lg:px-8">
+          <header className="border-b border-[#e7eaee] bg-[#fcfaf6] px-5 py-5 lg:px-8">
             <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <label className="flex min-w-[260px] items-center gap-3 rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3 text-sm text-slate-500 shadow-sm">
-                <Search size={16} />
+              <label className="flex min-w-[280px] items-center gap-3 rounded-full border border-[#e6ddcf] bg-white px-4 py-3 text-sm text-slate-500 shadow-[0_10px_28px_rgba(49,36,23,0.06)]">
+                <Search size={16} className="text-[#a78e68]" />
                 <input
                   aria-label="Global admin search"
                   placeholder="Search products, collections, orders, customers"
                   className="w-full bg-transparent outline-none placeholder:text-slate-400"
                 />
               </label>
-              <div className="flex items-center gap-3">
-                <Link href="/admin/products/new" target="_blank" rel="noreferrer" className="rounded-2xl bg-[#1f2933] px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800">
+              <div className="flex flex-wrap items-center gap-3">
+                <Link href="/admin/products/new" target="_blank" rel="noreferrer" className="rounded-full bg-[#1f2933] px-5 py-3 text-sm font-medium text-white shadow-[0_14px_30px_rgba(31,41,51,0.18)] transition hover:bg-slate-800">
                   Add Product
                 </Link>
-                <button type="button" className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] text-slate-600 transition hover:bg-white">
+                <button type="button" className="relative flex h-11 w-11 items-center justify-center rounded-full border border-[#e6ddcf] bg-white text-[#7f6a49] shadow-[0_10px_24px_rgba(49,36,23,0.06)] transition hover:bg-[#f9f5ee]">
                   <Bell size={18} />
                   <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500" />
                 </button>

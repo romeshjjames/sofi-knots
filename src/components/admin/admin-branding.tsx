@@ -45,11 +45,11 @@ export function AdminSidebarBrand() {
 
   return (
     <>
-      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-[#1f2933] text-white">
+      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-[#e8ddcf] bg-[#fffaf2] text-white shadow-[0_10px_24px_rgba(49,36,23,0.06)]">
         {branding.logoUrl ? (
           <img src={branding.logoUrl} alt={branding.siteName} className="h-full w-full object-cover" />
         ) : (
-          <span className="text-sm font-semibold">{initialsFromName(branding.siteName)}</span>
+          <span className="text-sm font-semibold text-[#1f2933]">{initialsFromName(branding.siteName)}</span>
         )}
       </div>
       <div>
@@ -86,8 +86,8 @@ export function AdminHeaderProfile() {
   }, []);
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-3 py-2.5 shadow-sm">
-      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[#1f2933] text-sm font-medium text-white">
+    <div className="flex items-center gap-3 rounded-full border border-[#e6ddcf] bg-white px-3 py-2.5 shadow-[0_10px_24px_rgba(49,36,23,0.06)]">
+      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[#eadfce] bg-[#fffaf2] text-sm font-medium text-[#1f2933]">
         {branding.logoUrl ? (
           <img src={branding.logoUrl} alt={branding.siteName} className="h-full w-full object-cover" />
         ) : (
