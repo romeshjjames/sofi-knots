@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { getManagedPageMetadata, renderManagedPage } from "@/lib/managed-pages";
+import { PageHero } from "@/components/site/page-hero";
+import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
+import { getManagedPageMetadata } from "@/lib/managed-pages";
+import { getCatalogPageBySlug } from "@/lib/catalog";
+import { getActiveFaqs } from "@/lib/faqs";
 
 const fallback = {
   title: "Frequently Asked Questions",
@@ -32,5 +36,47 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FaqPage() {
-  return renderManagedPage("faq", fallback);
+  const [pageResult, faqs] = await Promise.all([getCatalogPageBySlug("faq"), getActiveFaqs()]);
+  const page = pageResult.data;
+  const groupedFaqs = faqs.reduce<Record<string, typeof faqs>>((groups, item) => {
+    const key = item.category || "General";
+    groups[key] ||= [];
+    groups[key].push(item);
+    return groups;
+  }, {});
+
+  return (
+    <div>
+      <StorefrontNavbar />
+      <PageHero
+        eyebrow={fallback.eyebrow}
+        title={page?.title || fallback.heroTitle}
+        description={page?.excerpt || fallback.heroDescription}
+      />
+      <section className="brand-section">
+        <div className="brand-container max-w-4xl space-y-10">
+          {Object.keys(groupedFaqs).length ? (
+            Object.entries(groupedFaqs).map(([category, entries]) => (
+              <div key={category} className="space-y-4">
+                <div className="text-xs uppercase tracking-[0.24em] text-brand-taupe">{category}</div>
+                <div className="space-y-4">
+                  {entries
+                    .sort((left, right) => left.displayOrder - right.displayOrder)
+                    .map((item) => (
+                      <div key={item.id} className="rounded-[24px] border border-brand-sand/40 bg-white p-6">
+                        <h2 className="font-serif text-2xl text-brand-brown">{item.question}</h2>
+                        <p className="mt-3 text-sm leading-7 text-brand-warm">{item.answer}</p>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            fallback.body
+          )}
+        </div>
+      </section>
+      <StorefrontFooter />
+    </div>
+  );
 }
