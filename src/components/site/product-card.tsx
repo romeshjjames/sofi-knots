@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Heart, ShoppingBag, Star } from "lucide-react";
+import { useCart } from "@/components/cart/cart-provider";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import type { Product } from "@/types/commerce";
 
@@ -11,6 +12,8 @@ type Props = {
 };
 
 export function ProductCard({ product, index = 0 }: Props) {
+  const { addItem } = useCart();
+
   return (
     <div className="brand-card group animate-fade-in" style={{ animationDelay: `${index * 80}ms` }}>
       <Link
@@ -63,9 +66,13 @@ export function ProductCard({ product, index = 0 }: Props) {
                 type="button"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-ivory/90 text-brand-warm shadow-sm backdrop-blur-sm transition-colors hover:text-brand-gold"
                 aria-label="Add to cart"
-                onClick={() =>
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  addItem(product.id, 1);
                   void trackAnalyticsEvent({
                     eventName: "add_to_cart_intent",
+                    path: `/product/${product.slug}`,
                     metadata: {
                       productId: product.id,
                       productSlug: product.slug,
@@ -73,8 +80,8 @@ export function ProductCard({ product, index = 0 }: Props) {
                       source: "product_card_quick_action",
                       category: product.category,
                     },
-                  })
-                }
+                  });
+                }}
               >
                 <ShoppingBag size={16} />
               </button>

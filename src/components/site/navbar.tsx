@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Heart, Menu, Search, ShoppingBag, X } from "lucide-react";
 import { useState } from "react";
+import { useCart } from "@/components/cart/cart-provider";
 
 type NavbarProps = {
   siteName?: string;
@@ -21,6 +22,7 @@ const navLinks = [
 export function Navbar({ siteName = "Sofi Knots" }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { itemCount } = useCart();
 
   return (
     <header className="sticky top-0 z-50 border-b border-brand-sand/40 bg-brand-ivory/95 backdrop-blur-sm">
@@ -64,7 +66,14 @@ export function Navbar({ siteName = "Sofi Knots" }: NavbarProps) {
             <Heart size={20} />
           </Link>
           <Link href="/cart" className="p-2 text-brand-warm transition-colors hover:text-brand-gold" aria-label="Cart">
-            <ShoppingBag size={20} />
+            <span className="relative block">
+              <ShoppingBag size={20} />
+              {itemCount > 0 ? (
+                <span className="absolute -right-2 -top-2 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-brand-brown px-1.5 text-[10px] font-medium leading-none text-white">
+                  {itemCount > 99 ? "99+" : itemCount}
+                </span>
+              ) : null}
+            </span>
           </Link>
         </div>
       </div>
