@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
+import { AdminHeaderProfile, AdminSidebarBrand } from "@/components/admin/admin-branding";
 import { LogoutButton } from "@/components/admin/logout-button";
 
 type AdminNavKey =
@@ -86,13 +87,7 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
       <div className="grid min-h-screen lg:grid-cols-[248px_minmax(0,1fr)]">
         <aside className="border-r border-[#e7eaee] bg-[#fbfcfd] px-4 py-5 lg:px-5">
           <Link href="/admin" className="flex items-center gap-3 rounded-2xl border border-[#eceff3] bg-white px-4 py-4 shadow-sm transition hover:border-[#d9dee5]">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1f2933] text-white">
-              <Gem size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Sofi Knots</p>
-              <p className="font-serif text-2xl text-slate-900">Admin</p>
-            </div>
+            <AdminSidebarBrand />
           </Link>
 
           <nav className="mt-8 space-y-1.5">
@@ -151,13 +146,7 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
                   <Bell size={18} />
                   <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500" />
                 </button>
-                <div className="flex items-center gap-3 rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-3 py-2.5 shadow-sm">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1f2933] text-sm font-medium text-white">SK</div>
-                  <div className="hidden sm:block">
-                    <p className="text-sm font-medium text-slate-900">Sofi Knots Admin</p>
-                    <p className="text-xs text-slate-500">Store manager</p>
-                  </div>
-                </div>
+                <AdminHeaderProfile />
                 <LogoutButton />
               </div>
             </div>

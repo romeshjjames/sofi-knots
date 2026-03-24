@@ -1,7 +1,24 @@
 import { NextResponse } from "next/server";
-import { createAuditLog } from "@/lib/admin-data";
+import { createAuditLog, getSiteSettings } from "@/lib/admin-data";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { requireAdminApi } from "@/lib/supabase/auth";
+
+export async function GET() {
+  const auth = await requireAdminApi(["super_admin", "marketing_admin", "content_admin", "catalog_admin"]);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
+  try {
+    const settings = await getSiteSettings();
+    return NextResponse.json({
+      settings: {
+        siteName: settings.siteName,
+        logoUrl: settings.branding.logoUrl,
+      },
+    });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to load site settings." }, { status: 500 });
+  }
+}
 
 export async function PATCH(request: Request) {
   const auth = await requireAdminApi(["super_admin", "marketing_admin", "content_admin"]);
