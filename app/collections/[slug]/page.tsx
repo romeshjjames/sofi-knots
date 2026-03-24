@@ -9,6 +9,9 @@ import { getCollectionAdminSettingsMap, getCollectionPageContentMap } from "@/li
 import { getCatalogCollectionBySlug, getCatalogPageBySlug, getCatalogProducts, resolveCollectionProducts } from "@/lib/catalog";
 import { buildStorefrontMetadata } from "@/lib/seo";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const [collectionResult, pageResult] = await Promise.all([
     getCatalogCollectionBySlug(params.slug),
