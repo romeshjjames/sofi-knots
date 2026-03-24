@@ -214,6 +214,7 @@ export type CollectionAdminSettingsRecord = {
   collectionId: string;
   collectionType: "manual" | "automated";
   status: "active" | "draft";
+  showIntroSection: boolean;
   visibility: "visible" | "hidden";
   onlineStoreEnabled: boolean;
   salesChannels: string[];
@@ -891,6 +892,7 @@ export async function getCollectionAdminSettingsMap(collectionIds: string[]) {
       collectionId: row.entity_id,
       collectionType: payload.collectionType === "automated" ? "automated" : "manual",
       status: payload.status === "draft" ? "draft" : "active",
+      showIntroSection: payload.showIntroSection !== false,
       visibility: payload.visibility === "hidden" ? "hidden" : "visible",
       onlineStoreEnabled: payload.onlineStoreEnabled !== false,
       salesChannels: Array.isArray(payload.salesChannels) ? payload.salesChannels.filter((value): value is string => typeof value === "string") : ["online-store"],
@@ -914,6 +916,7 @@ export async function getCollectionAdminSettingsMap(collectionIds: string[]) {
       collectionId,
       collectionType: "manual",
       status: "active",
+      showIntroSection: true,
       visibility: "visible",
       onlineStoreEnabled: true,
       salesChannels: ["online-store"],

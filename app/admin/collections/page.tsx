@@ -25,6 +25,7 @@ export default async function AdminCollectionsPage({
       collectionId: collection.id ?? collection.slug,
       collectionType: "manual" as const,
       status: "active" as const,
+      showIntroSection: true,
       visibility: "visible" as const,
       onlineStoreEnabled: true,
       salesChannels: ["online-store"],

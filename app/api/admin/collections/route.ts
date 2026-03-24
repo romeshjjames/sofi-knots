@@ -51,6 +51,7 @@ export async function POST(request: Request) {
       payload: {
         collectionType: body.collectionType || "manual",
         status: body.status || "active",
+        showIntroSection: body.showIntroSection !== false,
         visibility: body.visibility || "visible",
         onlineStoreEnabled: body.onlineStoreEnabled !== false,
         salesChannels: Array.isArray(body.salesChannels) ? body.salesChannels : ["online-store"],

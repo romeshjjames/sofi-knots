@@ -30,6 +30,7 @@ type CollectionEditor = {
   imageUrl: string;
   collectionType: "manual" | "automated";
   status: "active" | "draft";
+  showIntroSection: boolean;
   visibility: "visible" | "hidden";
   onlineStoreEnabled: boolean;
   salesChannels: string[];
@@ -50,6 +51,7 @@ const emptyEditor: CollectionEditor = {
   imageUrl: "",
   collectionType: "manual",
   status: "draft",
+  showIntroSection: true,
   visibility: "visible",
   onlineStoreEnabled: true,
   salesChannels: ["online-store"],
@@ -85,6 +87,7 @@ function mapCollectionToEditor(collection: CollectionListItem): CollectionEditor
     imageUrl: collection.imageUrl ?? "",
     collectionType: collection.settings.collectionType,
     status: collection.settings.status,
+    showIntroSection: collection.settings.showIntroSection,
     visibility: collection.settings.visibility,
     onlineStoreEnabled: collection.settings.onlineStoreEnabled,
     salesChannels: collection.settings.salesChannels,
@@ -162,6 +165,7 @@ export function CollectionsAdmin({ collections, products, initialSelectedId = nu
           collectionId: editor.id ?? "new-collection",
           collectionType: editor.collectionType,
           status: editor.status,
+          showIntroSection: editor.showIntroSection,
           visibility: editor.visibility,
           onlineStoreEnabled: editor.onlineStoreEnabled,
           salesChannels: editor.salesChannels,
@@ -260,6 +264,7 @@ export function CollectionsAdmin({ collections, products, initialSelectedId = nu
       collectionType: editor.collectionType,
       status: nextStatus ?? editor.status,
       visibility: editor.visibility,
+      showIntroSection: editor.showIntroSection,
       onlineStoreEnabled: editor.onlineStoreEnabled,
       salesChannels: editor.salesChannels,
       assignedProductIds: editor.collectionType === "manual" ? editor.assignedProductIds : [],
@@ -299,6 +304,7 @@ export function CollectionsAdmin({ collections, products, initialSelectedId = nu
           collectionId: nextId,
           collectionType: editor.collectionType,
           status: nextStatus ?? editor.status,
+          showIntroSection: editor.showIntroSection,
           visibility: editor.visibility,
           onlineStoreEnabled: editor.onlineStoreEnabled,
           salesChannels: editor.salesChannels,
@@ -688,6 +694,14 @@ export function CollectionsAdmin({ collections, products, initialSelectedId = nu
           <section className="rounded-[28px] border border-[#e7eaee] bg-white p-5 shadow-sm">
             <h4 className="text-lg font-semibold text-slate-950">Sales channels and visibility</h4>
             <div className="mt-4 space-y-4">
+              <label className="flex items-center justify-between rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3">
+                <span className="text-sm font-medium text-slate-700">Show collection intro section</span>
+                <input
+                  type="checkbox"
+                  checked={editor.showIntroSection}
+                  onChange={(event) => setEditor((current) => ({ ...current, showIntroSection: event.target.checked }))}
+                />
+              </label>
               <label className="flex items-center justify-between rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3">
                 <span className="text-sm font-medium text-slate-700">Online store</span>
                 <input type="checkbox" checked={editor.onlineStoreEnabled} onChange={(event) => setEditor((current) => ({ ...current, onlineStoreEnabled: event.target.checked }))} />

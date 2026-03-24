@@ -69,19 +69,21 @@ export default async function CollectionLandingPage({ params }: { params: { slug
         title={page?.title || collection.title}
         description={page?.excerpt || collection.description}
       />
-      <section className="brand-section">
-        <div className="brand-container max-w-5xl">
-          {Array.isArray(collectionPageBody) && collectionPageBody.length ? (
-            <CmsPageRenderer bodyText={JSON.stringify(collectionPageBody, null, 2)} />
-          ) : page ? (
-            <CmsPageRenderer bodyText={JSON.stringify(page.body ?? [], null, 2)} />
-          ) : (
-            <div className="rounded-[28px] border border-brand-sand/40 bg-brand-cream p-8 text-brand-warm">
-              Create a page in the admin with slug <strong>{`collection-${collection.slug}`}</strong> to add a custom collection landing page with hero content, storytelling sections, and SEO copy.
-            </div>
-          )}
-        </div>
-      </section>
+      {settings?.showIntroSection !== false ? (
+        <section className="brand-section">
+          <div className="brand-container max-w-5xl">
+            {Array.isArray(collectionPageBody) && collectionPageBody.length ? (
+              <CmsPageRenderer bodyText={JSON.stringify(collectionPageBody, null, 2)} />
+            ) : page ? (
+              <CmsPageRenderer bodyText={JSON.stringify(page.body ?? [], null, 2)} />
+            ) : (
+              <div className="rounded-[28px] border border-brand-sand/40 bg-brand-cream p-8 text-brand-warm">
+                Create a page in the admin with slug <strong>{`collection-${collection.slug}`}</strong> to add a custom collection landing page with hero content, storytelling sections, and SEO copy.
+              </div>
+            )}
+          </div>
+        </section>
+      ) : null}
       <section className="brand-section pt-0">
         <div className="brand-container">
           <div className="mb-8 flex items-end justify-between gap-4">
