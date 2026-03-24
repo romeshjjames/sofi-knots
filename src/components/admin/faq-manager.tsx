@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FilePlus2, PencilLine, Search, Trash2 } from "lucide-react";
+import { PencilLine, Search, Trash2 } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 import type { FaqRecord, FaqStatus } from "@/types/faqs";
 
@@ -126,14 +126,6 @@ export function FaqManager({ faqs }: FaqManagerProps) {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#1f2933] px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
-              onClick={startCreate}
-            >
-              <FilePlus2 size={16} />
-              Add FAQ
-            </button>
           </div>
         </div>
         <div className="overflow-hidden">
