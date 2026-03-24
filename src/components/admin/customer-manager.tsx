@@ -69,6 +69,31 @@ export function CustomerManager({ customers }: { customers: CustomerSummary[] })
     setDeleteCandidate(null);
   }
 
+  async function toggleCustomerStatus(customer: CustomerSummary) {
+    const response = await fetch(`/api/admin/customers/${customer.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        email: customer.email,
+        phone: customer.phone,
+        notes: customer.notes,
+        tags: customer.tags,
+        isActive: !customer.isActive,
+      }),
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      setMessage(body.error || "Failed to update customer status.");
+      return;
+    }
+    setItems((current) =>
+      current.map((item) => (item.id === customer.id ? { ...item, isActive: !item.isActive } : item)),
+    );
+    setMessage(`${customer.fullName} marked as ${customer.isActive ? "inactive" : "active"}.`);
+  }
+
   return (
     <div className="space-y-4">
       <div className="rounded-[24px] border border-[#e7eaee] bg-white">
@@ -113,6 +138,7 @@ export function CustomerManager({ customers }: { customers: CustomerSummary[] })
                 <th className="px-4 py-3 font-medium">Customer</th>
                 <th className="px-4 py-3 font-medium">Orders</th>
                 <th className="px-4 py-3 font-medium">Total spent</th>
+                <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Last order</th>
                 <th className="px-4 py-3 font-medium">Tags</th>
                 <th className="px-4 py-3 font-medium">Actions</th>
@@ -128,6 +154,15 @@ export function CustomerManager({ customers }: { customers: CustomerSummary[] })
                   </td>
                   <td className="px-4 py-3 text-slate-700">{customer.orderCount}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">Rs. {customer.totalSpentInr.toLocaleString("en-IN")}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      type="button"
+                      className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${customer.isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-700"}`}
+                      onClick={() => void toggleCustomerStatus(customer)}
+                    >
+                      {customer.isActive ? "Active" : "Inactive"}
+                    </button>
+                  </td>
                   <td className="px-4 py-3 text-slate-600">{customer.lastOrderDate ? new Date(customer.lastOrderDate).toLocaleDateString("en-IN") : "No orders yet"}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
@@ -155,7 +190,7 @@ export function CustomerManager({ customers }: { customers: CustomerSummary[] })
               ))}
               {visibleCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-sm text-slate-500">
+                  <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-500">
                     No customers match the current search or filter.
                   </td>
                 </tr>

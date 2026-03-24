@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { getCustomerAdminStateByEmail } from "@/lib/customers";
 
 export const CUSTOMER_ACCESS_COOKIE = "sofi_customer_access_token";
 export const CUSTOMER_REFRESH_COOKIE = "sofi_customer_refresh_token";
@@ -11,6 +12,7 @@ export type CustomerSession = {
     email: string;
     fullName: string;
     phone: string | null;
+    isActive: boolean;
   } | null;
   customerId: string | null;
 };
@@ -91,14 +93,22 @@ export async function getCustomerSession(): Promise<CustomerSession> {
     phone,
   }).catch(() => null);
 
+  const adminState = await getCustomerAdminStateByEmail(userData.user.email).catch(() => null);
+  const isActive = adminState?.state.isActive !== false;
+
+  if (!isActive) {
+    return { user: null, customerId: adminState?.customerId ?? customerId };
+  }
+
   return {
     user: {
       id: userData.user.id,
       email: userData.user.email,
       fullName,
       phone,
+      isActive,
     },
-    customerId,
+    customerId: adminState?.customerId ?? customerId,
   };
 }
 

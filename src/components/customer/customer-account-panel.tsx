@@ -21,15 +21,18 @@ type AccountPayload = {
     fullName: string | null;
     phone: string | null;
     createdAt?: string;
+    isActive?: boolean;
   };
   orders: AccountOrder[];
 };
 
 export function CustomerAccountPanel() {
-  const { customer, loading, logout } = useCustomerAuth();
+  const { customer, loading, logout, refreshSession } = useCustomerAuth();
   const [data, setData] = useState<AccountPayload | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isEditing, setIsEditing] = useState(false);
+  const [profileForm, setProfileForm] = useState({ fullName: "", phone: "" });
 
   useEffect(() => {
     if (!customer) return;
@@ -41,8 +44,43 @@ export function CustomerAccountPanel() {
         return;
       }
       setData(body);
+      setProfileForm({
+        fullName: body.customer.fullName || customer.fullName,
+        phone: body.customer.phone || customer.phone || "",
+      });
     })();
   }, [customer]);
+
+  function saveProfile() {
+    setMessage(null);
+    startTransition(async () => {
+      const response = await fetch("/api/customer/account", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileForm),
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        setMessage(body.error || "Unable to update profile.");
+        return;
+      }
+      await refreshSession();
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              customer: {
+                ...current.customer,
+                fullName: profileForm.fullName,
+                phone: profileForm.phone || null,
+              },
+            }
+          : current,
+      );
+      setIsEditing(false);
+      setMessage("Profile updated successfully.");
+    });
+  }
 
   if (loading) {
     return <div className="rounded-sm border border-brand-sand/40 p-8 text-sm text-brand-warm">Loading account...</div>;
@@ -61,22 +99,55 @@ export function CustomerAccountPanel() {
       <div className="rounded-[28px] border border-brand-sand/35 bg-white p-8">
         <p className="brand-label mb-3">Customer profile</p>
         <h1 className="brand-heading mb-4 text-[clamp(2rem,4vw,3.2rem)]">Hello, {data?.customer.fullName || customer.fullName}</h1>
-        <div className="space-y-3 text-sm text-brand-warm">
+        <div className="space-y-4 text-sm text-brand-warm">
           <p>Email: <span className="text-brand-brown">{data?.customer.email || customer.email}</span></p>
-          <p>Phone: <span className="text-brand-brown">{data?.customer.phone || customer.phone || "Not added yet"}</span></p>
+          {isEditing ? (
+            <div className="space-y-3">
+              <input
+                className="brand-input"
+                placeholder="Full name"
+                value={profileForm.fullName}
+                onChange={(event) => setProfileForm((current) => ({ ...current, fullName: event.target.value }))}
+              />
+              <input
+                className="brand-input"
+                placeholder="Phone number"
+                value={profileForm.phone}
+                onChange={(event) => setProfileForm((current) => ({ ...current, phone: event.target.value }))}
+              />
+            </div>
+          ) : (
+            <p>Phone: <span className="text-brand-brown">{data?.customer.phone || customer.phone || "Not added yet"}</span></p>
+          )}
         </div>
-        <button
-          type="button"
-          className="brand-btn-outline mt-6"
-          onClick={() =>
-            startTransition(async () => {
-              await logout();
-              window.location.href = "/";
-            })
-          }
-        >
-          {isPending ? "Logging out..." : "Logout"}
-        </button>
+        <div className="mt-6 flex flex-wrap gap-3">
+          {isEditing ? (
+            <>
+              <button type="button" className="brand-btn-primary" disabled={isPending} onClick={saveProfile}>
+                {isPending ? "Saving..." : "Save profile"}
+              </button>
+              <button type="button" className="brand-btn-outline" onClick={() => setIsEditing(false)}>
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button type="button" className="brand-btn-outline" onClick={() => setIsEditing(true)}>
+              Edit profile
+            </button>
+          )}
+          <button
+            type="button"
+            className="brand-btn-outline"
+            onClick={() =>
+              startTransition(async () => {
+                await logout();
+                window.location.href = "/";
+              })
+            }
+          >
+            {isPending ? "Logging out..." : "Logout"}
+          </button>
+        </div>
       </div>
 
       <div className="rounded-[28px] border border-brand-sand/35 bg-white p-8">

@@ -16,9 +16,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       lastName: body.lastName || "",
       email: body.email || "",
       phone: body.phone || "",
-      notes: body.notes || "",
-      tags: Array.isArray(body.tags) ? body.tags : [],
-      addresses: Array.isArray(body.addresses) ? body.addresses : [],
+      notes: typeof body.notes === "string" ? body.notes : undefined,
+      tags: Array.isArray(body.tags) ? body.tags : undefined,
+      addresses: Array.isArray(body.addresses) ? body.addresses : undefined,
+      isActive: body.isActive !== false,
       actorUserId: auth.session.user.id,
     });
 

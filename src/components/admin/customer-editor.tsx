@@ -20,6 +20,7 @@ export function CustomerEditor({ customer, mode }: CustomerEditorProps) {
   const [lastName, setLastName] = useState(customer?.lastName || "");
   const [email, setEmail] = useState(customer?.email || "");
   const [phone, setPhone] = useState(customer?.phone || "");
+  const [isActive, setIsActive] = useState(customer?.isActive ?? true);
   const [notes, setNotes] = useState(customer?.notes || "");
   const [tags, setTags] = useState((customer?.tags || []).join(", "));
   const [addresses, setAddresses] = useState<CustomerAddress[]>(customer?.addresses?.length ? customer.addresses : [emptyAddress()]);
@@ -35,6 +36,7 @@ export function CustomerEditor({ customer, mode }: CustomerEditorProps) {
         lastName,
         email,
         phone,
+        isActive,
         notes,
         tags: tags.split(",").map((value) => value.trim()).filter(Boolean),
         addresses: addresses
@@ -92,6 +94,7 @@ export function CustomerEditor({ customer, mode }: CustomerEditorProps) {
               <h2 className="mt-2 font-serif text-2xl text-slate-950">{firstName || lastName ? `${firstName} ${lastName}`.trim() : "New customer"}</h2>
             </div>
             {customer?.tags?.includes("VIP") ? <AdminBadge tone="success">VIP</AdminBadge> : null}
+            {isActive ? <AdminBadge tone="success">Active</AdminBadge> : <AdminBadge tone="default">Inactive</AdminBadge>}
           </div>
         </section>
 
@@ -102,6 +105,16 @@ export function CustomerEditor({ customer, mode }: CustomerEditorProps) {
             <input className="brand-input" placeholder="Last name" value={lastName} onChange={(event) => setLastName(event.target.value)} />
             <input className="brand-input md:col-span-2" placeholder="Email" value={email} onChange={(event) => setEmail(event.target.value)} />
             <input className="brand-input md:col-span-2" placeholder="Phone" value={phone} onChange={(event) => setPhone(event.target.value)} />
+            <label className="md:col-span-2 flex items-center justify-between rounded-2xl border border-[#e7eaee] bg-[#fbfcfd] px-4 py-3 text-sm text-slate-700">
+              <span className="font-medium text-slate-900">Account status</span>
+              <button
+                type="button"
+                className={`inline-flex min-w-[124px] items-center justify-center rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-700"}`}
+                onClick={() => setIsActive((current) => !current)}
+              >
+                {isActive ? "Active" : "Inactive"}
+              </button>
+            </label>
             <input className="brand-input md:col-span-2" placeholder="Tags (VIP, Repeat customer, Wholesale)" value={tags} onChange={(event) => setTags(event.target.value)} />
             <textarea className="brand-input min-h-28 md:col-span-2" placeholder="Notes" value={notes} onChange={(event) => setNotes(event.target.value)} />
           </div>

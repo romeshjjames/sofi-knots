@@ -19,6 +19,7 @@ export async function POST(request: Request) {
       notes: body.notes || "",
       tags: Array.isArray(body.tags) ? body.tags : [],
       addresses: Array.isArray(body.addresses) ? body.addresses : [],
+      isActive: body.isActive !== false,
       actorUserId: auth.session.user.id,
     });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 type CustomerLoginPanelProps = {
   next?: string;
@@ -15,7 +15,28 @@ export function CustomerLoginPanel({ next = "/account" }: CustomerLoginPanelProp
     phone: "",
     email: "",
     password: "",
+    captchaAnswer: "",
+    website: "",
   });
+  const [captchaPrompt, setCaptchaPrompt] = useState<string>("");
+
+  useEffect(() => {
+    if (mode !== "signup") return;
+    void loadCaptcha();
+  }, [mode]);
+
+  async function loadCaptcha() {
+    try {
+      const response = await fetch("/api/customer/captcha", { cache: "no-store" });
+      const body = await response.json();
+      if (response.ok) {
+        setCaptchaPrompt(body.prompt || "");
+        setForm((current) => ({ ...current, captchaAnswer: "" }));
+      }
+    } catch {
+      setCaptchaPrompt("");
+    }
+  }
 
   function submit() {
     setMessage(null);
@@ -32,6 +53,9 @@ export function CustomerLoginPanel({ next = "/account" }: CustomerLoginPanelProp
 
       if (!response.ok) {
         setMessage(body.error || "Unable to continue.");
+        if (mode === "signup") {
+          void loadCaptcha();
+        }
         return;
       }
 
@@ -68,6 +92,21 @@ export function CustomerLoginPanel({ next = "/account" }: CustomerLoginPanelProp
           <>
             <input className="brand-input" placeholder="Full name" value={form.fullName} onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))} />
             <input className="brand-input" placeholder="Phone number" value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} />
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.18em] text-brand-taupe">Captcha</p>
+              <div className="rounded-2xl border border-brand-sand/35 bg-brand-cream px-4 py-3 text-sm text-brand-brown">
+                {captchaPrompt || "Loading challenge..."}
+              </div>
+              <input className="brand-input" placeholder="Enter captcha answer" value={form.captchaAnswer} onChange={(event) => setForm((current) => ({ ...current, captchaAnswer: event.target.value }))} />
+              <input
+                className="hidden"
+                tabIndex={-1}
+                autoComplete="off"
+                placeholder="Website"
+                value={form.website}
+                onChange={(event) => setForm((current) => ({ ...current, website: event.target.value }))}
+              />
+            </div>
           </>
         ) : null}
         <input className="brand-input" type="email" placeholder="Email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { getCustomerSession } from "@/lib/supabase/customer-auth";
+import { updateCustomer } from "@/lib/customers";
 
 export async function GET() {
   const session = await getCustomerSession();
@@ -50,6 +51,7 @@ export async function GET() {
       fullName: customer.full_name,
       phone: customer.phone,
       createdAt: customer.created_at,
+      isActive: session.user.isActive,
     },
     orders: (orders ?? []).map((order) => ({
       id: order.id,
@@ -61,4 +63,49 @@ export async function GET() {
       createdAt: order.created_at,
     })),
   });
+}
+
+export async function PATCH(request: Request) {
+  const session = await getCustomerSession();
+
+  if (!session.user?.email || !session.customerId) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const fullName = String(body.fullName ?? "").trim();
+  const phone = String(body.phone ?? "").trim();
+
+  if (!fullName) {
+    return NextResponse.json({ error: "Full name is required." }, { status: 400 });
+  }
+
+  const [firstName, ...rest] = fullName.split(/\s+/).filter(Boolean);
+  const lastName = rest.join(" ");
+
+  try {
+    await updateCustomer(session.customerId, {
+      firstName: firstName ?? "",
+      lastName,
+      email: session.user.email,
+      phone,
+      isActive: true,
+    });
+
+    const supabase = createAdminSupabaseClient();
+    const { error } = await supabase.auth.admin.updateUserById(session.user.id, {
+      user_metadata: {
+        full_name: fullName,
+        phone: phone || null,
+      },
+    });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ updated: true });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to update profile." }, { status: 500 });
+  }
 }

@@ -20,6 +20,7 @@ export type CustomerSummary = {
   lastName: string;
   email: string;
   phone: string;
+  isActive: boolean;
   orderCount: number;
   totalSpentInr: number;
   averageOrderValueInr: number;

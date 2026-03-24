@@ -7,6 +7,7 @@ type CustomerIdentity = {
   email: string;
   fullName: string;
   phone: string | null;
+  isActive?: boolean;
 } | null;
 
 type CustomerAuthContextValue = {

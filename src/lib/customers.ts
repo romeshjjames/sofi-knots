@@ -22,6 +22,7 @@ type OrderRow = {
 };
 
 type CustomerAdminPayload = {
+  isActive?: boolean;
   tags?: string[];
   notes?: string | null;
   addresses?: CustomerAddress[];
@@ -38,6 +39,7 @@ function splitName(fullName: string) {
 function normalizeCustomerAdminPayload(payload: Record<string, unknown> | null | undefined) {
   const typed = (payload ?? {}) as CustomerAdminPayload;
   return {
+    isActive: typed.isActive !== false,
     tags: Array.isArray(typed.tags) ? typed.tags.filter((value): value is string => typeof value === "string") : [],
     notes: typeof typed.notes === "string" ? typed.notes : "",
     addresses: Array.isArray(typed.addresses)
@@ -80,7 +82,7 @@ async function getCustomerAdminStateMap(customerIds: string[]) {
 
   ids.forEach((id) => {
     if (!map[id]) {
-      map[id] = { tags: [], notes: "", addresses: [] };
+      map[id] = { isActive: true, tags: [], notes: "", addresses: [] };
     }
   });
 
@@ -101,6 +103,7 @@ function mapCustomerSummary(row: CustomerRow, customerOrders: OrderRow[], adminS
     lastName,
     email: row.email,
     phone: row.phone || "",
+    isActive: adminState.isActive,
     orderCount,
     totalSpentInr,
     averageOrderValueInr: orderCount ? Math.round(totalSpentInr / orderCount) : 0,
@@ -140,7 +143,7 @@ export async function getCustomers() {
 
   return customerRows.map((row) => {
     const customerOrders = orderRows.filter((order) => order.customer_id === row.id);
-    return mapCustomerSummary(row, customerOrders, adminStateMap[row.id] ?? { tags: [], notes: "", addresses: [] });
+    return mapCustomerSummary(row, customerOrders, adminStateMap[row.id] ?? { isActive: true, tags: [], notes: "", addresses: [] });
   });
 }
 
@@ -160,7 +163,7 @@ export async function getCustomerById(id: string): Promise<CustomerDetail | null
   if (!customer) return null;
 
   const adminStateMap = await getCustomerAdminStateMap([id]);
-  const adminState = adminStateMap[id] ?? { tags: [], notes: "", addresses: [] };
+  const adminState = adminStateMap[id] ?? { isActive: true, tags: [], notes: "", addresses: [] };
   const orderRows = (orders ?? []) as OrderRow[];
   const summary = mapCustomerSummary(customer as CustomerRow, orderRows, adminState);
   const timeline = await getAuditLogs("customer_admin", id);
@@ -186,6 +189,7 @@ export async function createCustomer(input: {
   notes?: string;
   tags?: string[];
   addresses?: CustomerAddress[];
+  isActive?: boolean;
   actorUserId?: string | null;
 }) {
   const supabase = createAdminSupabaseClient();
@@ -209,6 +213,7 @@ export async function createCustomer(input: {
     entityId: data.id,
     action: "profile:update",
     payload: {
+      isActive: input.isActive !== false,
       tags: input.tags ?? [],
       notes: input.notes ?? "",
       addresses: input.addresses ?? [],
@@ -228,11 +233,13 @@ export async function updateCustomer(
     notes?: string;
     tags?: string[];
     addresses?: CustomerAddress[];
+    isActive?: boolean;
     actorUserId?: string | null;
   },
 ) {
   const supabase = createAdminSupabaseClient();
   const fullName = `${input.firstName} ${input.lastName}`.trim();
+  const existingState = await getCustomerAdminStateById(id);
 
   const { error } = await supabase
     .from("customers")
@@ -252,9 +259,10 @@ export async function updateCustomer(
     entityId: id,
     action: "profile:update",
     payload: {
-      tags: input.tags ?? [],
-      notes: input.notes ?? "",
-      addresses: input.addresses ?? [],
+      isActive: input.isActive !== false,
+      tags: input.tags ?? existingState.tags,
+      notes: input.notes ?? existingState.notes,
+      addresses: input.addresses ?? existingState.addresses,
     },
   });
 }
@@ -271,4 +279,23 @@ export async function deleteCustomer(id: string, actorUserId?: string | null) {
     action: "profile:delete",
     payload: {},
   });
+}
+
+export async function getCustomerAdminStateById(id: string) {
+  const map = await getCustomerAdminStateMap([id]);
+  return map[id] ?? { isActive: true, tags: [], notes: "", addresses: [] };
+}
+
+export async function getCustomerAdminStateByEmail(email: string) {
+  const supabase = createAdminSupabaseClient();
+  const normalizedEmail = email.trim().toLowerCase();
+  const { data, error } = await supabase.from("customers").select("id").eq("email", normalizedEmail).maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data?.id) {
+    return { customerId: null, state: { isActive: true, tags: [], notes: "", addresses: [] } };
+  }
+
+  const state = await getCustomerAdminStateById(data.id);
+  return { customerId: data.id as string, state };
 }

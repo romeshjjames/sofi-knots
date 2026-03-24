@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { CUSTOMER_CAPTCHA_COOKIE } from "@/lib/customer-captcha";
 import { CUSTOMER_ACCESS_COOKIE, CUSTOMER_REFRESH_COOKIE, syncCustomerProfile } from "@/lib/supabase/customer-auth";
 
 export async function POST(request: Request) {
@@ -9,6 +10,31 @@ export async function POST(request: Request) {
 
   if (!body.email || !body.password || !body.fullName) {
     return NextResponse.json({ error: "Full name, email, and password are required." }, { status: 400 });
+  }
+
+  const cookieStore = cookies();
+  const rawCaptcha = cookieStore.get(CUSTOMER_CAPTCHA_COOKIE)?.value;
+  const honeypot = typeof body.website === "string" ? body.website.trim() : "";
+  if (honeypot) {
+    return NextResponse.json({ error: "Signup blocked." }, { status: 400 });
+  }
+
+  let captchaAnswer = "";
+  let captchaExpiresAt = 0;
+  try {
+    const parsed = rawCaptcha ? (JSON.parse(rawCaptcha) as { answer?: string; expiresAt?: number }) : null;
+    captchaAnswer = parsed?.answer?.trim() || "";
+    captchaExpiresAt = typeof parsed?.expiresAt === "number" ? parsed.expiresAt : 0;
+  } catch {
+    captchaAnswer = "";
+  }
+
+  if (!captchaAnswer || captchaExpiresAt < Date.now()) {
+    return NextResponse.json({ error: "Captcha expired. Please try again." }, { status: 400 });
+  }
+
+  if (String(body.captchaAnswer ?? "").trim() !== captchaAnswer) {
+    return NextResponse.json({ error: "Captcha answer is incorrect." }, { status: 400 });
   }
 
   try {
@@ -48,7 +74,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const cookieStore = cookies();
     cookieStore.set(CUSTOMER_ACCESS_COOKIE, sessionData.session.access_token, {
       httpOnly: true,
       secure: true,
@@ -63,6 +88,7 @@ export async function POST(request: Request) {
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
     });
+    cookieStore.delete(CUSTOMER_CAPTCHA_COOKIE);
 
     return NextResponse.json({
       redirectTo: body.next || "/account",
