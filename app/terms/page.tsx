@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { getManagedPageMetadata, renderManagedPage } from "@/lib/managed-pages";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const fallback = {
   title: "Terms and Conditions",
   description: "Review the Sofi Knots terms and conditions for purchasing, payments, and store policies.",

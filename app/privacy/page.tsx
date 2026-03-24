@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { getManagedPageMetadata, renderManagedPage } from "@/lib/managed-pages";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const fallback = {
   title: "Privacy Policy",
   description: "Read the Sofi Knots privacy policy covering data collection, orders, and customer communication.",

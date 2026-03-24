@@ -5,6 +5,9 @@ import { getManagedPageMetadata } from "@/lib/managed-pages";
 import { getCatalogPageBySlug } from "@/lib/catalog";
 import { getActiveFaqs } from "@/lib/faqs";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const fallback = {
   title: "Frequently Asked Questions",
   description: "Find answers about handmade production timelines, shipping, customization, and order support for Sofi Knots.",

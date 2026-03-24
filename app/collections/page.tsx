@@ -7,6 +7,9 @@ import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront
 import { getCatalogCollections, getCatalogPageBySlug } from "@/lib/catalog";
 import { buildStorefrontMetadata } from "@/lib/seo";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function generateMetadata(): Promise<Metadata> {
   const result = await getCatalogPageBySlug("collections");
   const page = result.data;
