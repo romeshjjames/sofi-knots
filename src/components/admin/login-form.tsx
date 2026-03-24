@@ -21,7 +21,7 @@ export function LoginForm({ next = "/admin", error }: LoginFormProps) {
 
   return (
     <form
-      className="grid gap-4 rounded-sm border border-brand-sand/40 bg-brand-ivory p-8"
+      className="grid gap-4"
       onSubmit={(event) => {
         event.preventDefault();
         setMessage(null);
@@ -49,7 +49,6 @@ export function LoginForm({ next = "/admin", error }: LoginFormProps) {
     >
       <div>
         <h1 className="font-serif text-4xl text-brand-brown">Admin Login</h1>
-        <p className="mt-2 text-sm text-brand-warm">Sign in with a Supabase account that has an assigned admin role.</p>
       </div>
       <input className="brand-input" type="email" placeholder="Email" value={email} onChange={(event) => setEmail(event.target.value)} required />
       <input className="brand-input" type="password" placeholder="Password" value={password} onChange={(event) => setPassword(event.target.value)} required />
