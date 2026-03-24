@@ -4,6 +4,7 @@ import { Cormorant_Garamond, Jost } from "next/font/google";
 import { AnalyticsConsentBanner } from "@/components/analytics/analytics-consent-banner";
 import { AnalyticsTracker } from "@/components/analytics/analytics-tracker";
 import { CartProvider } from "@/components/cart/cart-provider";
+import { CustomerAuthProvider } from "@/components/customer/customer-auth-provider";
 import "./globals.css";
 import { buildStorefrontMetadata } from "@/lib/seo";
 
@@ -33,13 +34,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body className={`${jost.variable} ${cormorant.variable}`}>
-        <CartProvider>
-          <Suspense fallback={null}>
-            <AnalyticsTracker />
-          </Suspense>
-          {children}
-          <AnalyticsConsentBanner />
-        </CartProvider>
+        <CustomerAuthProvider>
+          <CartProvider>
+            <Suspense fallback={null}>
+              <AnalyticsTracker />
+            </Suspense>
+            {children}
+            <AnalyticsConsentBanner />
+          </CartProvider>
+        </CustomerAuthProvider>
       </body>
     </html>
   );

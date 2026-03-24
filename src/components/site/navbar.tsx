@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Menu, Search, ShoppingBag, X } from "lucide-react";
-import { useState } from "react";
+import { Heart, LogOut, Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { useState, useTransition } from "react";
 import { useCart } from "@/components/cart/cart-provider";
+import { useCustomerAuth } from "@/components/customer/customer-auth-provider";
 
 type NavbarProps = {
   siteName?: string;
@@ -21,8 +22,17 @@ const navLinks = [
 
 export function Navbar({ siteName = "Sofi Knots" }: NavbarProps) {
   const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
   const { itemCount } = useCart();
+  const { customer, loading, logout } = useCustomerAuth();
+
+  function handleLogout() {
+    startTransition(async () => {
+      await logout();
+      window.location.href = "/";
+    });
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-brand-sand/40 bg-brand-ivory/95 backdrop-blur-sm">
@@ -65,6 +75,9 @@ export function Navbar({ siteName = "Sofi Knots" }: NavbarProps) {
           <Link href="/wishlist" className="p-2 text-brand-warm transition-colors hover:text-brand-gold" aria-label="Wishlist">
             <Heart size={20} />
           </Link>
+          <Link href={customer ? "/account" : "/account/login"} className="p-2 text-brand-warm transition-colors hover:text-brand-gold" aria-label={customer ? "Account" : "Customer login"}>
+            <User size={20} />
+          </Link>
           <Link href="/cart" className="p-2 text-brand-warm transition-colors hover:text-brand-gold" aria-label="Cart">
             <span className="relative block">
               <ShoppingBag size={20} />
@@ -75,6 +88,16 @@ export function Navbar({ siteName = "Sofi Knots" }: NavbarProps) {
               ) : null}
             </span>
           </Link>
+          {customer && !loading ? (
+            <button
+              type="button"
+              className="hidden items-center gap-2 rounded-full border border-brand-sand/40 px-3 py-2 text-xs font-medium uppercase tracking-[0.12em] text-brand-warm transition hover:border-brand-gold hover:text-brand-gold lg:inline-flex"
+              onClick={handleLogout}
+            >
+              <LogOut size={14} />
+              {isPending ? "Logging out" : "Logout"}
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -97,6 +120,9 @@ export function Navbar({ siteName = "Sofi Knots" }: NavbarProps) {
               );
             })}
             <div className="flex flex-col gap-3 border-t border-brand-sand/40 pt-4">
+              <Link href={customer ? "/account" : "/account/login"} onClick={() => setOpen(false)} className="text-sm text-brand-taupe">
+                {customer ? "My Account" : "Customer Login"}
+              </Link>
               <Link href="/faq" onClick={() => setOpen(false)} className="text-sm text-brand-taupe">
                 FAQ
               </Link>
@@ -106,6 +132,11 @@ export function Navbar({ siteName = "Sofi Knots" }: NavbarProps) {
               <Link href="/admin" onClick={() => setOpen(false)} className="text-sm text-brand-taupe">
                 Admin Panel
               </Link>
+              {customer ? (
+                <button type="button" onClick={handleLogout} className="text-left text-sm text-brand-taupe">
+                  {isPending ? "Logging out..." : "Logout"}
+                </button>
+              ) : null}
             </div>
           </div>
         </nav>

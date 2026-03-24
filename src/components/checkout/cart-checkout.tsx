@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
+import { useCustomerAuth } from "@/components/customer/customer-auth-provider";
 import { getAnalyticsSessionId, getStoredAttribution, hasAnalyticsConsent, trackAnalyticsEvent } from "@/lib/analytics";
 import type { Product } from "@/types/commerce";
 
@@ -39,6 +40,7 @@ export function CartCheckout({ products, razorpayKeyId }: CartCheckoutProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { items: cart, setItemQuantity, removeItem, clearCart } = useCart();
+  const { customer: signedInCustomer } = useCustomerAuth();
   const [customer, setCustomer] = useState({
     fullName: "",
     email: "",
@@ -86,6 +88,16 @@ export function CartCheckout({ products, razorpayKeyId }: CartCheckoutProps) {
       },
     });
   }, [selectedItems, subtotal, total]);
+
+  useEffect(() => {
+    if (!signedInCustomer) return;
+    setCustomer((current) => ({
+      ...current,
+      fullName: current.fullName || signedInCustomer.fullName || "",
+      email: current.email || signedInCustomer.email || "",
+      phone: current.phone || signedInCustomer.phone || "",
+    }));
+  }, [signedInCustomer]);
 
   useEffect(() => {
     if (searchParams.get("checkout") !== "1" || autoCheckoutRequested || !selectedItems.length) return;
@@ -323,6 +335,19 @@ export function CartCheckout({ products, razorpayKeyId }: CartCheckoutProps) {
 
         <div className="rounded-sm border border-brand-sand/40 p-6">
           <h2 className="mb-4 font-serif text-2xl text-brand-brown">Customer Details</h2>
+          {signedInCustomer ? (
+            <div className="mb-4 rounded-sm bg-brand-cream px-4 py-3 text-sm text-brand-warm">
+              Signed in as <span className="font-medium text-brand-brown">{signedInCustomer.email}</span>. You can still complete checkout normally.
+            </div>
+          ) : (
+            <div className="mb-4 rounded-sm bg-brand-cream px-4 py-3 text-sm text-brand-warm">
+              Guest checkout is enabled. You can place an order without logging in, or{" "}
+              <Link href="/account/login?next=/cart" className="font-medium text-brand-brown underline-offset-4 hover:underline">
+                sign in
+              </Link>{" "}
+              for a faster checkout experience.
+            </div>
+          )}
           <div className="grid gap-4 md:grid-cols-2">
             <input className="brand-input" placeholder="Full name" value={customer.fullName} onChange={(event) => setCustomer((current) => ({ ...current, fullName: event.target.value }))} />
             <input className="brand-input" type="email" placeholder="Email" value={customer.email} onChange={(event) => setCustomer((current) => ({ ...current, email: event.target.value }))} />
