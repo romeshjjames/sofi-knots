@@ -87,7 +87,7 @@ export default async function CollectionLandingPage({ params }: { params: { slug
           </div>
         </section>
       ) : null}
-      <section className="brand-section pt-10 md:pt-14">
+      <section className="brand-section pt-16 md:pt-24">
         <div className="brand-container">
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
