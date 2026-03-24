@@ -930,6 +930,15 @@ export async function getCollectionAdminSettingsMap(collectionIds: string[]) {
   return map;
 }
 
+export async function getCollectionAdminSettingsBySlug(slug: string) {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase.from("collections").select("id").eq("slug", slug).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data?.id) return null;
+  const map = await getCollectionAdminSettingsMap([data.id]);
+  return map[data.id] ?? null;
+}
+
 export async function getHomepageMerchandising() {
   const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase

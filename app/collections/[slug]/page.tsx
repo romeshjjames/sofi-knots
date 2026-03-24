@@ -5,7 +5,7 @@ import { DataSourceNote } from "@/components/site/data-source-note";
 import { PageHero } from "@/components/site/page-hero";
 import { ProductCard } from "@/components/site/product-card";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
-import { getCollectionAdminSettingsMap, getCollectionPageContentMap } from "@/lib/admin-data";
+import { getCollectionAdminSettingsBySlug, getCollectionAdminSettingsMap, getCollectionPageContentMap } from "@/lib/admin-data";
 import { getCatalogCollectionBySlug, getCatalogPageBySlug, getCatalogProducts, resolveCollectionProducts } from "@/lib/catalog";
 import { buildStorefrontMetadata } from "@/lib/seo";
 
@@ -53,7 +53,7 @@ export default async function CollectionLandingPage({ params }: { params: { slug
     getCollectionAdminSettingsMap([collection.id ?? collection.slug]),
     getCollectionPageContentMap([collection.id ?? collection.slug]),
   ]);
-  const settings = settingsMap[collection.id ?? collection.slug];
+  const settings = settingsMap[collection.id ?? collection.slug] ?? (await getCollectionAdminSettingsBySlug(params.slug));
   const collectionPageBody = contentMap[collection.id ?? collection.slug]?.body;
   const collectionProducts = settings
     ? resolveCollectionProducts({
