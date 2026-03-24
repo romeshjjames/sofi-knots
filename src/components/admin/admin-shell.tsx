@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
+import { LogoutButton } from "@/components/admin/logout-button";
 
 type AdminNavKey =
   | "dashboard"
@@ -157,6 +158,7 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
                     <p className="text-xs text-slate-500">Store manager</p>
                   </div>
                 </div>
+                <LogoutButton />
               </div>
             </div>
 

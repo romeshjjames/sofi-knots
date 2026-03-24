@@ -667,16 +667,19 @@ export async function getSiteSettings() {
   } satisfies SiteSettingsRecord;
 
   const auditEntityId = data?.id ?? "global";
-  const { data: auditEntry, error: auditError } = await supabase
+  const { data: auditEntries, error: auditError } = await supabase
     .from("audit_logs")
-    .select("payload")
+    .select("entity_id, payload, created_at")
     .eq("entity_type", "site_settings")
-    .eq("entity_id", auditEntityId)
     .eq("action", "update")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .in("entity_id", Array.from(new Set([auditEntityId, "global"])))
+    .order("created_at", { ascending: false });
   if (auditError) throw new Error(auditError.message);
+
+  const auditEntry =
+    (auditEntries ?? []).find((entry) => entry.entity_id === auditEntityId) ??
+    (auditEntries ?? []).find((entry) => entry.entity_id === "global") ??
+    null;
 
   const payload = (auditEntry?.payload ?? {}) as Record<string, unknown>;
   const merged = {
