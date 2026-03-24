@@ -48,7 +48,7 @@ export function ProductActionButtons({ productId, productSlug, productName, cate
           })
         }
       >
-        Buy with Razorpay
+        Buy It Now
       </button>
     </div>
   );
