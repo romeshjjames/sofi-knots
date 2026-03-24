@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { unstable_noStore as noStore } from "next/cache";
 import { createAuditLog, getAuditLogs } from "@/lib/admin-data";
 import type { FaqRecord } from "@/types/faqs";
 
@@ -68,6 +69,7 @@ async function persistFaqs(faqs: FaqRecord[], actorUserId?: string | null) {
 }
 
 export async function getFaqs(): Promise<FaqRecord[]> {
+  noStore();
   const logs = await getAuditLogs("faq_admin", "library");
   const latest = logs.find((entry) => entry.action === "faqs:update");
   return normalizeFaqs(latest?.payload?.faqs);
