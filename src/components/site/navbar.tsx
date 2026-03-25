@@ -18,7 +18,6 @@ type NavbarProps = {
 };
 
 const navLinks = [
-  { label: "Home", path: "/" },
   { label: "About", path: "/about" },
   { label: "Blog", path: "/blog" },
   { label: "Contact", path: "/contact" },
@@ -57,12 +56,18 @@ export function Navbar({ siteName = "Sofi Knots", collections = [] }: NavbarProp
         </Link>
 
         <nav className="ml-16 hidden items-center gap-8 lg:flex">
+          <Link
+            href="/"
+            className={`text-sm font-medium uppercase tracking-[0.12em] transition-colors duration-200 hover:text-brand-gold ${
+              pathname === "/" ? "text-brand-gold" : "text-brand-warm"
+            }`}
+          >
+            Home
+          </Link>
           <div className="group relative">
             <Link
               href="/collections"
-              className={`text-sm font-medium uppercase tracking-[0.12em] transition-colors duration-200 hover:text-brand-gold ${
-                isCollectionsActive ? "text-brand-gold" : "text-brand-warm"
-              }`}
+              className="rounded-full border border-[#c79a5a] bg-[#f7ecd8] px-4 py-2 text-sm font-medium uppercase tracking-[0.12em] text-[#b7843f] transition-colors duration-200 hover:border-[#b7843f] hover:bg-[#f3e2c5]"
             >
               Collections
             </Link>
@@ -144,11 +149,18 @@ export function Navbar({ siteName = "Sofi Knots", collections = [] }: NavbarProp
         <nav className="animate-fade-in border-t border-brand-sand/40 bg-brand-ivory lg:hidden">
           <div className="brand-container flex flex-col gap-4 py-6">
             <Link
-              href="/collections"
+              href="/"
               onClick={() => setOpen(false)}
               className={`py-1 text-sm font-medium uppercase tracking-[0.12em] transition-colors ${
-                isCollectionsActive ? "text-brand-gold" : "text-brand-warm"
+                pathname === "/" ? "text-brand-gold" : "text-brand-warm"
               }`}
+            >
+              Home
+            </Link>
+            <Link
+              href="/collections"
+              onClick={() => setOpen(false)}
+              className="rounded-full border border-[#c79a5a] bg-[#f7ecd8] px-4 py-2 text-sm font-medium uppercase tracking-[0.12em] text-[#b7843f] transition-colors"
             >
               Collections
             </Link>
