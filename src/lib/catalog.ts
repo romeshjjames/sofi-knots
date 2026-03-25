@@ -1,4 +1,5 @@
 import { blogPosts as fallbackBlogPosts } from "@/data/blog";
+import { unstable_noStore as noStore } from "next/cache";
 import {
   getFeaturedProducts as getFallbackFeaturedProducts,
   getNewArrivalProducts as getFallbackNewArrivalProducts,
@@ -329,6 +330,7 @@ export function resolveCollectionProducts(input: {
 }
 
 async function fetchProductsFromSupabase() {
+  noStore();
   const supabase = createAdminSupabaseClient();
 
   return supabase
@@ -362,6 +364,7 @@ async function fetchProductsFromSupabase() {
 }
 
 export async function getCatalogProductById(id: string): Promise<CatalogResult<Product | null>> {
+  noStore();
   try {
     const supabase = createAdminSupabaseClient();
     const { data, error } = await supabase
@@ -431,6 +434,7 @@ export async function getCatalogProductById(id: string): Promise<CatalogResult<P
 }
 
 export async function getCatalogProducts(): Promise<CatalogResult<Product[]>> {
+  noStore();
   try {
     const { data, error } = await fetchProductsFromSupabase();
 
@@ -491,6 +495,7 @@ export async function getNewArrivalProducts(): Promise<CatalogResult<Product[]>>
 }
 
 export async function getCatalogProductBySlug(slug: string): Promise<CatalogResult<Product | null>> {
+  noStore();
   try {
     const supabase = createAdminSupabaseClient();
     const { data, error } = await supabase
@@ -561,6 +566,7 @@ export async function getCatalogProductBySlug(slug: string): Promise<CatalogResu
 }
 
 export async function getCatalogCollections(): Promise<CatalogResult<Collection[]>> {
+  noStore();
   try {
     const supabase = createAdminSupabaseClient();
     const { data, error } = await supabase
@@ -603,6 +609,7 @@ export async function getCatalogCollections(): Promise<CatalogResult<Collection[
 }
 
 export async function getCatalogCollectionBySlug(slug: string): Promise<CatalogResult<Collection | null>> {
+  noStore();
   const result = await getCatalogCollections();
   return {
     ...result,
@@ -611,6 +618,7 @@ export async function getCatalogCollectionBySlug(slug: string): Promise<CatalogR
 }
 
 export async function getCatalogCategories(): Promise<CatalogResult<Category[]>> {
+  noStore();
   try {
     const supabase = createAdminSupabaseClient();
     const { data, error } = await supabase

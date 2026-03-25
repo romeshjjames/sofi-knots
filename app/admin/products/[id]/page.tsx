@@ -3,15 +3,16 @@ import { notFound } from "next/navigation";
 import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
 import { ProductDetailEditor } from "@/components/admin/product-detail-editor";
 import { getProductAdminSettingsMap, getProductPageContentMap } from "@/lib/admin-data";
-import { getCatalogCategories, getCatalogCollections, getCatalogProductById } from "@/lib/catalog";
+import { getAdminCategoryOptions, getAdminCollectionOptions } from "@/lib/admin-catalog";
+import { getCatalogProductById } from "@/lib/catalog";
 import { requireAdminPage } from "@/lib/supabase/auth";
 
 export default async function AdminProductEditPage({ params }: { params: { id: string } }) {
   await requireAdminPage(["super_admin", "catalog_admin"]);
   const [productResult, categoriesResult, collectionsResult] = await Promise.all([
     getCatalogProductById(params.id),
-    getCatalogCategories(),
-    getCatalogCollections(),
+    getAdminCategoryOptions(),
+    getAdminCollectionOptions(),
   ]);
 
   const product = productResult.data;
@@ -63,8 +64,8 @@ export default async function AdminProductEditPage({ params }: { params: { id: s
       >
         <ProductDetailEditor
           initialProduct={productWithSettings}
-          categories={categoriesResult.data}
-          collections={collectionsResult.data.map((item) => ({ id: item.id ?? item.slug, name: item.title, slug: item.slug }))}
+          categories={categoriesResult}
+          collections={collectionsResult}
         />
       </AdminPanel>
     </AdminShell>

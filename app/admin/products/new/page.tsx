@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
 import { ProductCreateForm } from "@/components/admin/product-create-form";
-import { getCatalogCategories, getCatalogCollections } from "@/lib/catalog";
+import { getAdminCategoryOptions, getAdminCollectionOptions } from "@/lib/admin-catalog";
 import { requireAdminPage } from "@/lib/supabase/auth";
 
 export default async function AdminProductCreatePage() {
   await requireAdminPage(["super_admin", "catalog_admin"]);
-  const [categoriesResult, collectionsResult] = await Promise.all([getCatalogCategories(), getCatalogCollections()]);
+  const [categories, collections] = await Promise.all([getAdminCategoryOptions(), getAdminCollectionOptions()]);
 
   return (
     <AdminShell
@@ -30,8 +30,8 @@ export default async function AdminProductCreatePage() {
         description="Add the product details, pricing, inventory, shipping, channels, and SEO in one focused page."
       >
         <ProductCreateForm
-          categories={categoriesResult.data}
-          collections={collectionsResult.data.map((item) => ({ id: item.id ?? item.slug, name: item.title, slug: item.slug }))}
+          categories={categories}
+          collections={collections}
         />
       </AdminPanel>
     </AdminShell>

@@ -12,6 +12,7 @@ import { buildStorefrontMetadata, productJsonLd } from "@/lib/seo";
 import { getStorefrontSettings } from "@/lib/storefront";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const result = await getCatalogProductBySlug(params.slug);
