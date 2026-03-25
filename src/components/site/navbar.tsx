@@ -14,6 +14,7 @@ type CollectionNavItem = {
 
 type NavbarProps = {
   siteName?: string;
+  logoUrl?: string | null;
   collections?: CollectionNavItem[];
 };
 
@@ -23,7 +24,7 @@ const navLinks = [
   { label: "Contact", path: "/contact" },
 ];
 
-export function Navbar({ siteName = "Sofi Knots", collections = [] }: NavbarProps) {
+export function Navbar({ siteName = "Sofi Knots", logoUrl = null, collections = [] }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
@@ -50,9 +51,17 @@ export function Navbar({ siteName = "Sofi Knots", collections = [] }: NavbarProp
         </button>
 
         <Link href="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0">
-          <span className="font-serif text-2xl font-semibold tracking-tight text-brand-brown lg:text-3xl">
-            {siteName}
-          </span>
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={siteName}
+              className="h-12 w-auto object-contain lg:h-16"
+            />
+          ) : (
+            <span className="font-serif text-2xl font-semibold tracking-tight text-brand-brown lg:text-3xl">
+              {siteName}
+            </span>
+          )}
         </Link>
 
         <nav className="ml-16 hidden items-center gap-8 lg:flex">

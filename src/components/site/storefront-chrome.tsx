@@ -8,6 +8,7 @@ export async function StorefrontNavbar() {
   return (
     <Navbar
       siteName={settings.siteName}
+      logoUrl={settings.logoUrl}
       collections={collectionsResult.data.map((collection) => ({
         title: collection.title,
         slug: collection.slug,
@@ -21,6 +22,7 @@ export async function StorefrontFooter() {
   return (
     <Footer
       siteName={settings.siteName}
+      logoUrl={settings.logoUrl}
       footerBrandText={settings.footerBrandText}
       supportEmail={settings.supportEmail}
       supportPhone={settings.supportPhone}

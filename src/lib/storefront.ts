@@ -3,6 +3,7 @@ import { siteConfig } from "@/lib/site-config";
 
 export type StorefrontSettings = {
   siteName: string;
+  logoUrl: string | null;
   siteUrl: string;
   storeDescription: string;
   defaultKeywords: string[];
@@ -54,6 +55,7 @@ export async function getStorefrontSettings(): Promise<StorefrontSettings> {
 
   return {
     siteName: settings.siteName || siteConfig.name,
+    logoUrl: settings.branding.logoUrl,
     siteUrl,
     storeDescription: settings.storeDescription || siteConfig.description,
     defaultKeywords: settings.defaultMetaKeywords?.length ? settings.defaultMetaKeywords : siteConfig.defaultKeywords,

@@ -3,6 +3,7 @@ import { Facebook, Instagram, Mail, Phone } from "lucide-react";
 
 type FooterProps = {
   siteName?: string;
+  logoUrl?: string | null;
   footerBrandText?: string;
   supportEmail?: string;
   supportPhone?: string;
@@ -11,6 +12,7 @@ type FooterProps = {
 
 export function Footer({
   siteName = "Sofi Knots",
+  logoUrl = null,
   footerBrandText = "Handcrafted macrame art made with love, patience, and premium natural materials.",
   supportEmail = "hello@sofiknots.com",
   supportPhone = "+91 98765 43210",
@@ -25,9 +27,17 @@ export function Footer({
       <div className="brand-container py-16 lg:py-20">
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           <div>
-            <h3 className="mb-4 font-serif text-2xl font-semibold text-brand-brown">
-              {siteName}
-            </h3>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={siteName}
+                className="mb-4 h-24 w-auto object-contain"
+              />
+            ) : (
+              <h3 className="mb-4 font-serif text-2xl font-semibold text-brand-brown">
+                {siteName}
+              </h3>
+            )}
             <p className="mb-6 text-sm leading-relaxed text-brand-warm">
               {footerBrandText}
             </p>
