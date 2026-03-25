@@ -46,6 +46,12 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const contentMap = await getProductPageContentMap([product.id]);
   const galleryImages = await getProductImages(product.id);
   const pageBody = contentMap[product.id]?.body;
+  const hasComparePrice = typeof product.originalPrice === "number";
+  const displayPrice = hasComparePrice ? Math.min(product.price, product.originalPrice as number) : product.price;
+  const displayComparePrice =
+    hasComparePrice && product.originalPrice !== product.price
+      ? Math.max(product.price, product.originalPrice as number)
+      : null;
 
   const jsonLd = productJsonLd({
     name: product.name,
@@ -76,10 +82,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
             <h1 className="brand-heading mb-4">{product.name}</h1>
             <p className="mb-4 text-lg text-brand-warm">{product.shortDescription}</p>
             <div className="mb-6 flex flex-col gap-1">
-              {product.originalPrice ? (
-                <span className="text-sm text-brand-taupe line-through">Rs. {product.originalPrice.toLocaleString("en-IN")}</span>
+              {displayComparePrice ? (
+                <span className="text-sm text-brand-taupe line-through">Rs. {displayComparePrice.toLocaleString("en-IN")}</span>
               ) : null}
-              <span className="text-2xl font-medium text-brand-brown">Rs. {product.price.toLocaleString("en-IN")}</span>
+              <span className="text-2xl font-medium text-brand-brown">Rs. {displayPrice.toLocaleString("en-IN")}</span>
             </div>
             <p className="mb-8 text-sm leading-relaxed text-brand-warm">{product.description}</p>
             <ProductActionButtons productId={product.id} productSlug={product.slug} productName={product.name} category={product.category} />
