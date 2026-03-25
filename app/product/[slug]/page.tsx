@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { DataSourceNote } from "@/components/site/data-source-note";
 import { ProductActionButtons } from "@/components/site/product-action-buttons";
+import { ProductGallery } from "@/components/site/product-gallery";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
-import { getProductPageContentMap } from "@/lib/admin-data";
+import { getProductImages, getProductPageContentMap } from "@/lib/admin-data";
 import { getCatalogProductBySlug } from "@/lib/catalog";
 import { getApprovedReviewsForProduct } from "@/lib/reviews";
 import { buildStorefrontMetadata, productJsonLd } from "@/lib/seo";
@@ -43,6 +44,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const storefront = await getStorefrontSettings();
   const reviews = await getApprovedReviewsForProduct({ productId: product.id, productSlug: product.slug });
   const contentMap = await getProductPageContentMap([product.id]);
+  const galleryImages = await getProductImages(product.id);
   const pageBody = contentMap[product.id]?.body;
 
   const jsonLd = productJsonLd({
@@ -62,31 +64,22 @@ export default async function ProductPage({ params }: { params: { slug: string }
       <DataSourceNote source={result.source} error={result.error} />
       <section className="brand-section">
         <div className="brand-container grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-brand-cream">
-            {product.featuredImageUrl ? (
-              <img
-                src={product.featuredImageUrl}
-                alt={product.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dcc6ad_100%)] p-8 text-center">
-                <div>
-                  <p className="brand-label mb-3">Media needed</p>
-                  <p className="max-w-sm font-serif text-3xl leading-tight text-brand-brown">Add a featured product image from the Products admin.</p>
-                </div>
-              </div>
-            )}
+          <div className="rounded-sm bg-brand-cream">
+            <ProductGallery
+              productName={product.name}
+              featuredImageUrl={product.featuredImageUrl}
+              images={galleryImages}
+            />
           </div>
           <div className="flex flex-col justify-center">
             <p className="brand-label mb-3">{product.category}</p>
             <h1 className="brand-heading mb-4">{product.name}</h1>
             <p className="mb-4 text-lg text-brand-warm">{product.shortDescription}</p>
-            <div className="mb-6 flex items-center gap-3">
-              <span className="text-xl font-medium text-brand-brown">Rs. {product.price.toLocaleString("en-IN")}</span>
+            <div className="mb-6 flex flex-col gap-1">
               {product.originalPrice ? (
                 <span className="text-sm text-brand-taupe line-through">Rs. {product.originalPrice.toLocaleString("en-IN")}</span>
               ) : null}
+              <span className="text-2xl font-medium text-brand-brown">Rs. {product.price.toLocaleString("en-IN")}</span>
             </div>
             <p className="mb-8 text-sm leading-relaxed text-brand-warm">{product.description}</p>
             <ProductActionButtons productId={product.id} productSlug={product.slug} productName={product.name} category={product.category} />
