@@ -132,6 +132,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       {Array.isArray(pageBody) && pageBody.length ? (
         <section className="brand-section border-t border-brand-sand/30 bg-white">
           <div className="brand-container max-w-5xl">
+            <p className="brand-label mb-4">Product story</p>
             <CmsPageRenderer bodyText={JSON.stringify(pageBody, null, 2)} />
           </div>
         </section>
