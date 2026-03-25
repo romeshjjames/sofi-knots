@@ -13,6 +13,14 @@ export function PagesManager({ pages }: { pages: PageRecord[] }) {
   const [deleteCandidate, setDeleteCandidate] = useState<PageRecord | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  const policyPages = useMemo(
+    () =>
+      items.filter((page) =>
+        ["shipping", "privacy", "terms"].includes(page.slug),
+      ),
+    [items],
+  );
+
   const visiblePages = useMemo(
     () =>
       items.filter((page) => {
@@ -52,6 +60,33 @@ export function PagesManager({ pages }: { pages: PageRecord[] }) {
 
   return (
     <div className="space-y-4">
+      {policyPages.length ? (
+        <div className="rounded-[24px] border border-[#e7eaee] bg-[#fbfcfd] p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-900">Policy pages</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Manage Shipping & Returns, Privacy Policy, and Terms & Conditions from here. These pages are already linked on the storefront footer and render live from the Pages CMS.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {policyPages.map((page) => (
+                <Link
+                  key={page.id}
+                  href={`/admin/pages/${page.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-[#e7eaee] bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <PencilLine size={15} />
+                  {page.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="rounded-[24px] border border-[#e7eaee] bg-white">
         <div className="border-b border-[#eef1f4] px-5 py-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
@@ -85,7 +120,7 @@ export function PagesManager({ pages }: { pages: PageRecord[] }) {
           </div>
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
             <span>{visiblePages.length} pages</span>
-            <span>Core storefront pages are provisioned here automatically so Home, Shop, Collections, Blog, and policy pages can all be edited from admin.</span>
+            <span>Core storefront pages are provisioned here automatically so Home, Collections, Blog, FAQ, Shipping & Returns, Privacy Policy, and Terms & Conditions can all be edited from admin.</span>
           </div>
         </div>
         <div className="overflow-hidden">

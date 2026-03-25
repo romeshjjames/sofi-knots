@@ -12,7 +12,7 @@ export default async function AdminPagesPage() {
       active="pages"
       eyebrow="Page management"
       title="Pages"
-      description="Manage landing pages, FAQs, policy pages, and other storefront pages from a tighter workspace."
+      description="Manage landing pages, FAQs, Shipping & Returns, Privacy Policy, Terms & Conditions, and other storefront pages from one tighter workspace."
       breadcrumbs={[
         { label: "Home", href: "/admin" },
         { label: "Pages" },

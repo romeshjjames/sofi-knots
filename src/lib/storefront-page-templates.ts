@@ -99,9 +99,9 @@ export const coreStorefrontRoutes: { slug: CoreStorefrontPageSlug; route: string
   { slug: "about", route: "/about", label: "About page" },
   { slug: "contact", route: "/contact", label: "Contact page" },
   { slug: "faq", route: "/faq", label: "FAQ page" },
-  { slug: "privacy", route: "/privacy", label: "Privacy policy" },
-  { slug: "shipping", route: "/shipping", label: "Shipping & returns" },
-  { slug: "terms", route: "/terms", label: "Terms & conditions" },
+  { slug: "privacy", route: "/privacy", label: "Privacy Policy" },
+  { slug: "shipping", route: "/shipping", label: "Shipping & Returns" },
+  { slug: "terms", route: "/terms", label: "Terms & Conditions" },
 ];
 
 export function isCoreStorefrontPageSlug(slug: string): slug is CoreStorefrontPageSlug {
