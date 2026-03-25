@@ -7,25 +7,30 @@ import { useState, useTransition } from "react";
 import { useCart } from "@/components/cart/cart-provider";
 import { useCustomerAuth } from "@/components/customer/customer-auth-provider";
 
+type CollectionNavItem = {
+  title: string;
+  slug: string;
+};
+
 type NavbarProps = {
   siteName?: string;
+  collections?: CollectionNavItem[];
 };
 
 const navLinks = [
   { label: "Home", path: "/" },
-  { label: "Shop", path: "/shop" },
-  { label: "Collections", path: "/collections" },
   { label: "About", path: "/about" },
   { label: "Blog", path: "/blog" },
   { label: "Contact", path: "/contact" },
 ];
 
-export function Navbar({ siteName = "Sofi Knots" }: NavbarProps) {
+export function Navbar({ siteName = "Sofi Knots", collections = [] }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
   const { itemCount } = useCart();
   const { customer, loading, logout } = useCustomerAuth();
+  const isCollectionsActive = pathname === "/collections" || pathname.startsWith("/collections/");
 
   function handleLogout() {
     startTransition(async () => {
@@ -52,6 +57,40 @@ export function Navbar({ siteName = "Sofi Knots" }: NavbarProps) {
         </Link>
 
         <nav className="ml-16 hidden items-center gap-8 lg:flex">
+          <div className="group relative">
+            <Link
+              href="/collections"
+              className={`text-sm font-medium uppercase tracking-[0.12em] transition-colors duration-200 hover:text-brand-gold ${
+                isCollectionsActive ? "text-brand-gold" : "text-brand-warm"
+              }`}
+            >
+              Collections
+            </Link>
+            {collections.length ? (
+              <div className="pointer-events-none absolute left-1/2 top-full z-40 hidden min-w-[260px] -translate-x-1/2 pt-4 group-hover:block group-focus-within:block">
+                <div className="pointer-events-auto rounded-[20px] border border-brand-sand/40 bg-brand-ivory px-4 py-4 shadow-[0_18px_40px_rgba(49,36,23,0.12)]">
+                  <div className="grid gap-2">
+                    {collections.map((collection) => {
+                      const isItemActive = pathname === `/collections/${collection.slug}`;
+                      return (
+                        <Link
+                          key={collection.slug}
+                          href={`/collections/${collection.slug}`}
+                          className={`rounded-xl px-3 py-2 text-sm transition-colors ${
+                            isItemActive
+                              ? "bg-brand-cream text-brand-brown"
+                              : "text-brand-warm hover:bg-brand-cream hover:text-brand-brown"
+                          }`}
+                        >
+                          {collection.title}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
           {navLinks.map((link) => {
             const isActive = pathname === link.path;
             return (
@@ -69,7 +108,7 @@ export function Navbar({ siteName = "Sofi Knots" }: NavbarProps) {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link href="/shop" className="p-2 text-brand-warm transition-colors hover:text-brand-gold" aria-label="Search">
+          <Link href="/collections" className="p-2 text-brand-warm transition-colors hover:text-brand-gold" aria-label="Search">
             <Search size={20} />
           </Link>
           <Link href="/wishlist" className="p-2 text-brand-warm transition-colors hover:text-brand-gold" aria-label="Wishlist">
@@ -104,6 +143,32 @@ export function Navbar({ siteName = "Sofi Knots" }: NavbarProps) {
       {open ? (
         <nav className="animate-fade-in border-t border-brand-sand/40 bg-brand-ivory lg:hidden">
           <div className="brand-container flex flex-col gap-4 py-6">
+            <Link
+              href="/collections"
+              onClick={() => setOpen(false)}
+              className={`py-1 text-sm font-medium uppercase tracking-[0.12em] transition-colors ${
+                isCollectionsActive ? "text-brand-gold" : "text-brand-warm"
+              }`}
+            >
+              Collections
+            </Link>
+            {collections.length ? (
+              <div className="ml-4 flex flex-col gap-2 border-l border-brand-sand/40 pl-4">
+                {collections.map((collection) => {
+                  const isItemActive = pathname === `/collections/${collection.slug}`;
+                  return (
+                    <Link
+                      key={collection.slug}
+                      href={`/collections/${collection.slug}`}
+                      onClick={() => setOpen(false)}
+                      className={`text-sm transition-colors ${isItemActive ? "text-brand-gold" : "text-brand-taupe"}`}
+                    >
+                      {collection.title}
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : null}
             {navLinks.map((link) => {
               const isActive = pathname === link.path;
               return (

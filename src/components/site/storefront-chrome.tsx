@@ -1,10 +1,19 @@
 import { Footer } from "@/components/site/footer";
 import { Navbar } from "@/components/site/navbar";
+import { getCatalogCollections } from "@/lib/catalog";
 import { getStorefrontSettings } from "@/lib/storefront";
 
 export async function StorefrontNavbar() {
-  const settings = await getStorefrontSettings();
-  return <Navbar siteName={settings.siteName} />;
+  const [settings, collectionsResult] = await Promise.all([getStorefrontSettings(), getCatalogCollections()]);
+  return (
+    <Navbar
+      siteName={settings.siteName}
+      collections={collectionsResult.data.map((collection) => ({
+        title: collection.title,
+        slug: collection.slug,
+      }))}
+    />
+  );
 }
 
 export async function StorefrontFooter() {
