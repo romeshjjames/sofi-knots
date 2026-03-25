@@ -9,7 +9,7 @@ function getSectionThemeClasses(theme: VisualSectionTheme) {
 }
 
 function getSectionSpacingClasses(spacing: VisualSectionSpacing) {
-  return spacing === "compact" ? "px-5 py-5" : "px-6 py-8 md:px-8 md:py-10";
+  return spacing === "compact" ? "px-5 py-5" : "px-6 py-6 md:px-8 md:py-8";
 }
 
 function getSectionLayoutClasses(layout: VisualSectionLayout, blockCount: number) {
@@ -29,12 +29,14 @@ function renderBlock(block: VisualContentBlock, index: number, theme: VisualSect
   }
 
   if (block.type === "image") {
+    const showCaption = !!block.caption && block.caption.trim().toLowerCase() !== "media library image";
+
     return (
       <figure key={`${block.type}-${index}`} className="space-y-3">
         {block.url ? (
           <img src={block.url} alt={block.alt || "CMS image"} className="w-full rounded-[24px] object-cover" />
         ) : null}
-        {block.caption ? <figcaption className={`text-xs uppercase tracking-[0.16em] ${theme === "ink" ? "text-white/60" : "text-brand-taupe"}`}>{block.caption}</figcaption> : null}
+        {showCaption ? <figcaption className={`text-xs uppercase tracking-[0.16em] ${theme === "ink" ? "text-white/60" : "text-brand-taupe"}`}>{block.caption}</figcaption> : null}
       </figure>
     );
   }
@@ -67,6 +69,26 @@ function renderBlock(block: VisualContentBlock, index: number, theme: VisualSect
   );
 }
 
+function renderSplitSection(section: ReturnType<typeof groupVisualSections>[number]) {
+  const imageBlock = section.blocks.find((block) => block.type === "image");
+  const contentBlocks = section.blocks.filter((block) => block !== imageBlock);
+
+  if (!imageBlock) {
+    return <div className={getSectionLayoutClasses(section.layout, section.blocks.length)}>{section.blocks.map((block, index) => renderBlock(block, index, section.theme))}</div>;
+  }
+
+  return (
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-8">
+      <div className="order-2 lg:order-1">
+        {renderBlock(imageBlock, 0, section.theme)}
+      </div>
+      <div className="order-1 space-y-4 lg:order-2 lg:pt-2">
+        {contentBlocks.map((block, index) => renderBlock(block, index + 1, section.theme))}
+      </div>
+    </div>
+  );
+}
+
 export function CmsPageRenderer({ bodyText }: { bodyText: string }) {
   const sections = groupVisualSections(bodyText);
 
@@ -85,9 +107,11 @@ export function CmsPageRenderer({ bodyText }: { bodyText: string }) {
           key={section.id}
           className={`rounded-[28px] border border-brand-sand/30 ${getSectionThemeClasses(section.theme)} ${getSectionSpacingClasses(section.spacing)}`}
         >
-          <div className={getSectionLayoutClasses(section.layout, section.blocks.length)}>
-            {section.blocks.map((block, index) => renderBlock(block, index, section.theme))}
-          </div>
+          {section.layout === "split" ? renderSplitSection(section) : (
+            <div className={getSectionLayoutClasses(section.layout, section.blocks.length)}>
+              {section.blocks.map((block, index) => renderBlock(block, index, section.theme))}
+            </div>
+          )}
         </section>
       ))}
     </div>
