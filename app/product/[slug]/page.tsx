@@ -91,9 +91,12 @@ export default async function ProductPage({ params }: { params: { slug: string }
             <p className="mb-8 text-sm leading-relaxed text-brand-warm">{product.description}</p>
             <ProductActionButtons productId={product.id} productSlug={product.slug} productName={product.name} category={product.category} />
             <div className="mt-8 rounded-sm bg-brand-cream p-6">
-              <p className="brand-label mb-2">SEO Focus</p>
-              <p className="text-sm leading-relaxed text-brand-warm">
-                This product page is already set up for unique metadata, canonical URLs, and Product schema markup.
+              <p className="brand-label mb-2">Search listing</p>
+              <h2 className="font-serif text-2xl text-brand-brown">
+                {product.seoTitle || product.name}
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-brand-warm">
+                {product.seoDescription || product.shortDescription || product.description}
               </p>
             </div>
           </div>
