@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CmsPageRenderer } from "@/components/site/cms-page-renderer";
 import { DataSourceNote } from "@/components/site/data-source-note";
 import { PageHero } from "@/components/site/page-hero";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
@@ -35,13 +34,6 @@ export default async function CollectionsPage() {
         title={collectionsPage?.title || "Collections Designed Around Stories"}
         description={collectionsPage?.excerpt || "Collections let the admin team group products for campaigns, gifting themes, and on-page SEO landing pages."}
       />
-      {collectionsPage ? (
-        <section className="brand-section pb-0">
-          <div className="brand-container max-w-5xl">
-            <CmsPageRenderer bodyText={JSON.stringify(collectionsPage.body ?? [], null, 2)} />
-          </div>
-        </section>
-      ) : null}
       <section className="brand-section">
         <div className="brand-container grid grid-cols-1 gap-6 md:grid-cols-3">
           {result.data.map((collection) => (
