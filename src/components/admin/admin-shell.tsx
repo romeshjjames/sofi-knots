@@ -25,9 +25,11 @@ import { cn } from "@/lib/utils";
 import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
 import { AdminHeaderProfile, AdminSidebarBrand } from "@/components/admin/admin-branding";
 import { LogoutButton } from "@/components/admin/logout-button";
+import { getAdminNotificationSummary } from "@/lib/admin-notifications";
 
 type AdminNavKey =
   | "dashboard"
+  | "notifications"
   | "products"
   | "collections"
   | "orders"
@@ -66,6 +68,7 @@ type AdminShellProps = {
 
 const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof LayoutDashboard }[] = [
   { key: "dashboard", label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { key: "notifications", label: "Notifications", href: "/admin/notifications", icon: Bell },
   { key: "products", label: "Products", href: "/admin/products", icon: Package },
   { key: "collections", label: "Collections", href: "/admin/collections", icon: FolderKanban },
   { key: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingCart },
@@ -82,7 +85,9 @@ const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof La
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings2 },
 ];
 
-export function AdminShell({ active, title, description, children, eyebrow = "Admin workspace", actions, stats = [], statsVariant = "default", breadcrumbs }: AdminShellProps) {
+export async function AdminShell({ active, title, description, children, eyebrow = "Admin workspace", actions, stats = [], statsVariant = "default", breadcrumbs }: AdminShellProps) {
+  const notificationSummary = await getAdminNotificationSummary();
+
   return (
     <div className="min-h-screen bg-[#f3f1ec] text-[#1f2933]">
       <div className="grid min-h-screen lg:grid-cols-[248px_minmax(0,1fr)]">
@@ -143,10 +148,20 @@ export function AdminShell({ active, title, description, children, eyebrow = "Ad
                 <Link href="/admin/products/new" target="_blank" rel="noreferrer" className="rounded-full bg-[#1f2933] px-5 py-3 text-sm font-medium text-white shadow-[0_14px_30px_rgba(31,41,51,0.18)] transition hover:bg-slate-800">
                   Add Product
                 </Link>
-                <button type="button" className="relative flex h-11 w-11 items-center justify-center rounded-full border border-[#e6ddcf] bg-white text-[#7f6a49] shadow-[0_10px_24px_rgba(49,36,23,0.06)] transition hover:bg-[#f9f5ee]">
+                <Link
+                  href="/admin/notifications"
+                  className="relative flex h-11 w-11 items-center justify-center rounded-full border border-[#e6ddcf] bg-white text-[#7f6a49] shadow-[0_10px_24px_rgba(49,36,23,0.06)] transition hover:bg-[#f9f5ee]"
+                >
                   <Bell size={18} />
-                  <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                </button>
+                  {notificationSummary.total ? (
+                    <>
+                      <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                      <span className="absolute -right-1 -top-1 min-w-[20px] rounded-full bg-[#1f2933] px-1.5 py-0.5 text-center text-[10px] font-medium text-white">
+                        {notificationSummary.total > 99 ? "99+" : notificationSummary.total}
+                      </span>
+                    </>
+                  ) : null}
+                </Link>
                 <AdminHeaderProfile />
                 <LogoutButton />
               </div>

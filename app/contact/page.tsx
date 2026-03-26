@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock3, Instagram, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import { ContactInquiryForm } from "@/components/site/contact-inquiry-form";
 import { StorefrontFooter, StorefrontNavbar } from "@/components/site/storefront-chrome";
 import { getCatalogPageBySlug } from "@/lib/catalog";
 import { buildStorefrontMetadata } from "@/lib/seo";
@@ -77,32 +78,7 @@ export default async function ContactPage() {
       <section className="brand-section bg-[#fcfaf6]">
         <div className="brand-container grid gap-12 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-[28px] border border-brand-sand/30 bg-white/70 p-7 shadow-[0_18px_50px_rgba(78,59,41,0.06)] sm:p-9">
-            <form className="space-y-5">
-              <div className="grid gap-5 md:grid-cols-2">
-                <label className="block">
-                  <span className="brand-label mb-3 block text-[11px]">Name</span>
-                  <input className="brand-input h-12" placeholder="Your name" />
-                </label>
-                <label className="block">
-                  <span className="brand-label mb-3 block text-[11px]">Email</span>
-                  <input className="brand-input h-12" type="email" placeholder="you@example.com" />
-                </label>
-              </div>
-
-              <label className="block">
-                <span className="brand-label mb-3 block text-[11px]">Subject</span>
-                <input className="brand-input h-12" placeholder="How can we help?" />
-              </label>
-
-              <label className="block">
-                <span className="brand-label mb-3 block text-[11px]">Message</span>
-                <textarea className="brand-input min-h-[180px]" placeholder="Tell us about your order, question, or request." />
-              </label>
-
-              <button type="submit" className="brand-btn-primary min-w-[170px] justify-center px-8 py-3">
-                Send Message
-              </button>
-            </form>
+            <ContactInquiryForm />
           </div>
 
           <aside className="rounded-[28px] border border-brand-sand/25 bg-[#f8f3ea] p-7 sm:p-9">
