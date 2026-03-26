@@ -1,5 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { createAuditLog, getAuditLogs } from "@/lib/admin-data";
+import { createAuditLog } from "@/lib/admin-data";
 import { getContactMessages, type ContactMessageRecord } from "@/lib/contact-messages";
 import { getCustomOrders } from "@/lib/custom-orders";
 import { getInventoryRecords } from "@/lib/inventory";
@@ -51,16 +51,27 @@ async function getAdminNotificationStateMap(notificationIds: string[]) {
   const uniqueIds = Array.from(new Set(notificationIds.filter(Boolean)));
   if (!uniqueIds.length) return {} as Record<string, AdminNotificationStateRecord>;
 
-  const logs = await getAuditLogs("admin_notification");
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("entity_id, payload, created_at")
+    .eq("entity_type", "admin_notification")
+    .in("entity_id", uniqueIds)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
   const map: Record<string, AdminNotificationStateRecord> = {};
 
-  for (const log of logs) {
-    if (!uniqueIds.includes(log.entityId) || map[log.entityId]) continue;
-    const payload = (log.payload ?? {}) as Record<string, unknown>;
-    map[log.entityId] = {
+  for (const row of data ?? []) {
+    if (map[row.entity_id]) continue;
+    const payload = (row.payload ?? {}) as Record<string, unknown>;
+    map[row.entity_id] = {
       isRead: payload.isRead === true,
       deleted: payload.deleted === true,
-      updatedAt: log.createdAt,
+      updatedAt: row.created_at,
     };
   }
 
