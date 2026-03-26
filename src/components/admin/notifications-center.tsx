@@ -20,6 +20,7 @@ const kindConfig: Record<
 export function NotificationsCenter({ notifications }: { notifications: AdminNotificationRecord[] }) {
   const [items, setItems] = useState(notifications);
   const unreadCount = useMemo(() => items.filter((item) => !item.isRead).length, [items]);
+  const allRead = items.length > 0 && unreadCount === 0;
 
   async function updateNotification(notificationId: string, input: { isRead?: boolean; deleted?: boolean }) {
     const response = await fetch(`/api/admin/notifications/${notificationId}`, {
@@ -58,10 +59,16 @@ export function NotificationsCenter({ notifications }: { notifications: AdminNot
         <button
           type="button"
           className="inline-flex items-center gap-2 rounded-2xl border border-[#e7eaee] bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-          onClick={() => void Promise.all(items.filter((item) => !item.isRead).map((item) => updateNotification(item.id, { isRead: true })))}
+          onClick={() =>
+            void Promise.all(
+              items.map((item) =>
+                updateNotification(item.id, { isRead: allRead ? false : true }),
+              ),
+            )
+          }
         >
           <CheckCheck size={16} />
-          Mark all read
+          {allRead ? "Mark all unread" : "Mark all read"}
         </button>
       </div>
 
