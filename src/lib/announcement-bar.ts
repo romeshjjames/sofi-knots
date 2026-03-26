@@ -21,6 +21,15 @@ function normalizeAnnouncementBar(payload: Record<string, unknown> | null | unde
   };
 }
 
+function normalizeScheduleValue(value: string | null | undefined) {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
+}
+
 function isWithinSchedule(record: AnnouncementBarRecord) {
   const now = Date.now();
   const start = record.startsAt ? new Date(record.startsAt).getTime() : null;
@@ -65,8 +74,8 @@ export async function updateAnnouncementBar(
       text: input.text,
       ctaLink: input.ctaLink || null,
       isActive: input.isActive,
-      startsAt: input.startsAt || null,
-      endsAt: input.endsAt || null,
+      startsAt: normalizeScheduleValue(input.startsAt),
+      endsAt: normalizeScheduleValue(input.endsAt),
     },
   });
 }

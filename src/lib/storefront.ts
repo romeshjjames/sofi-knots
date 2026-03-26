@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { getSiteSettings } from "@/lib/admin-data";
 import { getActiveAnnouncementBar, type AnnouncementBarRecord } from "@/lib/announcement-bar";
 import { siteConfig } from "@/lib/site-config";
@@ -44,6 +45,7 @@ function normalizeWhatsAppLink(inputPhone: string | null, socialLinks: Record<st
 }
 
 export async function getStorefrontSettings(): Promise<StorefrontSettings> {
+  noStore();
   const settings = await getSiteSettings();
   const siteUrl = settings.siteUrl || siteConfig.url;
   const supportEmail = settings.supportEmail || siteConfig.contactEmail;
