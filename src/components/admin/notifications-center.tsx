@@ -31,6 +31,8 @@ export function NotificationsCenter({ notifications }: { notifications: AdminNot
 
     if (!response.ok) return;
 
+    window.dispatchEvent(new Event("admin-notifications-changed"));
+
     if (input.deleted) {
       setItems((current) => current.filter((item) => item.id !== notificationId));
       return;
