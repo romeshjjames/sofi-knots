@@ -23,10 +23,10 @@ export default async function AdminNotificationsPage() {
       statsVariant="compact"
       stats={[
         { label: "Alerts", value: `${summary.total}`, hint: "Operational alerts currently visible." },
+        { label: "Unread", value: `${summary.unread}`, hint: "Notifications still needing review." },
         { label: "Orders", value: `${summary.newOrders}`, hint: "Recent order activity needing awareness." },
         { label: "Custom", value: `${summary.customOrders}`, hint: "Custom-order requests to review." },
         { label: "Low stock", value: `${summary.lowStock}`, hint: "Products needing stock action." },
-        { label: "Messages", value: `${summary.contactMessages}`, hint: "Contact form inquiries received." },
       ]}
     >
       <AdminPanel

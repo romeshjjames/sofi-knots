@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { Bell, Boxes, ClipboardList, Mail, RotateCcw, TriangleAlert } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Bell, Boxes, CheckCheck, ClipboardList, Mail, RotateCcw, TriangleAlert, Trash2 } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 import type { AdminNotificationKind, AdminNotificationRecord } from "@/lib/admin-notifications";
 
@@ -15,7 +18,29 @@ const kindConfig: Record<
 };
 
 export function NotificationsCenter({ notifications }: { notifications: AdminNotificationRecord[] }) {
-  if (!notifications.length) {
+  const [items, setItems] = useState(notifications);
+  const unreadCount = useMemo(() => items.filter((item) => !item.isRead).length, [items]);
+
+  async function updateNotification(notificationId: string, input: { isRead?: boolean; deleted?: boolean }) {
+    const response = await fetch(`/api/admin/notifications/${notificationId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+
+    if (!response.ok) return;
+
+    if (input.deleted) {
+      setItems((current) => current.filter((item) => item.id !== notificationId));
+      return;
+    }
+
+    setItems((current) =>
+      current.map((item) => (item.id === notificationId ? { ...item, isRead: input.isRead === true } : item)),
+    );
+  }
+
+  if (!items.length) {
     return (
       <div className="rounded-[24px] border border-[#e7eaee] bg-[#fbfcfd] p-10 text-center text-sm text-slate-500">
         No operational alerts right now.
@@ -24,33 +49,77 @@ export function NotificationsCenter({ notifications }: { notifications: AdminNot
   }
 
   return (
-    <div className="space-y-3">
-      {notifications.map((notification) => {
-        const config = kindConfig[notification.kind];
-        const Icon = config.icon;
+    <div className="space-y-4">
+      <div className="flex items-center justify-between rounded-[24px] border border-[#e7eaee] bg-[#fbfcfd] px-5 py-4">
+        <div>
+          <p className="text-sm font-medium text-slate-900">Notifications</p>
+          <p className="mt-1 text-sm text-slate-500">{unreadCount} unread alerts</p>
+        </div>
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 rounded-2xl border border-[#e7eaee] bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+          onClick={() => void Promise.all(items.filter((item) => !item.isRead).map((item) => updateNotification(item.id, { isRead: true })))}
+        >
+          <CheckCheck size={16} />
+          Mark all read
+        </button>
+      </div>
 
-        return (
-          <Link
-            key={notification.id}
-            href={notification.href}
-            className="flex items-start gap-4 rounded-[24px] border border-[#e7eaee] bg-white p-5 shadow-sm transition hover:border-[#d9dee5] hover:bg-[#fbfcfd]"
-          >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#fbfcfd] text-slate-600">
-              <Icon size={18} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-medium text-slate-900">{notification.title}</p>
-                <AdminBadge tone={config.tone}>{config.label}</AdminBadge>
+      <div className="space-y-3">
+        {items.map((notification) => {
+          const config = kindConfig[notification.kind];
+          const Icon = config.icon;
+
+          return (
+            <div
+              key={notification.id}
+              className={`flex items-start gap-4 rounded-[24px] border p-5 shadow-sm transition ${
+                notification.isRead
+                  ? "border-[#e7eaee] bg-white"
+                  : "border-[#d8e5f4] bg-[#f8fbff]"
+              }`}
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#fbfcfd] text-slate-600">
+                <Icon size={18} />
               </div>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{notification.description}</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/api/admin/notifications/open?notificationId=${encodeURIComponent(notification.id)}&href=${encodeURIComponent(notification.href)}`}
+                    className="text-sm font-medium text-slate-900 hover:text-slate-700"
+                  >
+                    {notification.title}
+                  </Link>
+                  <AdminBadge tone={config.tone}>{config.label}</AdminBadge>
+                  {!notification.isRead ? <AdminBadge tone="info">Unread</AdminBadge> : null}
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{notification.description}</p>
+              </div>
+              <div className="flex shrink-0 items-start gap-2">
+                <div className="pt-2 text-xs text-slate-400">
+                  {new Date(notification.createdAt).toLocaleString("en-IN")}
+                </div>
+                <button
+                  type="button"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#e7eaee] text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                  title={notification.isRead ? "Mark unread" : "Mark read"}
+                  onClick={() => void updateNotification(notification.id, { isRead: !notification.isRead, deleted: false })}
+                >
+                  <CheckCheck size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#f0d4d4] text-rose-600 transition hover:bg-rose-50"
+                  title="Delete notification"
+                  onClick={() => void updateNotification(notification.id, { isRead: notification.isRead, deleted: true })}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
-            <div className="shrink-0 text-xs text-slate-400">
-              {new Date(notification.createdAt).toLocaleString("en-IN")}
-            </div>
-          </Link>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

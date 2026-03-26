@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import { createAuditLog, getAuditLogs } from "@/lib/admin-data";
 import { getContactMessages, type ContactMessageRecord } from "@/lib/contact-messages";
 import { getCustomOrders } from "@/lib/custom-orders";
 import { getInventoryRecords } from "@/lib/inventory";
@@ -19,6 +20,13 @@ export type AdminNotificationRecord = {
   description: string;
   createdAt: string;
   href: string;
+  isRead: boolean;
+};
+
+type AdminNotificationStateRecord = {
+  isRead: boolean;
+  deleted: boolean;
+  updatedAt: string;
 };
 
 function isRecent(dateString: string, days: number) {
@@ -35,7 +43,28 @@ function mapContactMessages(messages: ContactMessageRecord[]): AdminNotification
     description: message.subject,
     createdAt: message.createdAt,
     href: "/contact",
+    isRead: false,
   }));
+}
+
+async function getAdminNotificationStateMap(notificationIds: string[]) {
+  const uniqueIds = Array.from(new Set(notificationIds.filter(Boolean)));
+  if (!uniqueIds.length) return {} as Record<string, AdminNotificationStateRecord>;
+
+  const logs = await getAuditLogs("admin_notification");
+  const map: Record<string, AdminNotificationStateRecord> = {};
+
+  for (const log of logs) {
+    if (!uniqueIds.includes(log.entityId) || map[log.entityId]) continue;
+    const payload = (log.payload ?? {}) as Record<string, unknown>;
+    map[log.entityId] = {
+      isRead: payload.isRead === true,
+      deleted: payload.deleted === true,
+      updatedAt: log.createdAt,
+    };
+  }
+
+  return map;
 }
 
 async function getReturnRequestNotifications(): Promise<AdminNotificationRecord[]> {
@@ -83,6 +112,7 @@ async function getReturnRequestNotifications(): Promise<AdminNotificationRecord[
       description: reason,
       createdAt: row.created_at,
       href: `/admin/orders/${row.entity_id}`,
+      isRead: false,
     };
   });
 }
@@ -108,6 +138,7 @@ export async function getAdminNotifications(): Promise<AdminNotificationRecord[]
       description: `${order.customerName} placed an order for Rs. ${order.totalInr.toLocaleString("en-IN")}`,
       createdAt: order.createdAt,
       href: `/admin/orders/${order.id}`,
+      isRead: false,
     }));
 
   const customOrderNotifications: AdminNotificationRecord[] = customOrders
@@ -120,6 +151,7 @@ export async function getAdminNotifications(): Promise<AdminNotificationRecord[]
       description: order.productType,
       createdAt: order.updatedAt ?? `${order.submittedAt}T00:00:00.000Z`,
       href: `/admin/custom-orders/${order.id}`,
+      isRead: false,
     }));
 
   const lowStockNotifications: AdminNotificationRecord[] = inventoryRecords
@@ -135,15 +167,25 @@ export async function getAdminNotifications(): Promise<AdminNotificationRecord[]
           : `${record.availableStock} left in inventory`,
       createdAt: record.updatedAt ?? new Date().toISOString(),
       href: `/admin/inventory/${record.productId}`,
+      isRead: false,
     }));
 
-  return [
+  const notifications = [
     ...orderNotifications,
     ...customOrderNotifications,
     ...lowStockNotifications,
     ...returnRequests,
     ...mapContactMessages(contactMessages),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const stateMap = await getAdminNotificationStateMap(notifications.map((item) => item.id));
+
+  return notifications
+    .filter((item) => !stateMap[item.id]?.deleted)
+    .map((item) => ({
+      ...item,
+      isRead: stateMap[item.id]?.isRead ?? false,
+    }));
 }
 
 export async function getAdminNotificationSummary() {
@@ -151,10 +193,26 @@ export async function getAdminNotificationSummary() {
 
   return {
     total: notifications.length,
+    unread: notifications.filter((item) => !item.isRead).length,
     newOrders: notifications.filter((item) => item.kind === "new_order").length,
     customOrders: notifications.filter((item) => item.kind === "new_custom_order").length,
     lowStock: notifications.filter((item) => item.kind === "low_stock").length,
     returnRequests: notifications.filter((item) => item.kind === "return_request").length,
     contactMessages: notifications.filter((item) => item.kind === "contact_message").length,
   };
+}
+
+export async function updateAdminNotificationState(
+  notificationId: string,
+  input: { isRead?: boolean; deleted?: boolean },
+) {
+  await createAuditLog({
+    entityType: "admin_notification",
+    entityId: notificationId,
+    action: "state:update",
+    payload: {
+      isRead: input.isRead === true,
+      deleted: input.deleted === true,
+    },
+  });
 }
