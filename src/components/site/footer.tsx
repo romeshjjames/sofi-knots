@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Facebook, Instagram, Mail, Phone } from "lucide-react";
 
@@ -28,9 +29,11 @@ export function Footer({
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           <div>
             {logoUrl ? (
-              <img
+              <Image
                 src={logoUrl}
                 alt={siteName}
+                width={160}
+                height={96}
                 className="mb-4 h-24 w-auto object-contain"
               />
             ) : (

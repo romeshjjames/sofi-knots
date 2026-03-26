@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingBag, Star } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
@@ -38,10 +39,12 @@ export function ProductCard({ product, index = 0 }: Props) {
         >
         <div className="relative aspect-[3/4] overflow-hidden bg-brand-cream">
           {product.featuredImageUrl ? (
-            <img
+            <Image
               src={product.featuredImageUrl}
               alt={product.name}
-              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dcc6ad_100%)] p-6 text-center">

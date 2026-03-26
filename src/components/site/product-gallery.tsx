@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import type { ProductImageRecord } from "@/lib/admin-data";
 
@@ -43,10 +44,13 @@ export function ProductGallery({ productName, featuredImageUrl, images }: Produc
   return (
     <div className="flex h-full flex-col gap-4">
       <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-brand-cream">
-        <img
+        <Image
           src={activeImage.imageUrl}
           alt={activeImage.altText || productName}
-          className="h-full w-full object-cover"
+          fill
+          priority
+          sizes="(max-width: 1024px) 100vw, 55vw"
+          className="object-cover"
         />
       </div>
       {gallery.length > 1 ? (
@@ -64,9 +68,12 @@ export function ProductGallery({ productName, featuredImageUrl, images }: Produc
                     : "border-brand-sand/40 hover:border-brand-brown/60"
                 }`}
               >
-                <img
+                <Image
                   src={image.imageUrl}
                   alt={image.altText || `${productName} ${index + 1}`}
+                  width={240}
+                  height={300}
+                  sizes="(max-width: 1024px) 25vw, 120px"
                   className="aspect-[4/5] h-full w-full object-cover"
                 />
               </button>

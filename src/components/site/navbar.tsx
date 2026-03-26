@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Heart, LogOut, Menu, Search, ShoppingBag, User, X } from "lucide-react";
@@ -53,9 +54,11 @@ export function Navbar({ siteName = "Sofi Knots", logoUrl = null, collections = 
 
         <Link href="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0">
           {logoUrl ? (
-            <img
+            <Image
               src={logoUrl}
               alt={siteName}
+              width={160}
+              height={64}
               className="h-12 w-auto object-contain lg:h-16"
             />
           ) : (

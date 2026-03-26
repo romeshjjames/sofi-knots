@@ -1,13 +1,22 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { Cormorant_Garamond, Jost } from "next/font/google";
-import { AnalyticsConsentBanner } from "@/components/analytics/analytics-consent-banner";
-import { AnalyticsTracker } from "@/components/analytics/analytics-tracker";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { CustomerAuthProvider } from "@/components/customer/customer-auth-provider";
 import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
 import "./globals.css";
 import { buildStorefrontMetadata } from "@/lib/seo";
+
+const AnalyticsTracker = dynamic(
+  () => import("@/components/analytics/analytics-tracker").then((mod) => mod.AnalyticsTracker),
+  { ssr: false },
+);
+
+const AnalyticsConsentBanner = dynamic(
+  () => import("@/components/analytics/analytics-consent-banner").then((mod) => mod.AnalyticsConsentBanner),
+  { ssr: false },
+);
 
 const jost = Jost({
   subsets: ["latin"],
@@ -19,7 +28,7 @@ const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   variable: "--font-serif",
   display: "swap",
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
 });
 
 export async function generateMetadata(): Promise<Metadata> {

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Leaf, ShieldCheck, Sparkles, Star } from "lucide-react";
 import { DataSourceNote } from "@/components/site/data-source-note";
@@ -115,7 +116,14 @@ export async function HomePage() {
       <section className="relative min-h-[68vh] overflow-hidden border-b border-brand-sand/30 bg-[#e9ddce] lg:min-h-[78vh]">
         <div className="absolute inset-0">
           {getSectionImageUrl(heroSection) ? (
-            <img src={getSectionImageUrl(heroSection) || ""} alt={getSectionHeading(heroSection, "Sofi Knots hero")} className="h-full w-full object-cover" />
+            <Image
+              src={getSectionImageUrl(heroSection) || ""}
+              alt={getSectionHeading(heroSection, "Sofi Knots hero")}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+            />
           ) : (
             <div className="h-full w-full bg-[radial-gradient(circle_at_18%_30%,rgba(255,255,255,0.42),transparent_28%),radial-gradient(circle_at_78%_22%,rgba(255,255,255,0.18),transparent_18%),linear-gradient(135deg,#b9946c_0%,#d2b190_42%,#a57f58_100%)]" />
           )}
@@ -182,10 +190,12 @@ export async function HomePage() {
               >
                 <div className="relative aspect-[0.82] overflow-hidden bg-brand-cream">
                   {collection.imageUrl ? (
-                    <img
+                    <Image
                       src={collection.imageUrl}
                       alt={collection.title}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dfccb5_100%)] p-6 text-center">
@@ -231,7 +241,13 @@ export async function HomePage() {
         <div className="brand-container grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div className="relative aspect-[1.08] overflow-hidden bg-brand-cream">
             {getSectionImageUrl(valuesSection) ? (
-              <img src={getSectionImageUrl(valuesSection) || ""} alt={getSectionHeading(valuesSection, "Our craft")} className="h-full w-full object-cover" />
+              <Image
+                src={getSectionImageUrl(valuesSection) || ""}
+                alt={getSectionHeading(valuesSection, "Our craft")}
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
+              />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#efe3d2_0%,#dcc6ad_100%)] p-8 text-center">
                 <div>
