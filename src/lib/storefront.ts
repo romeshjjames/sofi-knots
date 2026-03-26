@@ -1,4 +1,5 @@
 import { getSiteSettings } from "@/lib/admin-data";
+import { getActiveAnnouncementBar, type AnnouncementBarRecord } from "@/lib/announcement-bar";
 import { siteConfig } from "@/lib/site-config";
 
 export type StorefrontSettings = {
@@ -32,6 +33,7 @@ export type StorefrontSettings = {
     shippingChargeInr: number;
     packagingNotes: string | null;
   };
+  announcementBar: AnnouncementBarRecord | null;
 };
 
 function normalizeWhatsAppLink(inputPhone: string | null, socialLinks: Record<string, string>) {
@@ -78,5 +80,6 @@ export async function getStorefrontSettings(): Promise<StorefrontSettings> {
     },
     policies: settings.policies,
     shipping: settings.shipping,
+    announcementBar: await getActiveAnnouncementBar(),
   };
 }

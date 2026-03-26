@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  Megaphone,
   BadgePercent,
   ArrowRight,
   Bell,
@@ -31,6 +32,7 @@ import { getAdminNotificationSummary } from "@/lib/admin-notifications";
 type AdminNavKey =
   | "dashboard"
   | "notifications"
+  | "announcementBar"
   | "products"
   | "collections"
   | "orders"
@@ -70,6 +72,7 @@ type AdminShellProps = {
 const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof LayoutDashboard }[] = [
   { key: "dashboard", label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { key: "notifications", label: "Notifications", href: "/admin/notifications", icon: Bell },
+  { key: "announcementBar", label: "Announcement Bar", href: "/admin/announcement-bar", icon: Megaphone },
   { key: "products", label: "Products", href: "/admin/products", icon: Package },
   { key: "collections", label: "Collections", href: "/admin/collections", icon: FolderKanban },
   { key: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingCart },
