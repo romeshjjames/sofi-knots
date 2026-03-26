@@ -1,11 +1,12 @@
 import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
 import { AnnouncementBarForm } from "@/components/admin/announcement-bar-form";
-import { getAnnouncementBar } from "@/lib/announcement-bar";
+import { getActiveAnnouncementBar, getAnnouncementBar } from "@/lib/announcement-bar";
 import { requireAdminPage } from "@/lib/supabase/auth";
 
 export default async function AdminAnnouncementBarPage() {
   await requireAdminPage(["super_admin", "content_admin", "marketing_admin"]);
-  const announcement = await getAnnouncementBar();
+  const [announcement, activeAnnouncement] = await Promise.all([getAnnouncementBar(), getActiveAnnouncementBar()]);
+  const liveStatus = activeAnnouncement ? "Live" : announcement.isActive ? "Scheduled or hidden" : "Inactive";
 
   return (
     <AdminShell
@@ -19,7 +20,7 @@ export default async function AdminAnnouncementBarPage() {
       ]}
       statsVariant="compact"
       stats={[
-        { label: "Status", value: announcement.isActive ? "Active" : "Inactive", hint: "Current storefront announcement visibility." },
+        { label: "Status", value: liveStatus, hint: "Whether the bar is currently visible on the storefront." },
         { label: "Has CTA", value: announcement.ctaLink ? "Yes" : "No", hint: "Whether the bar links to a storefront destination." },
         { label: "Scheduled", value: announcement.startsAt || announcement.endsAt ? "Yes" : "No", hint: "Uses date-based visibility control." },
       ]}

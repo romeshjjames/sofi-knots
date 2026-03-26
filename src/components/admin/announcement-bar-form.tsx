@@ -1,14 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { AnnouncementBarRecord } from "@/lib/announcement-bar";
 
+function formatDateTimeLocal(value: string | null) {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const local = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60 * 1000);
+  return local.toISOString().slice(0, 16);
+}
+
 export function AnnouncementBarForm({ initial }: { initial: AnnouncementBarRecord }) {
+  const router = useRouter();
   const [text, setText] = useState(initial.text);
   const [ctaLink, setCtaLink] = useState(initial.ctaLink ?? "");
   const [isActive, setIsActive] = useState(initial.isActive);
-  const [startsAt, setStartsAt] = useState(initial.startsAt ? initial.startsAt.slice(0, 16) : "");
-  const [endsAt, setEndsAt] = useState(initial.endsAt ? initial.endsAt.slice(0, 16) : "");
+  const [startsAt, setStartsAt] = useState(formatDateTimeLocal(initial.startsAt));
+  const [endsAt, setEndsAt] = useState(formatDateTimeLocal(initial.endsAt));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -38,6 +48,7 @@ export function AnnouncementBarForm({ initial }: { initial: AnnouncementBarRecor
     }
 
     setMessage("Announcement bar updated.");
+    router.refresh();
   }
 
   return (
@@ -99,6 +110,18 @@ export function AnnouncementBarForm({ initial }: { initial: AnnouncementBarRecor
                 onChange={(event) => setEndsAt(event.target.value)}
               />
             </label>
+
+            <button
+              type="button"
+              onClick={() => {
+                setStartsAt("");
+                setEndsAt("");
+                setMessage("Schedule cleared. Save to make the announcement unscheduled.");
+              }}
+              className="text-left text-xs font-medium uppercase tracking-[0.18em] text-slate-500 transition hover:text-slate-800"
+            >
+              Clear schedule
+            </button>
           </div>
         </div>
       </div>
