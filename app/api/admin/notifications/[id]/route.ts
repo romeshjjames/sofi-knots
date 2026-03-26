@@ -4,7 +4,10 @@ import { requireAdminApi } from "@/lib/supabase/auth";
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
-    await requireAdminApi(["super_admin", "order_admin", "content_admin", "marketing_admin"]);
+    const auth = await requireAdminApi(["super_admin", "order_admin", "content_admin", "marketing_admin"]);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
     const body = (await request.json()) as Record<string, unknown>;
 
     await updateAdminNotificationState(params.id, {

@@ -4,7 +4,10 @@ import { requireAdminApi } from "@/lib/supabase/auth";
 
 export async function GET() {
   try {
-    await requireAdminApi(["super_admin", "order_admin", "content_admin", "marketing_admin"]);
+    const auth = await requireAdminApi(["super_admin", "order_admin", "content_admin", "marketing_admin"]);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
     const summary = await getAdminNotificationSummary();
     return NextResponse.json(summary);
   } catch (error) {

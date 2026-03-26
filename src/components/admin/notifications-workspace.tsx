@@ -37,7 +37,7 @@ export function NotificationsWorkspace({ notifications }: { notifications: Admin
         <StatCard label="Low stock" value={`${summary.lowStock}`} hint="Products needing stock action." />
       </div>
 
-      <NotificationsCenter notifications={items} onItemsChange={setItems} />
+      <NotificationsCenter items={items} onItemsChange={setItems} />
     </div>
   );
 }

@@ -32,6 +32,9 @@ export function AdminNotificationBell({ initialUnread = 0 }: { initialUnread?: n
     }
 
     void refresh();
+    const interval = window.setInterval(() => {
+      void refresh();
+    }, 15000);
 
     const onVisibility = () => {
       if (document.visibilityState === "visible") {
@@ -49,6 +52,7 @@ export function AdminNotificationBell({ initialUnread = 0 }: { initialUnread?: n
 
     return () => {
       mounted = false;
+      window.clearInterval(interval);
       window.removeEventListener("focus", onChanged);
       window.removeEventListener("admin-notifications-changed", onChanged as EventListener);
       document.removeEventListener("visibilitychange", onVisibility);

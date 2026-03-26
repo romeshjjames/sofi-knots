@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Bell, Boxes, CheckCheck, ClipboardList, Mail, RotateCcw, TriangleAlert, Trash2 } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
 import type { AdminNotificationKind, AdminNotificationRecord } from "@/lib/admin-notifications";
@@ -17,20 +17,18 @@ const kindConfig: Record<
 };
 
 export function NotificationsCenter({
-  notifications,
+  items,
   onItemsChange,
 }: {
-  notifications: AdminNotificationRecord[];
-  onItemsChange?: React.Dispatch<React.SetStateAction<AdminNotificationRecord[]>>;
+  items: AdminNotificationRecord[];
+  onItemsChange: React.Dispatch<React.SetStateAction<AdminNotificationRecord[]>>;
 }) {
-  const [items, setItems] = useState(notifications);
   const unreadCount = useMemo(() => items.filter((item) => !item.isRead).length, [items]);
   const allRead = items.length > 0 && unreadCount === 0;
 
   function syncItems(updater: (current: AdminNotificationRecord[]) => AdminNotificationRecord[]) {
-    setItems((current) => {
+    onItemsChange((current) => {
       const next = updater(current);
-      onItemsChange?.(next);
       return next;
     });
   }
@@ -44,16 +42,16 @@ export function NotificationsCenter({
 
     if (!response.ok) return false;
 
-    window.dispatchEvent(new Event("admin-notifications-changed"));
-
     if (input.deleted) {
       syncItems((current) => current.filter((item) => item.id !== notificationId));
+      window.dispatchEvent(new Event("admin-notifications-changed"));
       return true;
     }
 
     syncItems((current) =>
       current.map((item) => (item.id === notificationId ? { ...item, isRead: input.isRead === true } : item)),
     );
+    window.dispatchEvent(new Event("admin-notifications-changed"));
     return true;
   }
 
@@ -82,8 +80,8 @@ export function NotificationsCenter({
 
     if (results.some((result) => !result.ok)) return;
 
-    window.dispatchEvent(new Event("admin-notifications-changed"));
     syncItems((current) => current.map((item) => ({ ...item, isRead: targetRead })));
+    window.dispatchEvent(new Event("admin-notifications-changed"));
   }
 
   if (!items.length) {
