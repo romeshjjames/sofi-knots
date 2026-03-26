@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Bell, Boxes, CheckCheck, ClipboardList, Mail, RotateCcw, TriangleAlert, Trash2 } from "lucide-react";
 import { AdminBadge } from "@/components/admin/admin-shell";
@@ -17,10 +16,24 @@ const kindConfig: Record<
   contact_message: { label: "Contact message", icon: Mail, tone: "info" },
 };
 
-export function NotificationsCenter({ notifications }: { notifications: AdminNotificationRecord[] }) {
+export function NotificationsCenter({
+  notifications,
+  onItemsChange,
+}: {
+  notifications: AdminNotificationRecord[];
+  onItemsChange?: React.Dispatch<React.SetStateAction<AdminNotificationRecord[]>>;
+}) {
   const [items, setItems] = useState(notifications);
   const unreadCount = useMemo(() => items.filter((item) => !item.isRead).length, [items]);
   const allRead = items.length > 0 && unreadCount === 0;
+
+  function syncItems(updater: (current: AdminNotificationRecord[]) => AdminNotificationRecord[]) {
+    setItems((current) => {
+      const next = updater(current);
+      onItemsChange?.(next);
+      return next;
+    });
+  }
 
   async function updateNotification(notificationId: string, input: { isRead?: boolean; deleted?: boolean }) {
     const response = await fetch(`/api/admin/notifications/${notificationId}`, {
@@ -29,18 +42,48 @@ export function NotificationsCenter({ notifications }: { notifications: AdminNot
       body: JSON.stringify(input),
     });
 
-    if (!response.ok) return;
+    if (!response.ok) return false;
 
     window.dispatchEvent(new Event("admin-notifications-changed"));
 
     if (input.deleted) {
-      setItems((current) => current.filter((item) => item.id !== notificationId));
-      return;
+      syncItems((current) => current.filter((item) => item.id !== notificationId));
+      return true;
     }
 
-    setItems((current) =>
+    syncItems((current) =>
       current.map((item) => (item.id === notificationId ? { ...item, isRead: input.isRead === true } : item)),
     );
+    return true;
+  }
+
+  async function openNotification(notification: AdminNotificationRecord) {
+    if (!notification.isRead) {
+      const ok = await updateNotification(notification.id, { isRead: true, deleted: false });
+      if (!ok) return;
+    }
+    window.location.href = notification.href;
+  }
+
+  async function toggleAll() {
+    const targetRead = !allRead;
+    const changedItems = items.filter((item) => item.isRead !== targetRead);
+    if (!changedItems.length) return;
+
+    const results = await Promise.all(
+      changedItems.map((item) =>
+        fetch(`/api/admin/notifications/${item.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isRead: targetRead, deleted: false }),
+        }),
+      ),
+    );
+
+    if (results.some((result) => !result.ok)) return;
+
+    window.dispatchEvent(new Event("admin-notifications-changed"));
+    syncItems((current) => current.map((item) => ({ ...item, isRead: targetRead })));
   }
 
   if (!items.length) {
@@ -61,13 +104,7 @@ export function NotificationsCenter({ notifications }: { notifications: AdminNot
         <button
           type="button"
           className="inline-flex items-center gap-2 rounded-2xl border border-[#e7eaee] bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-          onClick={() =>
-            void Promise.all(
-              items.map((item) =>
-                updateNotification(item.id, { isRead: allRead ? false : true }),
-              ),
-            )
-          }
+          onClick={() => void toggleAll()}
         >
           <CheckCheck size={16} />
           {allRead ? "Mark all unread" : "Mark all read"}
@@ -93,12 +130,13 @@ export function NotificationsCenter({ notifications }: { notifications: AdminNot
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link
-                    href={`/api/admin/notifications/open?notificationId=${encodeURIComponent(notification.id)}&href=${encodeURIComponent(notification.href)}`}
+                  <button
+                    type="button"
                     className="text-sm font-medium text-slate-900 hover:text-slate-700"
+                    onClick={() => void openNotification(notification)}
                   >
                     {notification.title}
-                  </Link>
+                  </button>
                   <AdminBadge tone={config.tone}>{config.label}</AdminBadge>
                   {!notification.isRead ? <AdminBadge tone="info">Unread</AdminBadge> : null}
                 </div>
