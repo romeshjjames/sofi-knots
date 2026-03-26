@@ -6,6 +6,7 @@ import { Heart, LogOut, Menu, Search, ShoppingBag, User, X } from "lucide-react"
 import { useState, useTransition } from "react";
 import { useCart } from "@/components/cart/cart-provider";
 import { useCustomerAuth } from "@/components/customer/customer-auth-provider";
+import { useWishlist } from "@/components/wishlist/wishlist-provider";
 
 type CollectionNavItem = {
   title: string;
@@ -29,8 +30,8 @@ export function Navbar({ siteName = "Sofi Knots", logoUrl = null, collections = 
   const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
   const { itemCount } = useCart();
+  const { itemCount: wishlistCount } = useWishlist();
   const { customer, loading, logout } = useCustomerAuth();
-  const isCollectionsActive = pathname === "/collections" || pathname.startsWith("/collections/");
 
   function handleLogout() {
     startTransition(async () => {
@@ -126,7 +127,14 @@ export function Navbar({ siteName = "Sofi Knots", logoUrl = null, collections = 
             <Search size={20} />
           </Link>
           <Link href="/wishlist" className="p-2 text-brand-warm transition-colors hover:text-brand-gold" aria-label="Wishlist">
-            <Heart size={20} />
+            <span className="relative block">
+              <Heart size={20} />
+              {wishlistCount > 0 ? (
+                <span className="absolute -right-2 -top-2 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-brand-brown px-1.5 text-[10px] font-medium leading-none text-white">
+                  {wishlistCount > 99 ? "99+" : wishlistCount}
+                </span>
+              ) : null}
+            </span>
           </Link>
           <Link href={customer ? "/account" : "/account/login"} className="p-2 text-brand-warm transition-colors hover:text-brand-gold" aria-label={customer ? "Account" : "Customer login"}>
             <User size={20} />

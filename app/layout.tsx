@@ -5,6 +5,7 @@ import { AnalyticsConsentBanner } from "@/components/analytics/analytics-consent
 import { AnalyticsTracker } from "@/components/analytics/analytics-tracker";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { CustomerAuthProvider } from "@/components/customer/customer-auth-provider";
+import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
 import "./globals.css";
 import { buildStorefrontMetadata } from "@/lib/seo";
 
@@ -35,13 +36,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className={`${jost.variable} ${cormorant.variable}`}>
         <CustomerAuthProvider>
-          <CartProvider>
-            <Suspense fallback={null}>
-              <AnalyticsTracker />
-            </Suspense>
-            {children}
-            <AnalyticsConsentBanner />
-          </CartProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <Suspense fallback={null}>
+                <AnalyticsTracker />
+              </Suspense>
+              {children}
+              <AnalyticsConsentBanner />
+            </CartProvider>
+          </WishlistProvider>
         </CustomerAuthProvider>
       </body>
     </html>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Heart, ShoppingBag, Star } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
+import { useWishlist } from "@/components/wishlist/wishlist-provider";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import type { Product } from "@/types/commerce";
 
@@ -13,6 +14,8 @@ type Props = {
 
 export function ProductCard({ product, index = 0 }: Props) {
   const { addItem } = useCart();
+  const { toggleItem, isInWishlist } = useWishlist();
+  const saved = isInWishlist(product.id);
 
   return (
     <div className="brand-card group animate-fade-in" style={{ animationDelay: `${index * 80}ms` }}>
@@ -57,10 +60,28 @@ export function ProductCard({ product, index = 0 }: Props) {
             <div className="flex gap-2">
               <button
                 type="button"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-ivory/90 text-brand-warm shadow-sm backdrop-blur-sm transition-colors hover:text-brand-rose"
-                aria-label="Add to wishlist"
+                className={`flex h-10 w-10 items-center justify-center rounded-full bg-brand-ivory/90 shadow-sm backdrop-blur-sm transition-colors ${
+                  saved ? "text-brand-rose" : "text-brand-warm hover:text-brand-rose"
+                }`}
+                aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  toggleItem(product.id);
+                  void trackAnalyticsEvent({
+                    eventName: saved ? "wishlist_remove" : "wishlist_add",
+                    path: `/product/${product.slug}`,
+                    metadata: {
+                      productId: product.id,
+                      productSlug: product.slug,
+                      productName: product.name,
+                      source: "product_card_quick_action",
+                      category: product.category,
+                    },
+                  });
+                }}
               >
-                <Heart size={16} />
+                <Heart size={16} className={saved ? "fill-current" : ""} />
               </button>
               <button
                 type="button"
