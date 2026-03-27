@@ -89,7 +89,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
               <span className="text-2xl font-medium text-brand-brown">Rs. {displayPrice.toLocaleString("en-IN")}</span>
             </div>
             <p className="mb-8 text-sm leading-relaxed text-brand-warm">{product.description}</p>
-            <ProductActionButtons productId={product.id} productSlug={product.slug} productName={product.name} category={product.category} />
+            <ProductActionButtons
+              productId={product.id}
+              productSlug={product.slug}
+              productName={product.name}
+              category={product.category}
+              productImageUrl={product.featuredImageUrl}
+            />
             <div className="mt-8 rounded-sm bg-brand-cream p-6">
               <h2 className="text-lg font-medium text-brand-warm">
                 {product.seoTitle || product.name}
