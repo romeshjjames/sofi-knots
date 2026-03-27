@@ -7,7 +7,8 @@ import { useCustomerAuth } from "@/components/customer/customer-auth-provider";
 type ColorSwatch = {
   id: string;
   name: string;
-  hex: string;
+  hex: string | null;
+  imageUrl: string | null;
 };
 
 type CustomOrderModalProps = {
@@ -331,7 +332,11 @@ export function CustomOrderModal({ open, onClose, productId, productName, produc
                         }}
                         className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-brand-warm transition hover:bg-[#f8f0e2]"
                       >
-                        <span className="h-4 w-4 rounded-full border border-black/10" style={{ backgroundColor: color.hex }} />
+                        {color.imageUrl ? (
+                          <img src={color.imageUrl} alt={color.name} className="h-5 w-5 rounded-full border border-black/10 object-cover" />
+                        ) : (
+                          <span className="h-4 w-4 rounded-full border border-black/10" style={{ backgroundColor: color.hex || "#f3f1ec" }} />
+                        )}
                         {color.name}
                       </button>
                     ))}

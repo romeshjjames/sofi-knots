@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { colorSwatches } from "@/lib/color-swatches";
+import { getEnabledColorSwatches } from "@/lib/color-swatches";
 
 export async function GET() {
-  return NextResponse.json({ colors: colorSwatches });
+  const colors = await getEnabledColorSwatches();
+  return NextResponse.json({ colors });
 }

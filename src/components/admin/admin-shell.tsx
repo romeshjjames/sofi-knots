@@ -44,6 +44,7 @@ type AdminNavKey =
   | "content"
   | "reviews"
   | "customOrders"
+  | "colorSwatches"
   | "inventory"
   | "media"
   | "analytics"
@@ -84,6 +85,7 @@ const navItems: { key: AdminNavKey; label: string; href: string; icon: typeof La
   { key: "media", label: "Media Library", href: "/admin/media", icon: Images },
   { key: "reviews", label: "Reviews", href: "/admin/reviews", icon: MessageSquareQuote },
   { key: "customOrders", label: "Custom Orders", href: "/admin/custom-orders", icon: SquarePen },
+  { key: "colorSwatches", label: "Color Swatches", href: "/admin/color-swatches", icon: Palette },
   { key: "inventory", label: "Inventory", href: "/admin/inventory", icon: Warehouse },
   { key: "analytics", label: "Analytics", href: "/admin/analytics", icon: LineChart },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings2 },

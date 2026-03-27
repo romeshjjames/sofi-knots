@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createCustomOrder } from "@/lib/custom-orders";
-import { colorSwatches } from "@/lib/color-swatches";
+import { getEnabledColorSwatches } from "@/lib/color-swatches";
 import { getCustomerSession } from "@/lib/supabase/customer-auth";
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as Record<string, unknown>;
     const session = await getCustomerSession().catch(() => ({ user: null, customerId: null }));
+    const colorSwatches = await getEnabledColorSwatches();
 
     const productId = String(body.product_id ?? "").trim();
     const productName = String(body.product_name ?? "").trim();
