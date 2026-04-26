@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { createColorSwatch, getColorSwatches } from "@/lib/color-swatches";
 import { requireAdminApi } from "@/lib/supabase/auth";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   const auth = await requireAdminApi(["super_admin", "content_admin", "marketing_admin"]);
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
