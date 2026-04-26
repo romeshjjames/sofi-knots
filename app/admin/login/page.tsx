@@ -1,14 +1,32 @@
 import { LoginForm } from "@/components/admin/login-form";
 import { getSiteSettings } from "@/lib/admin-data";
 
-export default function AdminLoginPage({
+type LoginSearchParams =
+  | Promise<Record<string, string | string[] | undefined>>
+  | Record<string, string | string[] | undefined>
+  | undefined;
+
+function getSingleParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function AdminLoginPage({
   searchParams,
 }: {
-  searchParams?: { next?: string; error?: string };
+  searchParams?: LoginSearchParams;
 }) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const settingsPromise = getSiteSettings();
 
-  return <AdminLoginPageContent searchParams={searchParams} settingsPromise={settingsPromise} />;
+  return (
+    <AdminLoginPageContent
+      searchParams={{
+        next: getSingleParam(resolvedSearchParams?.next),
+        error: getSingleParam(resolvedSearchParams?.error),
+      }}
+      settingsPromise={settingsPromise}
+    />
+  );
 }
 
 async function AdminLoginPageContent({

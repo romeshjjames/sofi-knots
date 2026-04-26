@@ -2,6 +2,8 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { MediaLibraryManager } from "@/components/admin/media-library-manager";
 import { getMediaAssets } from "@/lib/media-library";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminMediaPage() {
   const assets = await getMediaAssets();
 
