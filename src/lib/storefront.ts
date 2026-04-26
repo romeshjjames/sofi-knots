@@ -46,42 +46,84 @@ function normalizeWhatsAppLink(inputPhone: string | null, socialLinks: Record<st
 
 export async function getStorefrontSettings(): Promise<StorefrontSettings> {
   noStore();
-  const settings = await getSiteSettings();
-  const siteUrl = settings.siteUrl || siteConfig.url;
-  const supportEmail = settings.supportEmail || siteConfig.contactEmail;
-  const supportPhone = settings.supportPhone || siteConfig.contactPhone;
-  const socialLinks = {
-    instagram: siteConfig.social.instagram,
-    facebook: siteConfig.social.facebook,
-    whatsapp: normalizeWhatsAppLink(settings.whatsappPhone, settings.socialLinks),
-    ...settings.socialLinks,
-  };
+  try {
+    const settings = await getSiteSettings();
+    const siteUrl = settings.siteUrl || siteConfig.url;
+    const supportEmail = settings.supportEmail || siteConfig.contactEmail;
+    const supportPhone = settings.supportPhone || siteConfig.contactPhone;
+    const socialLinks = {
+      instagram: siteConfig.social.instagram,
+      facebook: siteConfig.social.facebook,
+      whatsapp: normalizeWhatsAppLink(settings.whatsappPhone, settings.socialLinks),
+      ...settings.socialLinks,
+    };
 
-  return {
-    siteName: settings.siteName || siteConfig.name,
-    logoUrl: settings.branding.logoUrl,
-    siteUrl,
-    storeDescription: settings.storeDescription || siteConfig.description,
-    defaultKeywords: settings.defaultMetaKeywords?.length ? settings.defaultMetaKeywords : siteConfig.defaultKeywords,
-    socialSharingImage: settings.seo.socialSharingImage || settings.branding.defaultBannerImageUrl,
-    faviconUrl: settings.branding.faviconUrl,
-    supportEmail,
-    supportPhone,
-    whatsappLink: normalizeWhatsAppLink(settings.whatsappPhone, socialLinks),
-    contactMessage:
-      settings.contactPageMessage ||
-      "We usually reply within 24 hours for product questions, gifting requests, and custom order inquiries.",
-    footerBrandText:
-      settings.branding.footerBrandText ||
-      "Handcrafted macrame art made with love, patience, and premium natural materials.",
-    socialLinks,
-    seo: {
-      defaultTitle: settings.defaultMetaTitle || siteConfig.defaultTitle,
-      defaultDescription: settings.defaultMetaDescription || settings.storeDescription || siteConfig.description,
-      allowIndexing: settings.seo.allowIndexing,
-    },
-    policies: settings.policies,
-    shipping: settings.shipping,
-    announcementBar: await getActiveAnnouncementBar(),
-  };
+    return {
+      siteName: settings.siteName || siteConfig.name,
+      logoUrl: settings.branding.logoUrl,
+      siteUrl,
+      storeDescription: settings.storeDescription || siteConfig.description,
+      defaultKeywords: settings.defaultMetaKeywords?.length ? settings.defaultMetaKeywords : siteConfig.defaultKeywords,
+      socialSharingImage: settings.seo.socialSharingImage || settings.branding.defaultBannerImageUrl,
+      faviconUrl: settings.branding.faviconUrl,
+      supportEmail,
+      supportPhone,
+      whatsappLink: normalizeWhatsAppLink(settings.whatsappPhone, socialLinks),
+      contactMessage:
+        settings.contactPageMessage ||
+        "We usually reply within 24 hours for product questions, gifting requests, and custom order inquiries.",
+      footerBrandText:
+        settings.branding.footerBrandText ||
+        "Handcrafted macrame art made with love, patience, and premium natural materials.",
+      socialLinks,
+      seo: {
+        defaultTitle: settings.defaultMetaTitle || siteConfig.defaultTitle,
+        defaultDescription: settings.defaultMetaDescription || settings.storeDescription || siteConfig.description,
+        allowIndexing: settings.seo.allowIndexing,
+      },
+      policies: settings.policies,
+      shipping: settings.shipping,
+      announcementBar: await getActiveAnnouncementBar().catch(() => null),
+    };
+  } catch {
+    return {
+      siteName: siteConfig.name,
+      logoUrl: null,
+      siteUrl: siteConfig.url,
+      storeDescription: siteConfig.description,
+      defaultKeywords: siteConfig.defaultKeywords,
+      socialSharingImage: null,
+      faviconUrl: null,
+      supportEmail: siteConfig.contactEmail,
+      supportPhone: siteConfig.contactPhone,
+      whatsappLink: siteConfig.social.whatsapp,
+      contactMessage:
+        "We usually reply within 24 hours for product questions, gifting requests, and custom order inquiries.",
+      footerBrandText:
+        "Handcrafted macrame art made with love, patience, and premium natural materials.",
+      socialLinks: {
+        instagram: siteConfig.social.instagram,
+        facebook: siteConfig.social.facebook,
+        whatsapp: siteConfig.social.whatsapp,
+      },
+      seo: {
+        defaultTitle: siteConfig.defaultTitle,
+        defaultDescription: siteConfig.description,
+        allowIndexing: true,
+      },
+      policies: {
+        privacyPolicy: null,
+        termsAndConditions: null,
+        shippingPolicy: null,
+        returnRefundPolicy: null,
+      },
+      shipping: {
+        deliveryTimeline: null,
+        freeShippingThresholdInr: 0,
+        shippingChargeInr: 0,
+        packagingNotes: null,
+      },
+      announcementBar: null,
+    };
+  }
 }

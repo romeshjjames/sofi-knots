@@ -6,6 +6,13 @@ type LoginSearchParams =
   | Record<string, string | string[] | undefined>
   | undefined;
 
+type LoginPageSettings = {
+  siteName: string;
+  branding: {
+    logoUrl: string | null;
+  };
+};
+
 function getSingleParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -16,7 +23,12 @@ export default async function AdminLoginPage({
   searchParams?: LoginSearchParams;
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const settingsPromise = getSiteSettings();
+  const settingsPromise = getSiteSettings().catch(() => ({
+    siteName: "Sofi Knots",
+    branding: {
+      logoUrl: null,
+    },
+  }));
 
   return (
     <AdminLoginPageContent
@@ -34,7 +46,7 @@ async function AdminLoginPageContent({
   settingsPromise,
 }: {
   searchParams?: { next?: string; error?: string };
-  settingsPromise: ReturnType<typeof getSiteSettings>;
+  settingsPromise: Promise<LoginPageSettings>;
 }) {
   const settings = await settingsPromise;
   const siteName = settings.siteName || "Sofi Knots";
